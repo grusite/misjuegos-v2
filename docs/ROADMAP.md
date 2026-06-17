@@ -13,13 +13,13 @@ Each task should be independently testable before moving on. Jorge approves plan
 
 ## Phase 1 — Supabase foundation
 
-- [ ] `supabase init` + local dev (`supabase start`)
-- [ ] Migrations: enums, `profiles`, signup trigger
-- [ ] Migrations: RLS on profiles
-- [ ] `supabaseClient.ts` + `.env`
-- [ ] `pnpm db:types` script
-- [ ] Real Google OAuth via Supabase Auth
-- [ ] Replace `loginMock` with real auth flow
+- [x] `supabase init` + local dev (`supabase start`)
+- [x] Migrations: enums, `profiles`, signup trigger
+- [x] Migrations: RLS on profiles
+- [x] `supabaseClient.ts` + `.env`
+- [x] `pnpm db:types` script
+- [x] Real Google OAuth via Supabase Auth
+- [x] Replace `loginMock` with real auth flow
 
 ## Phase 2 — Repository layer
 

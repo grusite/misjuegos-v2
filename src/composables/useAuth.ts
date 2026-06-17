@@ -6,19 +6,21 @@ export function useAuth() {
 
   const profile = computed(() => authStore.profile)
   const isAuthenticated = computed(() => authStore.isAuthenticated)
+  const isLoading = computed(() => authStore.isLoading)
 
-  function loginMock(displayName?: string) {
-    authStore.loginMock(displayName)
+  function loginWithGoogle() {
+    return authStore.loginWithGoogle()
   }
 
   function logout() {
-    authStore.logout()
+    return authStore.logout()
   }
 
   return {
     profile,
     isAuthenticated,
-    loginMock,
+    isLoading,
+    loginWithGoogle,
     logout,
   }
 }

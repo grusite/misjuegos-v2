@@ -13,8 +13,8 @@ This repo is a ground-up rebuild of MisJuegos (private app at [misjuegos.net](ht
 | Phase | Status | Description |
 |-------|--------|-------------|
 | **0** | ✅ Done | Vue 3 scaffold, Tailwind brand, Router + Pinia auth skeleton |
-| **1** | 🔜 Next | Supabase local, migrations, RLS, Google OAuth |
-| 2 | Pending | Repository layer |
+| **1** | ✅ Done | Supabase local, migrations, RLS, Google OAuth |
+| 2 | 🔜 Next | Repository layer |
 | 3 | Pending | App shell + **port v1 UI animations** |
 | 4 | Pending | Participants |
 | 5 | Pending | Board games + sessions + **messages + scores** |
@@ -40,10 +40,27 @@ These were agreed with Jorge — do not revisit without explicit approval:
 5. **Fresh start.** No migration from v1 `board_games` data. Google Sheets/Drive are one-time import sources only.
 6. **Catalog ≠ session.** `game_catalog` (what the game is) separate from `play_sessions` (a play instance). Escape rooms follow the same pattern.
 7. **Repo location:** `/Users/jorgemartin/repo/misjuegos-v2`
+8. **Local Supabase until prod.** Develop against `supabase start`; cloud project is for Phase 11 cutover only.
+9. **Prod DNS:** `misjuegos.net` is on **Cloudflare** (Jorge manages DNS there).
 
 ---
 
-## Product scope
+## Infrastructure (prod — Phase 11)
+
+| Item | Value |
+|------|-------|
+| Supabase cloud project | `misjuegos-v2` · ref `yyscffeexxtagilftrwo` |
+| Domain | `misjuegos.net` (Cloudflare DNS) |
+| Google OAuth client | Reuse existing **misjuegos** web client in Google Cloud |
+
+OAuth redirect URIs to maintain on that client:
+
+| Environment | Redirect URI |
+|-------------|--------------|
+| Local Supabase | `http://127.0.0.1:54321/auth/v1/callback` |
+| Prod Supabase | `https://yyscffeexxtagilftrwo.supabase.co/auth/v1/callback` |
+| v1 (legacy, remove when retired) | `https://zkvwwkkrcaocmimuolbv.supabase.co/auth/v1/callback` |
+
 
 MisJuegos tracks games played with friends:
 
@@ -189,7 +206,7 @@ pnpm lint
 pnpm build
 pnpm ts
 # Phase 1+:
-pnpm db:types     # generate Supabase types (to be added)
+pnpm db:types     # generate Supabase types from local DB
 ```
 
 ---

@@ -17,7 +17,24 @@ cp .env.dist .env   # Supabase vars — Phase 1
 pnpm dev
 ```
 
-Open http://localhost:5173 → login screen → **Entrar con Google** (mock until Phase 1).
+Open http://localhost:5173 → login screen → **Entrar con Google**.
+
+### Supabase local
+
+```bash
+# Requires Docker (Colima, Docker Desktop, etc.)
+cp .env.dist .env
+# Add Google OAuth credentials to .env (see below)
+supabase start
+pnpm dev
+```
+
+Google OAuth setup:
+
+1. Create OAuth credentials in [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Authorized redirect URI: `http://127.0.0.1:54321/auth/v1/callback`
+3. Set `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` in `.env`
+4. Restart Supabase: `supabase stop && supabase start`
 
 ## Scripts
 
@@ -28,6 +45,7 @@ Open http://localhost:5173 → login screen → **Entrar con Google** (mock unti
 | `pnpm test` | Unit tests |
 | `pnpm lint` | ESLint |
 | `pnpm ts` | Typecheck |
+| `pnpm db:types` | Regenerate Supabase types from local DB |
 
 ## Docs
 
@@ -40,9 +58,9 @@ Open http://localhost:5173 → login screen → **Entrar con Google** (mock unti
 
 ## Status
 
-**Phase 0 ✅** — Vue scaffold, brand tokens, mock auth, router shell.
+**Phase 1 ✅** — Supabase local, profiles migration, RLS, Google OAuth, `pnpm db:types`.
 
-**Phase 1 🔜** — Supabase migrations, RLS, Google OAuth.
+**Phase 2 🔜** — Repository layer.
 
 | [`docs/UI_ANIMATIONS.md`](docs/UI_ANIMATIONS.md) | v1 animations to preserve |
 

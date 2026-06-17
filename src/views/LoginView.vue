@@ -1,20 +1,21 @@
 <script setup lang="ts">
 import { ref } from "vue"
-import { useRouter } from "vue-router"
 import UiButton from "@/components/ui/UiButton.vue"
 import { useAuth } from "@/composables/useAuth"
 
-const router = useRouter()
-const { loginMock } = useAuth()
+const { loginWithGoogle, isLoading } = useAuth()
 
-const isLoading = ref(false)
+const errorMessage = ref<string | null>(null)
 
 async function handleGoogleLogin() {
-  isLoading.value = true
-  // Placeholder until Supabase Google OAuth is wired in Phase 1.
-  loginMock("Usuario demo")
-  await router.push({ name: "home" })
-  isLoading.value = false
+  errorMessage.value = null
+
+  try {
+    await loginWithGoogle()
+  } catch {
+    errorMessage.value =
+      "No se pudo iniciar sesión. Comprueba la configuración de Google OAuth."
+  }
 }
 </script>
 
@@ -37,8 +38,12 @@ async function handleGoogleLogin() {
         {{ isLoading ? "Entrando…" : "Entrar con Google" }}
       </UiButton>
 
-      <p class="text-center text-sm text-gray-500">
-        OAuth real en Fase 1. Por ahora usa login demo para probar el router.
+      <p
+        v-if="errorMessage"
+        class="text-center text-sm text-secondary"
+        role="alert"
+      >
+        {{ errorMessage }}
       </p>
     </div>
   </main>

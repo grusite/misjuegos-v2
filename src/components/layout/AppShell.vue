@@ -79,7 +79,7 @@ const navLinks = [
 
         <div class="border-t-4 border-dashed border-dark pt-4 text-dark">
           <p class="font-semibold">{{ profile?.displayName }}</p>
-          <p class="text-sm opacity-70">Sesión mock — Supabase en Fase 1</p>
+          <p class="text-sm opacity-70">Sesión con Google</p>
         </div>
       </div>
     </nav>
