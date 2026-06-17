@@ -58,9 +58,9 @@ Google OAuth setup:
 
 ## Status
 
-**Phase 1 ✅** — Supabase local, profiles migration, RLS, Google OAuth, `pnpm db:types`.
+**Phase 2 ✅** — Repository layer (`DbError`, participants/catalog/sessions repos, mappers).
 
-**Phase 2 🔜** — Repository layer.
+**Phase 3 🔜** — App shell + v1 animations.
 
 | [`docs/UI_ANIMATIONS.md`](docs/UI_ANIMATIONS.md) | v1 animations to preserve |
 

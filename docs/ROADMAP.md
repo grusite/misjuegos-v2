@@ -21,14 +21,16 @@ Each task should be independently testable before moving on. Jorge approves plan
 - [x] Real Google OAuth via Supabase Auth
 - [x] Replace `loginMock` with real auth flow
 
-## Phase 2 — Repository layer
+## Phase 2 — Repository layer ✅
 
-- [ ] `services/errors.ts` (DbError)
-- [ ] `participantsRepository` + tests
-- [ ] `participantAliasesRepository`
-- [ ] `catalogRepository`
-- [ ] `sessionsRepository`
-- [ ] Domain mappers
+- [x] `services/errors.ts` (DbError)
+- [x] `participantsRepository` + tests
+- [x] `participantAliasesRepository`
+- [x] `catalogRepository`
+- [x] `sessionsRepository`
+- [x] Domain mappers
+
+Repositories use `AppDatabase` (`src/domain/types/schema.ts`) for tables not yet migrated; after Phase 4/5 migrations run `pnpm db:types` and trim `PendingTables` from `rows.ts` when generated types include them.
 
 ## Phase 3 — App shell + animations
 
