@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, toRef, watch } from "vue"
+import { computed, ref, toRef, watch } from "vue"
 import { Icon } from "@iconify/vue"
 import { RouterLink, useRoute } from "vue-router"
 import NavIcon from "@/components/ui/NavIcon.vue"
@@ -22,6 +22,15 @@ const { profile, logout } = useAuth()
 const sourceRef = computed(() => props.source)
 const isOpen = toRef(props, "open")
 const { origin, updateOrigin } = useMenuOrigin(sourceRef, isOpen)
+const toolsExpanded = ref(false)
+
+const mainLinks = computed(() =>
+  navLinks.filter(link => (link.section ?? "main") === "main"),
+)
+const toolLinks = computed(() =>
+  navLinks.filter(link => link.section === "tools"),
+)
+const isInTools = computed(() => route.path.startsWith("/tools/"))
 
 const navStyle = computed(() => ({
   "--left": `${origin.value.left}px`,
@@ -31,7 +40,16 @@ const navStyle = computed(() => ({
 watch(
   () => route.path,
   () => {
+    if (isInTools.value) toolsExpanded.value = true
     if (props.open) uiStore.closeNav(true)
+  },
+)
+
+watch(
+  () => props.open,
+  isMenuOpen => {
+    if (isMenuOpen && isInTools.value) toolsExpanded.value = true
+    if (isMenuOpen && !isInTools.value) toolsExpanded.value = false
   },
 )
 
@@ -100,6 +118,10 @@ function handleNavigate(navigate: () => void) {
   navigate()
 }
 
+function toggleTools() {
+  toolsExpanded.value = !toolsExpanded.value
+}
+
 async function handleLogout() {
   uiStore.closeNav(true)
   await logout()
@@ -133,7 +155,7 @@ async function handleLogout() {
         <div class="mt-8 flex-1">
           <div class="flex flex-col">
             <RouterLink
-              v-for="link in navLinks"
+              v-for="link in mainLinks"
               :key="link.to"
               v-slot="{ isActive, isExactActive, href, navigate }"
               :to="link.to"
@@ -158,6 +180,54 @@ async function handleLogout() {
                 />
               </a>
             </RouterLink>
+
+            <div class="mt-4">
+              <button
+                type="button"
+                class="flex w-full items-center gap-4 border-4 border-transparent p-4 text-2xl font-bold text-dark transition-colors hover:border-dark/30"
+                :class="{ 'rounded-lg border-dark': toolsExpanded || isInTools }"
+                @click="toggleTools"
+              >
+                <Icon icon="mdi:tools" class="h-7 w-7 shrink-0" aria-hidden="true" />
+                <span class="flex-1 text-left">Herramientas</span>
+                <Icon
+                  :icon="toolsExpanded ? 'mdi:chevron-up' : 'mdi:chevron-down'"
+                  class="h-5 w-5 shrink-0 opacity-70"
+                  aria-hidden="true"
+                />
+              </button>
+
+              <Transition name="tools-collapse">
+                <div v-if="toolsExpanded || isInTools" class="ml-6 border-l-4 border-dark/20 pl-2">
+                  <RouterLink
+                    v-for="link in toolLinks"
+                    :key="link.to"
+                    v-slot="{ isActive, href, navigate }"
+                    :to="link.to"
+                    custom
+                  >
+                    <a
+                      :href="href"
+                      class="flex items-center gap-4 border-4 p-3 text-xl font-bold text-dark transition-colors"
+                      :class="
+                        isActive
+                          ? 'rounded-lg border-dark'
+                          : 'border-transparent hover:border-dark/30'
+                      "
+                      @click="handleNavigate(navigate)"
+                    >
+                      <NavIcon :icon="link.icon" />
+                      <span class="flex-1">{{ link.name }}</span>
+                      <Icon
+                        icon="mdi:chevron-right"
+                        class="h-5 w-5 shrink-0 opacity-70"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  </RouterLink>
+                </div>
+              </Transition>
+            </div>
           </div>
         </div>
 
@@ -189,5 +259,16 @@ async function handleLogout() {
 <style scoped>
 .nav-drawer {
   clip-path: circle(var(--clipSize) at var(--left) var(--top));
+}
+
+.tools-collapse-enter-active,
+.tools-collapse-leave-active {
+  transition: all 0.2s ease;
+}
+
+.tools-collapse-enter-from,
+.tools-collapse-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 </style>

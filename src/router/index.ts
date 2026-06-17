@@ -26,20 +26,24 @@ const router = createRouter({
           component: () => import("@/views/ParticipantsView.vue"),
         },
         {
-          path: "dices",
-          name: "dices",
+          path: "tools/dice",
+          name: "tools-dice",
           component: () => import("@/views/DicesView.vue"),
         },
         {
-          path: "roulette",
-          name: "roulette",
+          path: "tools/roulette",
+          name: "tools-roulette",
           component: () => import("@/views/RouletteView.vue"),
         },
         {
-          path: "timer",
-          name: "timer",
+          path: "tools/timer",
+          name: "tools-timer",
           component: () => import("@/views/TimerView.vue"),
         },
+        // Backward compatible redirects from previous Phase 3 paths.
+        { path: "dices", redirect: { name: "tools-dice" } },
+        { path: "roulette", redirect: { name: "tools-roulette" } },
+        { path: "timer", redirect: { name: "tools-timer" } },
         {
           path: "dashboard",
           name: "dashboard",

@@ -111,6 +111,7 @@ Views → Composables → Services/Repositories → Supabase
 - Minimize scope — smallest correct diff; match existing conventions
 - Comments only for non-obvious business logic
 - Do not commit secrets (`.env`)
+- When adding dependencies, always install the latest available version from the package manager (do not pin or invent older versions unless explicitly requested)
 
 ### File layout (target)
 

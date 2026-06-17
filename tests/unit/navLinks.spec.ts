@@ -2,16 +2,24 @@ import { describe, expect, it } from "vitest"
 import { navLinks } from "@/config/navLinks"
 
 describe("navLinks", () => {
-  it("includes all main sections from v1", () => {
-    const names = navLinks.map(link => link.name)
+  it("keeps v1 sections grouped by main and tools", () => {
+    const mainNames = navLinks
+      .filter(link => (link.section ?? "main") === "main")
+      .map(link => link.name)
+    const toolNames = navLinks
+      .filter(link => link.section === "tools")
+      .map(link => link.name)
 
-    expect(names).toEqual([
+    expect(mainNames).toEqual([
       "Partidas",
       "Amigos",
+      "Dashboard",
+    ])
+
+    expect(toolNames).toEqual([
       "Dados",
       "Ruleta",
       "Cuenta atrás",
-      "Dashboard",
     ])
   })
 })
