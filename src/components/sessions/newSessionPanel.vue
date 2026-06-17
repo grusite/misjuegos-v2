@@ -3,12 +3,16 @@ import { computed, reactive, watch } from "vue"
 import SessionParticipantPicker from "@/components/sessions/SessionParticipantPicker.vue"
 import UiButton from "@/components/ui/UiButton.vue"
 import type { Participant } from "@/domain/types/participant"
-import type { BggSearchResult } from "@/services/bgg/bggService"
+import type { BggSearchFeedback, BggSearchResult } from "@/services/bgg/bggService"
 
 const props = defineProps<{
   participants: Participant[]
   selfParticipantId?: string | null
   bggResults: BggSearchResult[]
+  bggSearchFeedback?: BggSearchFeedback | null
+  isBggSearching?: boolean
+  bggAutoFillTitle?: string | null
+  bggAutoSelectId?: number | null
   isSaving?: boolean
   createParticipant?: (displayName: string) => Promise<Participant | null>
 }>()
@@ -47,6 +51,34 @@ watch(
 
 const selectedBgg = computed(() =>
   props.bggResults.find(result => String(result.bggId) === form.bggSelectionId) ?? null,
+)
+
+const bggFeedbackClass = computed(() => {
+  const tone = props.bggSearchFeedback?.tone
+  if (tone === "warning") return "text-secondary"
+  if (tone === "info") return "text-gray-400"
+  return "text-gray-500"
+})
+
+watch(
+  () => props.bggAutoFillTitle,
+  title => {
+    if (title && !form.title.trim()) form.title = title
+  },
+)
+
+watch(
+  () => props.bggAutoSelectId,
+  bggId => {
+    if (bggId) form.bggSelectionId = String(bggId)
+  },
+)
+
+watch(
+  () => form.bggSelectionId,
+  () => {
+    if (selectedBgg.value) form.title = selectedBgg.value.title
+  },
 )
 
 const canSubmit = computed(() => form.title.trim().length > 0)
@@ -90,11 +122,19 @@ function handleSubmit() {
           type="button"
           variant="ghost"
           class="!px-4 !py-2 !text-base"
+          :disabled="isBggSearching || isSaving"
           @click="emit('searchBgg', form.bggQuery)"
         >
-          Buscar
+          {{ isBggSearching ? "Buscando..." : "Buscar" }}
         </UiButton>
       </div>
+      <p
+        v-if="bggSearchFeedback"
+        class="text-sm"
+        :class="bggFeedbackClass"
+      >
+        {{ bggSearchFeedback.message }}
+      </p>
       <select
         v-if="bggResults.length > 0"
         v-model="form.bggSelectionId"
@@ -109,6 +149,17 @@ function handleSubmit() {
           {{ result.title }}{{ result.yearPublished ? ` (${result.yearPublished})` : "" }}
         </option>
       </select>
+      <p class="text-xs text-gray-500">
+        Datos de juegos vía
+        <a
+          href="https://boardgamegeek.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-board underline-offset-2 hover:underline"
+        >
+          BoardGameGeek
+        </a>
+      </p>
     </label>
 
     <SessionParticipantPicker

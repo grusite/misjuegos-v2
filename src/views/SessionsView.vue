@@ -17,10 +17,15 @@ const {
   selfParticipantId,
   escapeCatalog,
   bggResults,
+  bggSearchFeedback,
+  isBggSearching,
+  bggAutoFillTitle,
+  bggAutoSelectId,
   isLoading,
   isSaving,
   errorMessage,
   searchBgg,
+  clearBggSearchState,
   createSession,
   createEscapeSession,
   createFriendParticipant,
@@ -39,9 +44,16 @@ const filterOptions: Array<{ value: SessionFilter; label: string }> = [
 watch(
   () => uiStore.isNavOpen,
   isNavOpen => {
-    if (isNavOpen) isCreating.value = false
+    if (isNavOpen) {
+      clearBggSearchState()
+      isCreating.value = false
+    }
   },
 )
+
+watch(isCreating, open => {
+  if (!open) clearBggSearchState()
+})
 
 onMounted(() => {
   const unregister = uiStore.onHomeClick(() => {
@@ -109,8 +121,14 @@ async function handleCreateBoard(payload: {
   const sessionId = await createSession(payload)
   if (!sessionId) return
 
+  clearBggSearchState()
   isCreating.value = false
   await router.push({ name: "session-detail", params: { id: sessionId } })
+}
+
+function handleCancelCreate() {
+  clearBggSearchState()
+  isCreating.value = false
 }
 
 async function handleCreateEscape(payload: {
@@ -250,11 +268,15 @@ async function handleCreateEscape(payload: {
             :participants="participants"
             :self-participant-id="selfParticipantId"
             :bgg-results="bggResults"
+            :bgg-search-feedback="bggSearchFeedback"
+            :is-bgg-searching="isBggSearching"
+            :bgg-auto-fill-title="bggAutoFillTitle"
+            :bgg-auto-select-id="bggAutoSelectId"
             :is-saving="isSaving"
             :create-participant="createFriendParticipant"
             @search-bgg="searchBgg"
             @submit="handleCreateBoard"
-            @cancel="isCreating = false"
+            @cancel="handleCancelCreate"
           />
           <NewEscapeSessionPanel
             v-else
@@ -264,7 +286,7 @@ async function handleCreateEscape(payload: {
             :is-saving="isSaving"
             :create-participant="createFriendParticipant"
             @submit="handleCreateEscape"
-            @cancel="isCreating = false"
+            @cancel="handleCancelCreate"
           />
         </div>
       </div>

@@ -16,7 +16,12 @@ import {
 } from "@/services/participants/participantBootstrap"
 import { participantsRepository } from "@/services/participants/participantsRepository"
 import { sessionsRepository } from "@/services/sessions/sessionsRepository"
-import { searchBoardGames, type BggSearchResult } from "@/services/bgg/bggService"
+import {
+  bggSearchFeedbackForError,
+  searchBoardGames,
+  type BggSearchFeedback,
+  type BggSearchResult,
+} from "@/services/bgg/bggService"
 
 export type SessionFilter = "all" | GameType
 
@@ -60,6 +65,10 @@ export function useSessions() {
   const participants = ref<Participant[]>([])
   const escapeCatalog = ref<EscapeRoomCatalogEntry[]>([])
   const bggResults = ref<BggSearchResult[]>([])
+  const bggSearchFeedback = ref<BggSearchFeedback | null>(null)
+  const isBggSearching = ref(false)
+  const bggAutoFillTitle = ref<string | null>(null)
+  const bggAutoSelectId = ref<number | null>(null)
   const sessionFilter = ref<SessionFilter>("all")
 
   const isLoading = ref(false)
@@ -172,7 +181,64 @@ export function useSessions() {
   }
 
   async function searchBgg(query: string) {
-    bggResults.value = await searchBoardGames(query)
+    const normalized = query.trim()
+
+    bggSearchFeedback.value = null
+    bggAutoFillTitle.value = null
+    bggAutoSelectId.value = null
+
+    if (!normalized) {
+      bggResults.value = []
+      bggSearchFeedback.value = {
+        tone: "hint",
+        message: "Escribe un nombre para buscar en BGG.",
+      }
+      return
+    }
+
+    isBggSearching.value = true
+
+    try {
+      const results = await searchBoardGames(normalized)
+      bggResults.value = results
+
+      if (results.length === 0) {
+        bggSearchFeedback.value = {
+          tone: "hint",
+          message: `Nada en BGG para «${normalized}». Usa el nombre de arriba.`,
+        }
+        bggAutoFillTitle.value = normalized
+        return
+      }
+
+      if (results.length === 1) {
+        const [match] = results
+        if (match) {
+          bggAutoSelectId.value = match.bggId
+          bggAutoFillTitle.value = match.title
+        }
+        return
+      }
+
+      bggSearchFeedback.value = {
+        tone: "hint",
+        message: `${results.length} resultados. Elige uno de la lista.`,
+      }
+    } catch (error) {
+      bggResults.value = []
+      bggSearchFeedback.value = bggSearchFeedbackForError(error)
+      bggAutoFillTitle.value = normalized
+    } finally {
+      isBggSearching.value = false
+    }
+  }
+
+  function clearBggSearchState() {
+    bggResults.value = []
+    bggSearchFeedback.value = null
+    bggAutoFillTitle.value = null
+    bggAutoSelectId.value = null
+    isBggSearching.value = false
   }
 
   async function createFriendParticipant(displayName: string): Promise<Participant | null> {
@@ -315,6 +381,10 @@ export function useSessions() {
     participants,
     escapeCatalog,
     bggResults,
+    bggSearchFeedback,
+    isBggSearching,
+    bggAutoFillTitle,
+    bggAutoSelectId,
     isLoading,
     isSaving,
     errorMessage,
@@ -322,6 +392,7 @@ export function useSessions() {
     loadSessions,
     loadEscapeCatalog,
     searchBgg,
+    clearBggSearchState,
     createSession,
     createEscapeSession,
     createFriendParticipant,
