@@ -72,31 +72,86 @@ Repositories use `AppDatabase` (`src/domain/types/schema.ts`) for tables not yet
 - [x] Stat cards, charts (top games, trends, partners)
 - [x] Escape room stats section
 
-## Phase 8 — Import pipeline (next)
+## Phase 8 — Desired games (wishlist) (next)
 
-- [ ] Migrations: import_runs + import_errors
-- [ ] Zod schema + parser for Escape Babel columns
-- [ ] Alias resolver (Participantes string → participants)
-- [ ] Idempotent importer (`source_hash`)
-- [ ] CLI/script for CSV + optional Google Sheets fetch
-- [ ] Import debug UI
+Personal “want to play” list — board games and escape rooms you haven’t played yet, useful for planning and booking.
 
-## Phase 9 — Photos
+**Placement (proposed):**
+
+- Route: `/wishlist` (nav label: “Quiero jugar” or “Deseados”)
+- Separate from `game_catalog` / `play_sessions` — wishlist items are intentions, not played history
+- Optional later: “Convert to session” when you actually play one
+
+**Tasks:**
+
+- [ ] Migration: `desired_games` (+ RLS)
+  - `type` (`board_game` | `escape_room`), `title`, `notes`, `priority` (optional)
+  - Escape-specific optional fields: `city`, `venue`, `company`, `booking_url`
+  - Board-game optional: BGG id / link to existing `game_catalog` when known
+  - `created_by`, `status` (`active` | `played` | `dropped`) for light lifecycle
+- [ ] `desiredGamesRepository` + Zod schemas
+- [ ] List UI with filters (tab or chips: Todos / Juegos de mesa / Escapes)
+- [ ] Add/edit form (manual entry; BGG search reuse for board games)
+- [ ] Mobile-first cards (notes, city/venue visible at a glance for escapes)
+
+## Phase 9 — Player teams
+
+Reusable groups of participants for fast session setup (same crew every week, escape group, etc.).
+
+**Placement (proposed):**
+
+- Route: `/teams` (nav near Participantes)
+- Used when creating sessions: “Seleccionar equipo” fills participant checkboxes in one tap
+- Team photo stored via Storage (Phase 11) — schema ready now, upload UI can land with photos phase or a minimal upload here
+
+**Tasks:**
+
+- [ ] Migration: `player_teams`, `player_team_members` (+ RLS)
+  - Team: `name`, `description`, `photo_path` (nullable until Storage), `created_by`
+  - Members: `team_id`, `participant_id` (FK → participants)
+- [ ] `playerTeamsRepository` + Zod schemas
+- [ ] Teams list + create/edit UI (name, description, member multi-select)
+- [ ] Team card with avatar grid or single team image placeholder
+- [ ] Hook into new session flows (`useSessions`, escape create): pick team → pre-select members
+
+## Phase 10 — Import pipeline
+
+One-time historical import from Escape Babel (and future sources). **Prefer CSV + local files over live Google APIs** for the initial cutover.
+
+**Import strategy (agreed direction):**
+
+- Export spreadsheet to **CSV** locally → place in repo (e.g. `data/import/escape-babel.csv`) or pass path to CLI
+- Run a **Node script** (`pnpm import:escapes` or similar): parse → Zod validate → idempotent upsert via `source_hash`
+- **No v1 DB migration**; Sheets/Drive are one-time sources only (see locked decisions in `AGENTS.md`)
+- Optional later: Google Sheets fetch for re-runs — not required for first import
+- **Pictures:** download from Drive to a local folder → separate upload script (Phase 11) or import script that uploads to Storage and links `photos` rows; no need for Drive API if files are local
+
+**Tasks:**
+
+- [ ] Migrations: `import_runs` + `import_errors`
+- [ ] Zod schema + parser for Escape Babel CSV columns
+- [ ] Alias resolver (`Participantes` string → `participants` / `participant_aliases`)
+- [ ] Idempotent importer (`source_hash`, keep `source_raw`)
+- [ ] CLI script: read CSV path, dry-run + commit modes, summary report
+- [ ] Import debug UI (optional — view last run, errors, row counts)
+
+## Phase 11 — Photos / Storage
 
 - [ ] Storage bucket + RLS
-- [ ] Upload composable + gallery
-- [ ] Google Drive one-time migration script
+- [ ] Upload composable + gallery (sessions, teams, etc.)
+- [ ] **Local batch script:** upload folder of images from disk → Storage paths + `photos` rows (pairs with Phase 10 CSV import)
+- [ ] Google Drive one-time migration script (optional — only if local download is impractical)
 
-## Phase 10 — Utilities
+## Phase 12 — Utilities
 
 - [ ] Roulette (CSS/spring — port from v1)
 - [ ] Sand timer SVG animation
 - [ ] 3D dice roller (Three.js + Cannon — lazy route)
 
-## Phase 11 — Production
+## Phase 13 — Production
 
 - [ ] Apply migrations to prod Supabase
-- [ ] Run Escape Babel import
+- [ ] Run Escape Babel CSV import + photo batch upload
 - [ ] Deploy misjuegos.net
 - [ ] README setup verified on fresh clone
 
@@ -120,7 +175,9 @@ misjuegos-v2/
 │   ├── services/
 │   │   ├── profiles/
 │   │   ├── participants/
+│   │   ├── playerTeams/
 │   │   ├── catalog/
+│   │   ├── desiredGames/
 │   │   ├── sessions/
 │   │   ├── dashboard/
 │   │   ├── bgg/
