@@ -1,87 +1,15 @@
 <script setup lang="ts">
-import type { NavLink } from "@/config/navLinks"
+import { Icon } from "@iconify/vue"
 
 defineProps<{
-  name: NavLink["icon"]
+  icon: string
 }>()
 </script>
 
 <template>
-  <!-- Partidas — puzzle piece -->
-  <svg
-    v-if="name === 'games'"
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 256 256"
-    class="h-7 w-7 shrink-0 fill-current"
+  <Icon
+    :icon="icon"
+    class="h-7 w-7 shrink-0"
     aria-hidden="true"
-  >
-    <path
-      d="M240,136a24,24,0,0,0-24-24H184.2a48,48,0,0,0-86.4,0H40a24,24,0,0,0,0,48H97.8a48,48,0,0,0,86.4,0H216A24,24,0,0,0,240,136ZM96,184a32,32,0,1,1,32-32A32,32,0,0,1,96,184Zm104-32a8,8,0,0,1-8,8H184.2a47.9,47.9,0,0,0-7.2-16H200A8,8,0,0,1,200,152ZM56,128a8,8,0,0,1,8-8H79a47.9,47.9,0,0,0,7.2-16H64a8,8,0,0,1,0-16H86.2a48,48,0,0,0,86.4,0H200a8,8,0,0,1,0,16H176.8a47.9,47.9,0,0,0,7.2,16H216a8,8,0,0,1,0,16H184.2a48,48,0,0,0-86.4,0H64A8,8,0,0,1,56,128Z"
-    />
-  </svg>
-
-  <!-- Amigos — users -->
-  <svg
-    v-else-if="name === 'friends'"
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 256 256"
-    class="h-7 w-7 shrink-0 fill-current"
-    aria-hidden="true"
-  >
-    <path
-      d="M244.8,150.4a8,8,0,0,1-11.2-1.6A51.6,51.6,0,0,0,192,128a8,8,0,0,1,0-16,24,24,0,1,0-23.24-30,8,8,0,1,1-15.5-4A40,40,0,1,1,219,117.51a67.94,67.94,0,0,1,27.43,21.11A8,8,0,0,1,244.8,150.4ZM190.92,212a8,8,0,1,1-13.84,8,57,57,0,0,0-98.16,0,8,8,0,1,1-13.84-8,72.06,72.06,0,0,1,33.74-29.92,48,48,0,1,1,58.36,0A72.06,72.06,0,0,1,190.92,212ZM128,176a32,32,0,1,0-32-32A32,32,0,0,0,128,176Z"
-    />
-  </svg>
-
-  <!-- Dados — dice -->
-  <svg
-    v-else-if="name === 'dices'"
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 256 256"
-    class="h-7 w-7 shrink-0 fill-current"
-    aria-hidden="true"
-  >
-    <path
-      d="M221.87,83.16A8,8,0,0,0,216,80H40a8,8,0,0,0-5.87,3.16l-24,32A8,8,0,0,0,8,120v80a16,16,0,0,0,16,16H232a16,16,0,0,0,16-16V120a8,8,0,0,0-2.13-5.37ZM40,96h80v80H40Zm96,80V96h80l.06,80ZM64,120a8,8,0,1,1,8,8A8,8,0,0,1,64,120Zm48,48a8,8,0,1,1,8,8A8,8,0,0,1,112,168Zm0-48a8,8,0,1,1,8,8A8,8,0,0,1,112,120Zm48,48a8,8,0,1,1,8,8A8,8,0,0,1,160,168Z"
-    />
-  </svg>
-
-  <!-- Ruleta — poker chip -->
-  <svg
-    v-else-if="name === 'roulette'"
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 256 256"
-    class="h-7 w-7 shrink-0 fill-current"
-    aria-hidden="true"
-  >
-    <path
-      d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm32-88a32,32,0,1,1-32-32A32,32,0,0,1,160,128Zm-32-48a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Z"
-    />
-  </svg>
-
-  <!-- Cuenta atrás — hourglass -->
-  <svg
-    v-else-if="name === 'timer'"
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 256 256"
-    class="h-7 w-7 shrink-0 fill-current"
-    aria-hidden="true"
-  >
-    <path
-      d="M200,75.3V40a16,16,0,0,0-16-16H72A16,16,0,0,0,56,40V75.3a16,16,0,0,0,6.2,12.6L114.7,136,62.2,184.1a16,16,0,0,0-6.2,12.6V232a16,16,0,0,0,16,16H184a16,16,0,0,0,16-16V196.7a16,16,0,0,0-6.2-12.6L141.3,136l52.5-48.1A16,16,0,0,0,200,75.3ZM184,40V64H72V40Zm0,192H72V196.7L124.5,148,184,196.7Zm-82.8-60L72,75.3V72H184v3.3Z"
-    />
-  </svg>
-
-  <!-- Dashboard — chart -->
-  <svg
-    v-else
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 256 256"
-    class="h-7 w-7 shrink-0 fill-current"
-    aria-hidden="true"
-  >
-    <path
-      d="M224,200h-8V40a8,8,0,0,0-8-8H152a8,8,0,0,0-8,8V80H96a8,8,0,0,0-8,8v40H48a8,8,0,0,0-8,8v64H32a8,8,0,0,0,0,16H224a8,8,0,0,0,0-16ZM160,48h40V200H160Zm-56,40h40V200H104ZM56,144H88v56H56Z"
-    />
-  </svg>
+  />
 </template>

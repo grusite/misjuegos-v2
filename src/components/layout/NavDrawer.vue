@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, toRef, watch } from "vue"
+import { Icon } from "@iconify/vue"
 import { RouterLink, useRoute } from "vue-router"
 import NavIcon from "@/components/ui/NavIcon.vue"
 import UserAvatar from "@/components/ui/UserAvatar.vue"
@@ -58,7 +59,9 @@ function animateClipSize(
 
   function frame(now: number) {
     const progress = Math.min((now - start) / duration, 1)
-    const eased = 20 + (out ? quartIn(progress) : quartOut(progress)) * maxSize
+    // Svelte out transitions run t 1→0; Vue leave runs progress 0→1 — invert for close.
+    const t = out ? 1 - progress : progress
+    const eased = 20 + (out ? quartIn(t) : quartOut(t)) * maxSize
     element.style.setProperty("--clipSize", `${eased}px`)
 
     if (progress < 1) {
@@ -146,16 +149,13 @@ async function handleLogout() {
                 "
                 @click="handleNavigate(navigate)"
               >
-                <NavIcon :name="link.icon" />
+                <NavIcon :icon="link.icon" />
                 <span class="flex-1">{{ link.name }}</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  class="h-5 w-5 shrink-0 fill-current opacity-70"
+                <Icon
+                  icon="mdi:chevron-right"
+                  class="h-5 w-5 shrink-0 opacity-70"
                   aria-hidden="true"
-                >
-                  <path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41Z" />
-                </svg>
+                />
               </a>
             </RouterLink>
           </div>
@@ -170,20 +170,15 @@ async function handleLogout() {
           />
           <button
             type="button"
-            class="flex h-10 w-10 items-center justify-center rounded-full bg-dark text-primary transition-colors hover:scale-105"
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-dark text-primary transition-colors hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-dark"
             aria-label="Cerrar sesión"
             @click="handleLogout"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              class="h-5 w-5 fill-current"
+            <Icon
+              icon="mdi:power"
+              class="h-6 w-6"
               aria-hidden="true"
-            >
-              <path
-                d="M16 17v-3H9v-4h7V7l5 5-5 5M14 2a2 2 0 0 1 2 2v2h5v18H3V6h5V4a2 2 0 0 1 2-2h4m0 2H10v2h4V4Z"
-              />
-            </svg>
+            />
           </button>
         </div>
       </div>

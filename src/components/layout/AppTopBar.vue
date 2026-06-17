@@ -34,7 +34,7 @@ const menuButtonRef = ref<HTMLElement | null>(null)
       <button
         ref="menuButtonRef"
         type="button"
-        class="relative z-50 flex h-10 w-10 items-center justify-center rounded-full bg-primary transition-transform hover:scale-105"
+        class="relative z-50 flex h-10 w-10 items-center justify-center rounded-full bg-primary transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-dark"
         :aria-expanded="uiStore.isNavOpen"
         :aria-label="uiStore.isNavOpen ? 'Cerrar menú' : 'Abrir menú'"
         @click="uiStore.toggleNav()"

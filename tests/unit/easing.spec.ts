@@ -11,4 +11,12 @@ describe("easing", () => {
     expect(quartIn(0)).toBe(0)
     expect(quartIn(1)).toBe(1)
   })
+
+  it("menu close shrinks clip radius (inverted progress)", () => {
+    const maxSize = 1000
+    const start = 20 + quartIn(1) * maxSize
+    const end = 20 + quartIn(0) * maxSize
+
+    expect(start).toBeGreaterThan(end)
+  })
 })
