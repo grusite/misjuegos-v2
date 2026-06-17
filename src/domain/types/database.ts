@@ -137,6 +137,75 @@ export type Database = {
           },
         ]
       }
+      desired_games: {
+        Row: {
+          bgg_id: number | null
+          booking_url: string | null
+          city: string | null
+          company: string | null
+          created_at: string
+          created_by: string
+          game_catalog_id: string | null
+          id: string
+          notes: string | null
+          priority: number | null
+          status: Database["public"]["Enums"]["desired_game_status"]
+          title: string
+          type: Database["public"]["Enums"]["game_type"]
+          updated_at: string
+          venue: string | null
+        }
+        Insert: {
+          bgg_id?: number | null
+          booking_url?: string | null
+          city?: string | null
+          company?: string | null
+          created_at?: string
+          created_by: string
+          game_catalog_id?: string | null
+          id?: string
+          notes?: string | null
+          priority?: number | null
+          status?: Database["public"]["Enums"]["desired_game_status"]
+          title: string
+          type: Database["public"]["Enums"]["game_type"]
+          updated_at?: string
+          venue?: string | null
+        }
+        Update: {
+          bgg_id?: number | null
+          booking_url?: string | null
+          city?: string | null
+          company?: string | null
+          created_at?: string
+          created_by?: string
+          game_catalog_id?: string | null
+          id?: string
+          notes?: string | null
+          priority?: number | null
+          status?: Database["public"]["Enums"]["desired_game_status"]
+          title?: string
+          type?: Database["public"]["Enums"]["game_type"]
+          updated_at?: string
+          venue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "desired_games_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "desired_games_game_catalog_id_fkey"
+            columns: ["game_catalog_id"]
+            isOneToOne: false
+            referencedRelation: "game_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       escape_room_details: {
         Row: {
           city: string | null
@@ -505,6 +574,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      desired_game_status: "active" | "played" | "dropped"
       game_type: "board_game" | "escape_room"
       import_source: "google_sheets" | "google_drive" | "manual"
       import_status: "pending" | "running" | "completed" | "failed"
@@ -635,6 +705,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      desired_game_status: ["active", "played", "dropped"],
       game_type: ["board_game", "escape_room"],
       import_source: ["google_sheets", "google_drive", "manual"],
       import_status: ["pending", "running", "completed", "failed"],

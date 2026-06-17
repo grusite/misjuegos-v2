@@ -177,17 +177,5 @@ export type SessionParticipantInsert = {
   participant_id?: string | null
 }
 
-type TableDef<Row, Insert, Update = Partial<Insert>> = {
-  Row: Row
-  Insert: Insert
-  Update: Update
-  Relationships: []
-}
-
-export type PendingTables = {
-  escape_room_details: TableDef<
-    EscapeRoomDetailsRow,
-    EscapeRoomDetailsInsert,
-    Partial<EscapeRoomDetailsInsert>
-  >
-}
+/** Tables not yet in generated `database.ts` — empty after Phase 8 migrations. */
+export type PendingTables = Record<string, never>

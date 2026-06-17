@@ -12,6 +12,7 @@ describe("navLinks", () => {
 
     expect(mainNames).toEqual([
       "Partidas",
+      "Quiero jugar",
       "Amigos",
       "Dashboard",
     ])

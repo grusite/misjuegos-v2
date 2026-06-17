@@ -72,29 +72,25 @@ Repositories use `AppDatabase` (`src/domain/types/schema.ts`) for tables not yet
 - [x] Stat cards, charts (top games, trends, partners)
 - [x] Escape room stats section
 
-## Phase 8 — Desired games (wishlist) (next)
+## Phase 8 — Desired games (wishlist) ✅
 
 Personal “want to play” list — board games and escape rooms you haven’t played yet, useful for planning and booking.
 
-**Placement (proposed):**
+**Placement:**
 
-- Route: `/wishlist` (nav label: “Quiero jugar” or “Deseados”)
+- Route: `/wishlist` (nav: “Quiero jugar”)
 - Separate from `game_catalog` / `play_sessions` — wishlist items are intentions, not played history
 - Optional later: “Convert to session” when you actually play one
 
 **Tasks:**
 
-- [ ] Migration: `desired_games` (+ RLS)
-  - `type` (`board_game` | `escape_room`), `title`, `notes`, `priority` (optional)
-  - Escape-specific optional fields: `city`, `venue`, `company`, `booking_url`
-  - Board-game optional: BGG id / link to existing `game_catalog` when known
-  - `created_by`, `status` (`active` | `played` | `dropped`) for light lifecycle
-- [ ] `desiredGamesRepository` + Zod schemas
-- [ ] List UI with filters (tab or chips: Todos / Juegos de mesa / Escapes)
-- [ ] Add/edit form (manual entry; BGG search reuse for board games)
-- [ ] Mobile-first cards (notes, city/venue visible at a glance for escapes)
+- [x] Migration: `desired_games` (+ RLS)
+- [x] `desiredGamesRepository` + Zod schemas
+- [x] List UI with filters (chips: Todos / Juegos / Escapes)
+- [x] Add/edit form (manual entry; BGG search reuse for board games)
+- [x] Mobile-first cards (notes, city/venue visible at a glance for escapes)
 
-## Phase 9 — Player teams
+## Phase 9 — Player teams (next)
 
 Reusable groups of participants for fast session setup (same crew every week, escape group, etc.).
 

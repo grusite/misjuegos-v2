@@ -8,6 +8,7 @@ Supabase PostgreSQL. All tables use RLS. Migrations live in `supabase/migrations
 game_type       -- 'board_game' | 'escape_room'
 session_status  -- 'planned' | 'in_progress' | 'completed' | 'abandoned'
 session_outcome -- 'win' | 'loss' | 'draw' | 'unknown' | 'escaped' | 'failed'
+desired_game_status -- 'active' | 'played' | 'dropped'
 import_source   -- 'google_sheets' | 'google_drive' | 'manual'
 import_status   -- 'pending' | 'running' | 'completed' | 'failed'
 photo_source    -- 'upload' | 'google_drive' | 'import'
@@ -88,6 +89,25 @@ Partial UNIQUE(type, source, source_external_id) where not null.
 | venue | text NULL | Sitio |
 | room_name | text NULL | Sala |
 | company | text NULL |
+
+### desired_games (Phase 8)
+
+Personal wishlist — games/escapes you want to play, separate from catalog and sessions.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid PK | |
+| type | game_type | board_game \| escape_room |
+| title | text | |
+| notes | text NULL | |
+| priority | smallint NULL | 1–3 optional |
+| city, venue, company | text NULL | Escape-specific |
+| booking_url | text NULL | |
+| bgg_id | int NULL | Board-game BGG link |
+| game_catalog_id | uuid NULL FK | Optional link to catalog |
+| status | desired_game_status | default active |
+| created_by | uuid FK → profiles | |
+| created_at, updated_at | timestamptz | |
 
 ### play_sessions
 A single play instance.
