@@ -3,16 +3,21 @@ import { ref } from "vue"
 import { RouterLink } from "vue-router"
 import HamburgerButton from "@/components/layout/HamburgerButton.vue"
 import NavDrawer from "@/components/layout/NavDrawer.vue"
+import { useScrollHeader } from "@/composables/useScrollHeader"
 import { useUiStore } from "@/stores/uiStore"
 
 const uiStore = useUiStore()
 const menuButtonRef = ref<HTMLElement | null>(null)
+const { isScrolled } = useScrollHeader()
 </script>
 
 <template>
-  <div class="fixed inset-x-0 top-0 z-30 p-4">
+  <div class="fixed inset-x-0 top-0 z-30 p-4 transition-[background-color,backdrop-filter] duration-300">
     <div class="relative m-auto flex max-w-lg items-start justify-between gap-8">
-      <div class="absolute inset-0 bg-dark/80 backdrop-blur-sm" />
+      <div
+        class="absolute inset-0 backdrop-blur-sm transition-colors duration-300"
+        :class="isScrolled ? 'bg-dark/40' : 'bg-dark/80'"
+      />
 
       <RouterLink
         to="/"

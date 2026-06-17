@@ -108,8 +108,13 @@ export function useSessions() {
         gameCatalogId: game.id,
         createdBy: ownerId.value,
         playedAt: new Date().toISOString(),
-        status: "planned",
+        status: "in_progress",
         notes: payload.notes?.trim() || null,
+      })
+
+      await sessionsRepository.update(session.id, {
+        isPaused: false,
+        lastStartedAt: new Date().toISOString(),
       })
 
       const members: SessionMemberInput[] = payload.selectedParticipants.map(

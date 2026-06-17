@@ -108,8 +108,8 @@ async function handleCreate(payload: {
 
     <div
       v-show="!uiStore.isNavOpen"
-      class="pointer-events-none fixed inset-x-0 z-20 mx-auto flex max-w-lg justify-center px-4 transition-all duration-1000"
-      :class="isCreating ? 'bottom-4' : '-bottom-11'"
+      class="pointer-events-none fixed inset-x-0 mx-auto flex max-w-lg justify-center px-4 transition-all duration-1000"
+      :class="isCreating ? 'bottom-4 z-50' : '-bottom-11 z-20'"
     >
       <button
         type="button"

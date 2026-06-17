@@ -31,6 +31,7 @@ export type SessionMessage = {
   id: string
   sessionId: string
   authorProfileId: string
+  authorDisplayName: string
   content: string
   createdAt: string
 }
@@ -76,6 +77,7 @@ export type SessionMemberInput = {
 export type SessionMessageInput = {
   content: string
   authorProfileId: string
+  authorDisplayName?: string
 }
 
 export type SessionScoreInput = {

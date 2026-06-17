@@ -21,12 +21,22 @@ import {
   toPlaySessionUpdate,
 } from "@/services/sessions/sessionMapper"
 
+const MESSAGE_SELECT =
+  "id, session_id, author_profile_id, content, created_at, author:profiles!session_messages_author_profile_id_fkey(display_name)"
+
+type SessionMessageRow = AppDatabase["public"]["Tables"]["session_messages"]["Row"]
+type SessionMessageAuthorRow = { display_name: string }
+
 export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
-  function mapSessionMessage(row: AppDatabase["public"]["Tables"]["session_messages"]["Row"]): SessionMessage {
+  function mapSessionMessage(
+    row: SessionMessageRow & { author?: SessionMessageAuthorRow | null },
+    fallbackAuthorName?: string,
+  ): SessionMessage {
     return {
       id: row.id,
       sessionId: row.session_id,
       authorProfileId: row.author_profile_id,
+      authorDisplayName: row.author?.display_name ?? fallbackAuthorName ?? "Usuario",
       content: row.content,
       createdAt: row.created_at,
     }
@@ -134,11 +144,11 @@ export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
     async listMessages(sessionId: string): Promise<SessionMessage[]> {
       const result = await client
         .from("session_messages")
-        .select("*")
+        .select(MESSAGE_SELECT)
         .eq("session_id", sessionId)
         .order("created_at", { ascending: true })
 
-      return unwrap(result).map(mapSessionMessage)
+      return unwrap(result).map(row => mapSessionMessage(row))
     },
 
     async addMessage(
@@ -152,10 +162,10 @@ export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
           author_profile_id: input.authorProfileId,
           content: input.content,
         })
-        .select("*")
+        .select(MESSAGE_SELECT)
         .single()
 
-      return mapSessionMessage(unwrap(result))
+      return mapSessionMessage(unwrap(result), input.authorDisplayName)
     },
 
     async listScores(sessionId: string): Promise<SessionScore[]> {

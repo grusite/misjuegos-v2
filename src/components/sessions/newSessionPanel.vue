@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, reactive } from "vue"
+import { computed, reactive, watch } from "vue"
+import { Icon } from "@iconify/vue"
 import UiButton from "@/components/ui/UiButton.vue"
 import type { Participant } from "@/domain/types/participant"
 import type { BggSearchResult } from "@/services/bgg/bggService"
@@ -31,14 +32,29 @@ const form = reactive({
   bggSelectionId: "",
 })
 
+watch(
+  () => props.participants,
+  participants => {
+    if (form.selectedParticipants.length === 0 && participants.length > 0) {
+      form.selectedParticipants = [participants[0].id]
+    }
+  },
+  { immediate: true },
+)
+
 const selectedBgg = computed(() =>
   props.bggResults.find(result => String(result.bggId) === form.bggSelectionId) ?? null,
 )
 
 const canSubmit = computed(() => form.title.trim().length > 0)
 
+function isParticipantSelected(participantId: string) {
+  return form.selectedParticipants.includes(participantId)
+}
+
 function toggleParticipant(participantId: string) {
-  if (form.selectedParticipants.includes(participantId)) {
+  if (isParticipantSelected(participantId)) {
+    if (form.selectedParticipants.length === 1) return
     form.selectedParticipants = form.selectedParticipants.filter(id => id !== participantId)
     return
   }
@@ -107,21 +123,34 @@ function handleSubmit() {
     </label>
 
     <div class="space-y-2">
-      <p class="text-sm text-gray-400">Participantes</p>
+      <div class="flex items-baseline justify-between gap-2">
+        <p class="text-sm text-gray-400">Participantes</p>
+        <p class="text-xs text-gray-500">Toca para añadir o quitar</p>
+      </div>
       <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <button
           v-for="participant in participants"
           :key="participant.id"
           type="button"
-          class="rounded-lg border-2 px-3 py-2 text-left text-sm transition-colors"
+          class="flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-left text-sm transition-colors"
           :class="
-            form.selectedParticipants.includes(participant.id)
+            isParticipantSelected(participant.id)
               ? 'border-primary bg-primary/20 text-primary'
               : 'border-gray-700 text-gray-300 hover:border-primary/50'
           "
+          :aria-pressed="isParticipantSelected(participant.id)"
           @click="toggleParticipant(participant.id)"
         >
-          {{ participant.displayName }}
+          <Icon
+            :icon="
+              isParticipantSelected(participant.id)
+                ? 'mdi:check-circle'
+                : 'mdi:circle-outline'
+            "
+            class="h-5 w-5 shrink-0"
+            aria-hidden="true"
+          />
+          <span class="min-w-0 flex-1 truncate">{{ participant.displayName }}</span>
         </button>
       </div>
     </div>

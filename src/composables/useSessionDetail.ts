@@ -203,6 +203,7 @@ export function useSessionDetail(sessionId: string) {
     try {
       const created = await sessionsRepository.addMessage(session.value.id, {
         authorProfileId: authStore.profile.id,
+        authorDisplayName: authStore.profile.displayName,
         content: normalized,
       })
 
