@@ -19,8 +19,8 @@ This repo is a ground-up rebuild of MisJuegos (private app at [misjuegos.net](ht
 | **4** | ✅ Done | Participants migrations + UI |
 | **5** | ✅ Done | Board games + sessions + messages + scores |
 | **6** | ✅ Done | Escape rooms — create flow, detail panel, list filters |
-| 7 | 🔜 Next | Dashboard |
-| 8 | Pending | Import pipeline (Escape Babel spreadsheet) |
+| **7** | ✅ Done | Dashboard — stats, charts, partners, escape summary |
+| 8 | 🔜 Next | Import pipeline (Escape Babel spreadsheet) |
 | 9 | Pending | Photos / Storage |
 | 10 | Pending | Utilities (dice, roulette, timer) |
 | 11 | Pending | Production cutover |

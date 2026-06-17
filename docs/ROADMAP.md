@@ -66,13 +66,13 @@ Repositories use `AppDatabase` (`src/domain/types/schema.ts`) for tables not yet
 - [x] Escape detail panel (clues, time, price, escaped)
 - [x] Catalog browse + session list filters
 
-## Phase 7 — Dashboard (next)
+## Phase 7 — Dashboard ✅
 
-- [ ] `dashboardRepository.getStats`
-- [ ] Stat cards, charts (top games, trends, partners)
-- [ ] Escape room stats section
+- [x] `dashboardRepository.getStats`
+- [x] Stat cards, charts (top games, trends, partners)
+- [x] Escape room stats section
 
-## Phase 8 — Import pipeline
+## Phase 8 — Import pipeline (next)
 
 - [ ] Migrations: import_runs + import_errors
 - [ ] Zod schema + parser for Escape Babel columns
