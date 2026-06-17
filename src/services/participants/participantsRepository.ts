@@ -6,7 +6,7 @@ import type {
   UpdateParticipantInput,
 } from "@/domain/types/participant"
 import type { AppDatabase } from "@/domain/types/schema"
-import { unwrap, unwrapNullable } from "@/services/errors"
+import { unwrap, unwrapNullable, fromPostgrestError } from "@/services/errors"
 import {
   mapParticipant,
   toParticipantInsert,
@@ -75,8 +75,8 @@ export function createParticipantsRepository(client: SupabaseClient<AppDatabase>
     },
 
     async remove(id: string): Promise<void> {
-      const result = await client.from("participants").delete().eq("id", id)
-      unwrap(result)
+      const { error } = await client.from("participants").delete().eq("id", id)
+      if (error) throw fromPostgrestError(error)
     },
 
     async linkProfile(id: string, profileId: string): Promise<Participant> {

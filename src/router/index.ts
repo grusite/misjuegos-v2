@@ -12,9 +12,40 @@ const router = createRouter({
     },
     {
       path: "/",
-      name: "home",
-      component: () => import("@/views/HomeView.vue"),
+      component: () => import("@/components/layout/AppShell.vue"),
       meta: { requiresAuth: true },
+      children: [
+        {
+          path: "",
+          name: "home",
+          component: () => import("@/views/HomeView.vue"),
+        },
+        {
+          path: "participants",
+          name: "participants",
+          component: () => import("@/views/ParticipantsView.vue"),
+        },
+        {
+          path: "dices",
+          name: "dices",
+          component: () => import("@/views/DicesView.vue"),
+        },
+        {
+          path: "roulette",
+          name: "roulette",
+          component: () => import("@/views/RouletteView.vue"),
+        },
+        {
+          path: "timer",
+          name: "timer",
+          component: () => import("@/views/TimerView.vue"),
+        },
+        {
+          path: "dashboard",
+          name: "dashboard",
+          component: () => import("@/views/DashboardView.vue"),
+        },
+      ],
     },
     {
       path: "/:pathMatch(.*)*",

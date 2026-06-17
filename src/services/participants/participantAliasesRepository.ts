@@ -6,7 +6,7 @@ import type {
   ParticipantAlias,
 } from "@/domain/types/participant"
 import type { AppDatabase } from "@/domain/types/schema"
-import { unwrap, unwrapNullable } from "@/services/errors"
+import { unwrap, unwrapNullable, fromPostgrestError } from "@/services/errors"
 import { mapParticipantAlias } from "@/services/participants/participantMapper"
 
 export function createParticipantAliasesRepository(
@@ -54,12 +54,12 @@ export function createParticipantAliasesRepository(
     },
 
     async remove(id: string): Promise<void> {
-      const result = await client
+      const { error } = await client
         .from("participant_aliases")
         .delete()
         .eq("id", id)
 
-      unwrap(result)
+      if (error) throw fromPostgrestError(error)
     },
   }
 }

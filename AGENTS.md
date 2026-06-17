@@ -15,8 +15,8 @@ This repo is a ground-up rebuild of MisJuegos (private app at [misjuegos.net](ht
 | **0** | ✅ Done | Vue 3 scaffold, Tailwind brand, Router + Pinia auth skeleton |
 | **1** | ✅ Done | Supabase local, migrations, RLS, Google OAuth |
 | **2** | ✅ Done | Repository layer (DbError, repos, mappers) |
-| 3 | 🔜 Next | App shell + **port v1 UI animations** |
-| 4 | Pending | Participants |
+| **3** | ✅ Done | App shell + v1 nav animations |
+| 4 | 🔜 Next | Participants |
 | 5 | Pending | Board games + sessions + **messages + scores** |
 | 6 | Pending | Escape rooms |
 | 7 | Pending | Dashboard |

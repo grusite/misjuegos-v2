@@ -4,7 +4,7 @@
 
 v1 reference repo: `../misjuegos-master/src/components/`
 
-Phase 0 v2 uses a **simplified nav** — full animation port is **Phase 3**.
+Phase 0 v2 uses a **simplified nav** — full animation port is **Phase 3** ✅ (items 1–3 below).
 
 ---
 
@@ -136,7 +136,10 @@ Phase 0 v2 uses a **simplified nav** — full animation port is **Phase 3**.
 
 When porting each animation:
 
-- [ ] Visual parity with v1 (timing, easing, colors)
+- [x] Hamburger morph (Phase 3)
+- [x] Circular clip-path menu (Phase 3)
+- [x] TopBar backdrop blur (Phase 3)
+- [ ] Home FAB slide (Phase 5)
 - [ ] Works on mobile (touch targets, no tap highlight — already in `main.css`)
 - [ ] Respects `prefers-reduced-motion` where reasonable (optional enhancement)
 - [ ] No layout shift / jank on open-close

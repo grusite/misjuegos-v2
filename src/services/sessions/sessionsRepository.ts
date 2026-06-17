@@ -9,7 +9,7 @@ import type {
   UpdateSessionInput,
 } from "@/domain/types/session"
 import type { AppDatabase } from "@/domain/types/schema"
-import { unwrap, unwrapNullable } from "@/services/errors"
+import { unwrap, unwrapNullable, fromPostgrestError } from "@/services/errors"
 import {
   mapPlaySession,
   mapSessionParticipant,
@@ -82,12 +82,12 @@ export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
       sessionId: string,
       members: SessionMemberInput[],
     ): Promise<SessionParticipant[]> {
-      const deleteResult = await client
+      const { error: deleteError } = await client
         .from("session_participants")
         .delete()
         .eq("session_id", sessionId)
 
-      unwrap(deleteResult)
+      if (deleteError) throw fromPostgrestError(deleteError)
 
       if (members.length === 0) return []
 

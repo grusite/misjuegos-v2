@@ -58,9 +58,9 @@ Google OAuth setup:
 
 ## Status
 
-**Phase 2 ✅** — Repository layer (`DbError`, participants/catalog/sessions repos, mappers).
+**Phase 3 ✅** — App shell: hamburger morph, circular nav reveal, route stubs.
 
-**Phase 3 🔜** — App shell + v1 animations.
+**Phase 4 🔜** — Participants.
 
 | [`docs/UI_ANIMATIONS.md`](docs/UI_ANIMATIONS.md) | v1 animations to preserve |
 

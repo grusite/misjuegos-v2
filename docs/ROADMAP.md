@@ -32,13 +32,13 @@ Each task should be independently testable before moving on. Jorge approves plan
 
 Repositories use `AppDatabase` (`src/domain/types/schema.ts`) for tables not yet migrated; after Phase 4/5 migrations run `pnpm db:types` and trim `PendingTables` from `rows.ts` when generated types include them.
 
-## Phase 3 — App shell + animations
+## Phase 3 — App shell + animations ✅
 
-- [ ] Port circular clip-path nav (`Menu.svelte` → Vue)
-- [ ] Port hamburger morph (`Hamburger.svelte`)
-- [ ] TopBar with backdrop blur
-- [ ] Route stubs for all nav items
-- [ ] See [`UI_ANIMATIONS.md`](UI_ANIMATIONS.md)
+- [x] Port circular clip-path nav (`Menu.svelte` → `NavDrawer.vue`)
+- [x] Port hamburger morph (`HamburgerButton.vue`)
+- [x] TopBar with backdrop blur (`AppTopBar.vue`)
+- [x] Route stubs for all nav items
+- [x] See [`UI_ANIMATIONS.md`](UI_ANIMATIONS.md) — items 1–3 done; FAB (4) in Phase 5
 
 ## Phase 4 — Participants
 
