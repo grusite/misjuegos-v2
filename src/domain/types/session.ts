@@ -27,6 +27,24 @@ export type SessionParticipant = {
   participantId: string | null
 }
 
+export type SessionMessage = {
+  id: string
+  sessionId: string
+  authorProfileId: string
+  content: string
+  createdAt: string
+}
+
+export type SessionScore = {
+  id: string
+  sessionId: string
+  profileId: string | null
+  participantId: string | null
+  score: number | null
+  rank: number | null
+  isWinner: boolean | null
+}
+
 export type CreateSessionInput = {
   gameCatalogId: string
   createdBy: string
@@ -53,6 +71,19 @@ export type UpdateSessionInput = {
 export type SessionMemberInput = {
   profileId?: string | null
   participantId?: string | null
+}
+
+export type SessionMessageInput = {
+  content: string
+  authorProfileId: string
+}
+
+export type SessionScoreInput = {
+  profileId?: string | null
+  participantId?: string | null
+  score?: number | null
+  rank?: number | null
+  isWinner?: boolean | null
 }
 
 export type ListSessionsOptions = {

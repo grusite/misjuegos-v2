@@ -185,21 +185,9 @@ type TableDef<Row, Insert, Update = Partial<Insert>> = {
 }
 
 export type PendingTables = {
-  game_catalog: TableDef<GameCatalogRow, GameCatalogInsert, Partial<GameCatalogInsert>>
-  board_game_details: TableDef<
-    BoardGameDetailsRow,
-    BoardGameDetailsInsert,
-    Partial<BoardGameDetailsInsert>
-  >
   escape_room_details: TableDef<
     EscapeRoomDetailsRow,
     EscapeRoomDetailsInsert,
     Partial<EscapeRoomDetailsInsert>
-  >
-  play_sessions: TableDef<PlaySessionRow, PlaySessionInsert, PlaySessionUpdate>
-  session_participants: TableDef<
-    SessionParticipantRow,
-    SessionParticipantInsert,
-    Partial<SessionParticipantInsert>
   >
 }

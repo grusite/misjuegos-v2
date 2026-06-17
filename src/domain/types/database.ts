@@ -34,6 +34,150 @@ export type Database = {
   }
   public: {
     Tables: {
+      board_game_details: {
+        Row: {
+          bgg_id: number | null
+          expansion_of_id: string | null
+          game_catalog_id: string
+          max_players: number | null
+          min_players: number | null
+          playing_time_min: number | null
+          raw_bgg: Json | null
+          thumbnail_url: string | null
+          year_published: number | null
+        }
+        Insert: {
+          bgg_id?: number | null
+          expansion_of_id?: string | null
+          game_catalog_id: string
+          max_players?: number | null
+          min_players?: number | null
+          playing_time_min?: number | null
+          raw_bgg?: Json | null
+          thumbnail_url?: string | null
+          year_published?: number | null
+        }
+        Update: {
+          bgg_id?: number | null
+          expansion_of_id?: string | null
+          game_catalog_id?: string
+          max_players?: number | null
+          min_players?: number | null
+          playing_time_min?: number | null
+          raw_bgg?: Json | null
+          thumbnail_url?: string | null
+          year_published?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_game_details_expansion_of_id_fkey"
+            columns: ["expansion_of_id"]
+            isOneToOne: false
+            referencedRelation: "game_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "board_game_details_game_catalog_id_fkey"
+            columns: ["game_catalog_id"]
+            isOneToOne: true
+            referencedRelation: "game_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      board_game_scores: {
+        Row: {
+          id: string
+          is_winner: boolean | null
+          participant_id: string | null
+          profile_id: string | null
+          rank: number | null
+          score: number | null
+          session_id: string
+        }
+        Insert: {
+          id?: string
+          is_winner?: boolean | null
+          participant_id?: string | null
+          profile_id?: string | null
+          rank?: number | null
+          score?: number | null
+          session_id: string
+        }
+        Update: {
+          id?: string
+          is_winner?: boolean | null
+          participant_id?: string | null
+          profile_id?: string | null
+          rank?: number | null
+          score?: number | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_game_scores_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "board_game_scores_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "board_game_scores_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "play_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      game_catalog: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          slug: string | null
+          source: string | null
+          source_external_id: string | null
+          title: string
+          type: Database["public"]["Enums"]["game_type"]
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          slug?: string | null
+          source?: string | null
+          source_external_id?: string | null
+          title: string
+          type: Database["public"]["Enums"]["game_type"]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          slug?: string | null
+          source?: string | null
+          source_external_id?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["game_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_catalog_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       participant_aliases: {
         Row: {
           alias: string
@@ -105,6 +249,78 @@ export type Database = {
           },
         ]
       }
+      play_sessions: {
+        Row: {
+          created_at: string
+          created_by: string
+          duration_ms: number
+          ended_at: string | null
+          game_catalog_id: string
+          id: string
+          is_paused: boolean
+          last_started_at: string | null
+          notes: string | null
+          outcome: Database["public"]["Enums"]["session_outcome"] | null
+          played_at: string
+          source: string | null
+          source_hash: string | null
+          source_raw: Json | null
+          status: Database["public"]["Enums"]["session_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          duration_ms?: number
+          ended_at?: string | null
+          game_catalog_id: string
+          id?: string
+          is_paused?: boolean
+          last_started_at?: string | null
+          notes?: string | null
+          outcome?: Database["public"]["Enums"]["session_outcome"] | null
+          played_at: string
+          source?: string | null
+          source_hash?: string | null
+          source_raw?: Json | null
+          status?: Database["public"]["Enums"]["session_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          duration_ms?: number
+          ended_at?: string | null
+          game_catalog_id?: string
+          id?: string
+          is_paused?: boolean
+          last_started_at?: string | null
+          notes?: string | null
+          outcome?: Database["public"]["Enums"]["session_outcome"] | null
+          played_at?: string
+          source?: string | null
+          source_hash?: string | null
+          source_raw?: Json | null
+          status?: Database["public"]["Enums"]["session_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "play_sessions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "play_sessions_game_catalog_id_fkey"
+            columns: ["game_catalog_id"]
+            isOneToOne: false
+            referencedRelation: "game_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -128,6 +344,88 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      session_messages: {
+        Row: {
+          author_profile_id: string
+          content: string
+          created_at: string
+          id: string
+          session_id: string
+        }
+        Insert: {
+          author_profile_id: string
+          content: string
+          created_at?: string
+          id?: string
+          session_id: string
+        }
+        Update: {
+          author_profile_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_messages_author_profile_id_fkey"
+            columns: ["author_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "play_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_participants: {
+        Row: {
+          id: string
+          participant_id: string | null
+          profile_id: string | null
+          session_id: string
+        }
+        Insert: {
+          id?: string
+          participant_id?: string | null
+          profile_id?: string | null
+          session_id: string
+        }
+        Update: {
+          id?: string
+          participant_id?: string | null
+          profile_id?: string | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_participants_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_participants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "play_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

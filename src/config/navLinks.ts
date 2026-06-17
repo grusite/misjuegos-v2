@@ -7,7 +7,7 @@ export type NavLink = {
 }
 
 export const navLinks: NavLink[] = [
-  { name: "Partidas", to: "/", icon: "ph:puzzle-piece", section: "main" },
+  { name: "Partidas", to: "/sessions", icon: "ph:puzzle-piece", section: "main" },
   { name: "Amigos", to: "/participants", icon: "ph:users-three", section: "main" },
   { name: "Dashboard", to: "/dashboard", icon: "mdi:chart-box", section: "main" },
   { name: "Dados", to: "/tools/dice", icon: "ph:cube", section: "tools" },

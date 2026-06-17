@@ -138,6 +138,7 @@ See [`docs/ROADMAP.md`](docs/ROADMAP.md#target-folder-structure) for the full tr
 - Logo: `public/logo.svg`
 - Style: playful but polished — bold borders, dashed outlines, primary yellow accents on dark bg
 - UI language: **Spanish** (user-facing copy)
+- **Mobile-first UX required.** Optimize layouts/interactions for phone usage first (touch targets, viewport fit, readable contrast), then adapt upwards.
 
 ### UI animations — MUST preserve from v1
 

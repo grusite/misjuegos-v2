@@ -47,16 +47,16 @@ Repositories use `AppDatabase` (`src/domain/types/schema.ts`) for tables not yet
 - [x] Add/edit form (Zod)
 - [x] Alias management
 
-## Phase 5 — Board game flow
+## Phase 5 — Board game flow (in progress)
 
-- [ ] Migrations: catalog, board_game_details, play_sessions, session_participants
-- [ ] Migrations: **session_messages**, **board_game_scores**
-- [ ] BGG service (`services/bgg/`)
-- [ ] New session flow (BGG search + manual + pick participants)
-- [ ] Sessions list + detail
-- [ ] Session timer composable
-- [ ] Outcome toggle + session messages UI
-- [ ] Board game scores UI
+- [x] Migrations: catalog, board_game_details, play_sessions, session_participants
+- [x] Migrations: **session_messages**, **board_game_scores**
+- [x] BGG service (`services/bgg/`)
+- [x] New session flow (BGG search + manual + pick participants)
+- [x] Sessions list + detail
+- [x] Session timer composable
+- [x] Outcome toggle + session messages UI
+- [x] Board game scores UI
 - [ ] Port Home FAB slide animation for “Nueva partida”
 
 ## Phase 6 — Escape rooms

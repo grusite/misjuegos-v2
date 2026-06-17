@@ -5,7 +5,11 @@ import type {
   ListSessionsOptions,
   PlaySession,
   SessionMemberInput,
+  SessionMessage,
+  SessionMessageInput,
   SessionParticipant,
+  SessionScore,
+  SessionScoreInput,
   UpdateSessionInput,
 } from "@/domain/types/session"
 import type { AppDatabase } from "@/domain/types/schema"
@@ -18,6 +22,28 @@ import {
 } from "@/services/sessions/sessionMapper"
 
 export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
+  function mapSessionMessage(row: AppDatabase["public"]["Tables"]["session_messages"]["Row"]): SessionMessage {
+    return {
+      id: row.id,
+      sessionId: row.session_id,
+      authorProfileId: row.author_profile_id,
+      content: row.content,
+      createdAt: row.created_at,
+    }
+  }
+
+  function mapSessionScore(row: AppDatabase["public"]["Tables"]["board_game_scores"]["Row"]): SessionScore {
+    return {
+      id: row.id,
+      sessionId: row.session_id,
+      profileId: row.profile_id,
+      participantId: row.participant_id,
+      score: row.score,
+      rank: row.rank,
+      isWinner: row.is_winner,
+    }
+  }
+
   return {
     async list(options: ListSessionsOptions = {}): Promise<PlaySession[]> {
       let query = client
@@ -103,6 +129,72 @@ export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
         .select("*")
 
       return unwrap(insertResult).map(mapSessionParticipant)
+    },
+
+    async listMessages(sessionId: string): Promise<SessionMessage[]> {
+      const result = await client
+        .from("session_messages")
+        .select("*")
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: true })
+
+      return unwrap(result).map(mapSessionMessage)
+    },
+
+    async addMessage(
+      sessionId: string,
+      input: SessionMessageInput,
+    ): Promise<SessionMessage> {
+      const result = await client
+        .from("session_messages")
+        .insert({
+          session_id: sessionId,
+          author_profile_id: input.authorProfileId,
+          content: input.content,
+        })
+        .select("*")
+        .single()
+
+      return mapSessionMessage(unwrap(result))
+    },
+
+    async listScores(sessionId: string): Promise<SessionScore[]> {
+      const result = await client
+        .from("board_game_scores")
+        .select("*")
+        .eq("session_id", sessionId)
+        .order("rank", { ascending: true, nullsFirst: false })
+
+      return unwrap(result).map(mapSessionScore)
+    },
+
+    async setScores(
+      sessionId: string,
+      scores: SessionScoreInput[],
+    ): Promise<SessionScore[]> {
+      const { error: deleteError } = await client
+        .from("board_game_scores")
+        .delete()
+        .eq("session_id", sessionId)
+
+      if (deleteError) throw fromPostgrestError(deleteError)
+      if (scores.length === 0) return []
+
+      const result = await client
+        .from("board_game_scores")
+        .insert(
+          scores.map(score => ({
+            session_id: sessionId,
+            profile_id: score.profileId ?? null,
+            participant_id: score.participantId ?? null,
+            score: score.score ?? null,
+            rank: score.rank ?? null,
+            is_winner: score.isWinner ?? null,
+          })),
+        )
+        .select("*")
+
+      return unwrap(result).map(mapSessionScore)
     },
   }
 }

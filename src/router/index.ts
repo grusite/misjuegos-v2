@@ -17,8 +17,17 @@ const router = createRouter({
       children: [
         {
           path: "",
-          name: "home",
-          component: () => import("@/views/HomeView.vue"),
+          redirect: { name: "sessions" },
+        },
+        {
+          path: "sessions",
+          name: "sessions",
+          component: () => import("@/views/SessionsView.vue"),
+        },
+        {
+          path: "sessions/:id",
+          name: "session-detail",
+          component: () => import("@/views/SessionDetailView.vue"),
         },
         {
           path: "participants",
@@ -70,7 +79,7 @@ router.beforeEach(async to => {
   }
 
   if (to.meta.guestOnly && authStore.isAuthenticated) {
-    return { name: "home" }
+    return { name: "sessions" }
   }
 
   return true
