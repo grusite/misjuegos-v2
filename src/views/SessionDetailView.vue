@@ -6,6 +6,7 @@ import UiConfirmDialog from "@/components/ui/UiConfirmDialog.vue"
 import BoardOutcomePicker from "@/components/sessions/BoardOutcomePicker.vue"
 import SessionMembersEditor from "@/components/sessions/SessionMembersEditor.vue"
 import SessionMessageItem from "@/components/sessions/SessionMessageItem.vue"
+import SessionTimerControls from "@/components/sessions/SessionTimerControls.vue"
 import EscapeSessionDetailsPanel from "@/components/sessions/EscapeSessionDetailsPanel.vue"
 import { useSessionDetail } from "@/composables/useSessionDetail"
 import { boardOutcomeLabelClass } from "@/lib/utils/outcomeStyles"
@@ -192,29 +193,14 @@ async function handleResetConfirm() {
             {{ elapsedSeconds }}s
           </span>
         </div>
-        <div class="grid grid-cols-3 gap-2">
-          <UiButton
-            :variant="isTimerPaused ? 'primary' : 'ghost'"
-            :disabled="!canWrite || isSaving || !isTimerPaused"
-            @click="startTimer"
-          >
-            Iniciar
-          </UiButton>
-          <UiButton
-            :variant="!isTimerPaused ? 'secondary' : 'ghost'"
-            :disabled="!canWrite || isSaving || isTimerPaused"
-            @click="pauseTimer"
-          >
-            Pausar
-          </UiButton>
-          <UiButton
-            variant="ghost"
-            :disabled="!canWrite || isSaving"
-            @click="showResetConfirm = true"
-          >
-            Reset
-          </UiButton>
-        </div>
+        <SessionTimerControls
+          :is-paused="isTimerPaused"
+          :can-write="Boolean(canWrite)"
+          :is-saving="isSaving"
+          @start="startTimer"
+          @pause="pauseTimer"
+          @reset="showResetConfirm = true"
+        />
       </section>
 
       <section
