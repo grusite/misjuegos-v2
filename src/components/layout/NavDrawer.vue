@@ -135,16 +135,17 @@ async function handleLogout() {
 </script>
 
 <template>
-  <Transition
-    :css="false"
-    @enter="onEnter"
-    @leave="onLeave"
-  >
-    <nav
-      v-if="open"
-      class="nav-drawer fixed inset-0 z-0 flex bg-primary"
-      :style="navStyle"
+  <Teleport to="body">
+    <Transition
+      :css="false"
+      @enter="onEnter"
+      @leave="onLeave"
     >
+      <nav
+        v-if="open"
+        class="nav-drawer fixed inset-0 z-[100] flex bg-primary"
+        :style="navStyle"
+      >
       <div class="mx-auto flex max-w-lg flex-1 flex-col p-4">
         <RouterLink
           :to="{ name: 'sessions' }"
@@ -259,7 +260,8 @@ async function handleLogout() {
         </div>
       </div>
       </nav>
-  </Transition>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>
