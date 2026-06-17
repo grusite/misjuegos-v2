@@ -30,7 +30,7 @@ Each task should be independently testable before moving on. Jorge approves plan
 - [x] `sessionsRepository`
 - [x] Domain mappers
 
-Repositories use `AppDatabase` (`src/domain/types/schema.ts`) for tables not yet migrated; after Phase 4/5 migrations run `pnpm db:types` and trim `PendingTables` from `rows.ts` when generated types include them.
+Repositories use `AppDatabase` (`src/domain/types/schema.ts`) for tables not yet migrated; after Phase 5 migrations run `pnpm db:types` and trim `PendingTables` from `rows.ts` when generated types include them.
 
 ## Phase 3 — App shell + animations ✅
 
@@ -40,12 +40,12 @@ Repositories use `AppDatabase` (`src/domain/types/schema.ts`) for tables not yet
 - [x] Route stubs for all nav items
 - [x] See [`UI_ANIMATIONS.md`](UI_ANIMATIONS.md) — items 1–3 done; FAB (4) in Phase 5
 
-## Phase 4 — Participants
+## Phase 4 — Participants ✅
 
-- [ ] Migrations: participants + aliases + RLS
-- [ ] Participants list/search UI
-- [ ] Add/edit form (Zod)
-- [ ] Alias management
+- [x] Migrations: participants + aliases + RLS
+- [x] Participants list/search UI
+- [x] Add/edit form (Zod)
+- [x] Alias management
 
 ## Phase 5 — Board game flow
 

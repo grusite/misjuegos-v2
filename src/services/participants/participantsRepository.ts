@@ -3,12 +3,14 @@ import { supabase } from "@/lib/supabaseClient"
 import type {
   CreateParticipantInput,
   Participant,
+  ParticipantWithAliases,
   UpdateParticipantInput,
 } from "@/domain/types/participant"
 import type { AppDatabase } from "@/domain/types/schema"
 import { unwrap, unwrapNullable, fromPostgrestError } from "@/services/errors"
 import {
   mapParticipant,
+  mapParticipantAlias,
   toParticipantInsert,
   toParticipantUpdate,
 } from "@/services/participants/participantMapper"
@@ -23,6 +25,21 @@ export function createParticipantsRepository(client: SupabaseClient<AppDatabase>
         .order("display_name")
 
       return unwrap(result).map(mapParticipant)
+    },
+
+    async listForOwnerWithAliases(
+      ownerId: string,
+    ): Promise<ParticipantWithAliases[]> {
+      const result = await client
+        .from("participants")
+        .select("*, participant_aliases(*)")
+        .eq("owner_id", ownerId)
+        .order("display_name")
+
+      return unwrap(result).map(row => ({
+        ...mapParticipant(row),
+        aliases: (row.participant_aliases ?? []).map(mapParticipantAlias),
+      }))
     },
 
     async search(ownerId: string, query: string): Promise<Participant[]> {

@@ -16,7 +16,7 @@ const menuButtonRef = ref<HTMLElement | null>(null)
 
       <RouterLink
         to="/"
-        class="relative"
+        class="relative z-50"
         aria-label="MisJuegos inicio"
       >
         <img
@@ -29,15 +29,14 @@ const menuButtonRef = ref<HTMLElement | null>(null)
       <NavDrawer
         :open="uiStore.isNavOpen"
         :source="menuButtonRef"
-        @close="uiStore.closeNav()"
       />
 
       <button
         ref="menuButtonRef"
         type="button"
-        class="relative z-30 flex h-10 w-10 items-center justify-center rounded-full bg-primary transition-transform hover:scale-105"
+        class="relative z-50 flex h-10 w-10 items-center justify-center rounded-full bg-primary transition-transform hover:scale-105"
         :aria-expanded="uiStore.isNavOpen"
-        aria-label="Abrir menú"
+        :aria-label="uiStore.isNavOpen ? 'Cerrar menú' : 'Abrir menú'"
         @click="uiStore.toggleNav()"
       >
         <HamburgerButton :open="uiStore.isNavOpen" />

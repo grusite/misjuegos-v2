@@ -30,3 +30,7 @@ export type CreateParticipantAliasInput = {
   alias: string
   source?: "import" | "manual"
 }
+
+export type ParticipantWithAliases = Participant & {
+  aliases: ParticipantAlias[]
+}

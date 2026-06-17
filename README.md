@@ -58,9 +58,9 @@ Google OAuth setup:
 
 ## Status
 
-**Phase 3 ✅** — App shell: hamburger morph, circular nav reveal, route stubs.
+**Phase 4 ✅** — Participants table, aliases, list/search UI, Zod forms.
 
-**Phase 4 🔜** — Participants.
+**Phase 5 🔜** — Board games, sessions, messages, scores.
 
 | [`docs/UI_ANIMATIONS.md`](docs/UI_ANIMATIONS.md) | v1 animations to preserve |
 

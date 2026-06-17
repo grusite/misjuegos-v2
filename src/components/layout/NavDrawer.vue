@@ -7,22 +7,20 @@ import { navLinks } from "@/config/navLinks"
 import { useMenuOrigin } from "@/composables/useMenuOrigin"
 import { useAuth } from "@/composables/useAuth"
 import { quartIn, quartOut } from "@/lib/utils/easing"
+import { useUiStore } from "@/stores/uiStore"
 
 const props = defineProps<{
   open: boolean
   source: HTMLElement | null
 }>()
 
-const emit = defineEmits<{
-  close: []
-}>()
-
 const route = useRoute()
+const uiStore = useUiStore()
 const { profile, logout } = useAuth()
 
 const sourceRef = computed(() => props.source)
 const isOpen = toRef(props, "open")
-const { origin } = useMenuOrigin(sourceRef, isOpen)
+const { origin, updateOrigin } = useMenuOrigin(sourceRef, isOpen)
 
 const navStyle = computed(() => ({
   "--left": `${origin.value.left}px`,
@@ -31,7 +29,9 @@ const navStyle = computed(() => ({
 
 watch(
   () => route.path,
-  () => emit("close"),
+  () => {
+    if (props.open) uiStore.closeNav(true)
+  },
 )
 
 function prefersReducedMotion() {
@@ -73,16 +73,32 @@ function animateClipSize(
 
 function onEnter(element: Element, done: () => void) {
   const nav = element as HTMLElement
+  updateOrigin()
   nav.style.setProperty("--clipSize", "20px")
   animateClipSize(nav, false, done)
 }
 
 function onLeave(element: Element, done: () => void) {
+  if (uiStore.consumeSkipNavAnimation()) {
+    done()
+    return
+  }
+
+  updateOrigin()
   animateClipSize(element as HTMLElement, true, done)
 }
 
+function isLinkActive(linkTo: string, isActive: boolean, isExactActive: boolean) {
+  return linkTo === "/" ? isExactActive : isActive
+}
+
+function handleNavigate(navigate: () => void) {
+  uiStore.closeNav(true)
+  navigate()
+}
+
 async function handleLogout() {
-  emit("close")
+  uiStore.closeNav(true)
   await logout()
 }
 </script>
@@ -102,12 +118,12 @@ async function handleLogout() {
         <RouterLink
           to="/"
           class="w-6"
-          @click="emit('close')"
+          @click="uiStore.closeNav(true)"
         >
           <img
             src="/logo.svg"
             alt="MisJuegos"
-            class="h-10 w-6 text-dark"
+            class="h-10 w-6"
           />
         </RouterLink>
 
@@ -116,7 +132,7 @@ async function handleLogout() {
             <RouterLink
               v-for="link in navLinks"
               :key="link.to"
-              v-slot="{ isActive, href, navigate }"
+              v-slot="{ isActive, isExactActive, href, navigate }"
               :to="link.to"
               custom
             >
@@ -124,18 +140,18 @@ async function handleLogout() {
                 :href="href"
                 class="flex items-center gap-4 border-4 p-4 text-2xl font-bold text-dark transition-colors"
                 :class="
-                  isActive
+                  isLinkActive(link.to, isActive, isExactActive)
                     ? 'rounded-lg border-dark'
                     : 'border-transparent hover:border-dark/30'
                 "
-                @click="navigate"
+                @click="handleNavigate(navigate)"
               >
                 <NavIcon :name="link.icon" />
                 <span class="flex-1">{{ link.name }}</span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
-                  class="h-5 w-5 shrink-0 fill-current"
+                  class="h-5 w-5 shrink-0 fill-current opacity-70"
                   aria-hidden="true"
                 >
                   <path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41Z" />
@@ -150,10 +166,11 @@ async function handleLogout() {
             v-if="profile"
             :display-name="profile.displayName"
             :avatar-url="profile.avatarUrl"
+            variant="light"
           />
           <button
             type="button"
-            class="flex h-10 w-10 items-center justify-center rounded-full bg-dark text-2xl text-primary transition-colors hover:scale-105"
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-dark text-primary transition-colors hover:scale-105"
             aria-label="Cerrar sesión"
             @click="handleLogout"
           >
@@ -164,7 +181,7 @@ async function handleLogout() {
               aria-hidden="true"
             >
               <path
-                d="M12 3c-1.1 0-2 .9-2 2v4H8V5c0-2.21 1.79-4 4-4s4 1.79 4 4v4h-2V5c0-1.1-.9-2-2-2m7 7v8c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2v-8H3v8c0 2.21 1.79 4 4 4h10c2.21 0 4-1.79 4-4v-8h-2Z"
+                d="M16 17v-3H9v-4h7V7l5 5-5 5M14 2a2 2 0 0 1 2 2v2h5v18H3V6h5V4a2 2 0 0 1 2-2h4m0 2H10v2h4V4Z"
               />
             </svg>
           </button>

@@ -16,8 +16,8 @@ This repo is a ground-up rebuild of MisJuegos (private app at [misjuegos.net](ht
 | **1** | ✅ Done | Supabase local, migrations, RLS, Google OAuth |
 | **2** | ✅ Done | Repository layer (DbError, repos, mappers) |
 | **3** | ✅ Done | App shell + v1 nav animations |
-| 4 | 🔜 Next | Participants |
-| 5 | Pending | Board games + sessions + **messages + scores** |
+| **4** | ✅ Done | Participants migrations + UI |
+| 5 | 🔜 Next | Board games + sessions + messages + scores |
 | 6 | Pending | Escape rooms |
 | 7 | Pending | Dashboard |
 | 8 | Pending | Import pipeline (Escape Babel spreadsheet) |

@@ -42,6 +42,20 @@ export function unwrap<T>(result: {
   return result.data
 }
 
+export function getDbErrorMessage(error: unknown): string {
+  if (error instanceof DbError) {
+    if (error.code === "23505") {
+      return "Ya existe un registro con ese valor"
+    }
+
+    return error.message
+  }
+
+  if (error instanceof Error) return error.message
+
+  return "Ha ocurrido un error"
+}
+
 export function unwrapNullable<T>(result: {
   data: T | null
   error: PostgrestError | null

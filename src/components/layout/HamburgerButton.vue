@@ -25,7 +25,9 @@ defineProps<{
 }
 
 .hamburger div {
-  transition: 0.2s ease-in-out;
+  transition:
+    transform 0.2s ease-in-out,
+    opacity 0.2s ease-in-out;
 }
 
 .hamburger.open div:nth-child(1) {

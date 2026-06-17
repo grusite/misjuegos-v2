@@ -3,17 +3,30 @@ import { ref } from "vue"
 
 export const useUiStore = defineStore("ui", () => {
   const isNavOpen = ref(false)
+  const skipNavAnimation = ref(false)
 
   function openNav() {
+    skipNavAnimation.value = false
     isNavOpen.value = true
   }
 
-  function closeNav() {
+  function closeNav(instant = false) {
+    skipNavAnimation.value = instant
     isNavOpen.value = false
   }
 
   function toggleNav() {
-    isNavOpen.value = !isNavOpen.value
+    if (isNavOpen.value) {
+      closeNav()
+    } else {
+      openNav()
+    }
+  }
+
+  function consumeSkipNavAnimation() {
+    const skip = skipNavAnimation.value
+    skipNavAnimation.value = false
+    return skip
   }
 
   return {
@@ -21,5 +34,6 @@ export const useUiStore = defineStore("ui", () => {
     openNav,
     closeNav,
     toggleNav,
+    consumeSkipNavAnimation,
   }
 })

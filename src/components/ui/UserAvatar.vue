@@ -2,21 +2,46 @@
 import { computed } from "vue"
 import { getAvatarColor } from "@/lib/utils/avatarColor"
 
-const props = defineProps<{
-  displayName: string
-  avatarUrl?: string | null
-  email?: string | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    displayName: string
+    avatarUrl?: string | null
+    email?: string | null
+    colorClass?: string | null
+    variant?: "light" | "dark"
+  }>(),
+  {
+    avatarUrl: null,
+    email: null,
+    colorClass: null,
+    variant: "light",
+  },
+)
 
 const initial = computed(() =>
   props.displayName.charAt(0).toUpperCase(),
 )
 
-const bgColor = computed(() => getAvatarColor(props.displayName))
+const bgColor = computed(
+  () => props.colorClass ?? getAvatarColor(props.displayName),
+)
+
+const textClasses = computed(() =>
+  props.variant === "dark"
+    ? "text-gray-100"
+    : "text-dark",
+)
+
+const emailClasses = computed(() =>
+  props.variant === "dark" ? "text-gray-400" : "text-stone-600",
+)
 </script>
 
 <template>
-  <div class="flex flex-1 items-center gap-3 text-dark">
+  <div
+    class="flex flex-1 items-center gap-3"
+    :class="textClasses"
+  >
     <img
       v-if="avatarUrl"
       :src="avatarUrl"
@@ -33,7 +58,13 @@ const bgColor = computed(() => getAvatarColor(props.displayName))
     </div>
     <div class="leading-tight">
       <div class="font-medium">{{ displayName }}</div>
-      <div v-if="email" class="text-sm text-stone-600">{{ email }}</div>
+      <div
+        v-if="email"
+        class="text-sm"
+        :class="emailClasses"
+      >
+        {{ email }}
+      </div>
     </div>
   </div>
 </template>

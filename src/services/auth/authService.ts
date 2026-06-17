@@ -40,7 +40,7 @@ export async function fetchProfile(userId: string): Promise<AuthProfile | null> 
     .from("profiles")
     .select("id, display_name, avatar_url")
     .eq("id", userId)
-    .single()
+    .maybeSingle()
 
   if (error || !data) return null
 
