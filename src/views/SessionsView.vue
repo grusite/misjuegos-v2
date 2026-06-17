@@ -23,6 +23,7 @@ const {
   searchBgg,
   createSession,
   createEscapeSession,
+  createFriendParticipant,
 } = useSessions()
 
 const isCreating = ref(false)
@@ -250,6 +251,7 @@ async function handleCreateEscape(payload: {
             :self-participant-id="selfParticipantId"
             :bgg-results="bggResults"
             :is-saving="isSaving"
+            :create-participant="createFriendParticipant"
             @search-bgg="searchBgg"
             @submit="handleCreateBoard"
             @cancel="isCreating = false"
@@ -260,6 +262,7 @@ async function handleCreateEscape(payload: {
             :self-participant-id="selfParticipantId"
             :escape-catalog="escapeCatalog"
             :is-saving="isSaving"
+            :create-participant="createFriendParticipant"
             @submit="handleCreateEscape"
             @cancel="isCreating = false"
           />

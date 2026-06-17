@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from "vue"
-import { Icon } from "@iconify/vue"
+import SessionParticipantPicker from "@/components/sessions/SessionParticipantPicker.vue"
 import UiButton from "@/components/ui/UiButton.vue"
 import type { Participant } from "@/domain/types/participant"
 import type { BggSearchResult } from "@/services/bgg/bggService"
@@ -10,6 +10,7 @@ const props = defineProps<{
   selfParticipantId?: string | null
   bggResults: BggSearchResult[]
   isSaving?: boolean
+  createParticipant?: (displayName: string) => Promise<Participant | null>
 }>()
 
 const emit = defineEmits<{
@@ -49,20 +50,6 @@ const selectedBgg = computed(() =>
 )
 
 const canSubmit = computed(() => form.title.trim().length > 0)
-
-function isParticipantSelected(participantId: string) {
-  return form.selectedParticipants.includes(participantId)
-}
-
-function toggleParticipant(participantId: string) {
-  if (isParticipantSelected(participantId)) {
-    if (form.selectedParticipants.length === 1) return
-    form.selectedParticipants = form.selectedParticipants.filter(id => id !== participantId)
-    return
-  }
-
-  form.selectedParticipants = [...form.selectedParticipants, participantId]
-}
 
 function handleSubmit() {
   if (!canSubmit.value) return
@@ -124,38 +111,13 @@ function handleSubmit() {
       </select>
     </label>
 
-    <div class="space-y-2">
-      <div class="flex items-baseline justify-between gap-2">
-        <p class="text-sm text-gray-400">Participantes</p>
-        <p class="text-xs text-gray-500">Toca para añadir o quitar</p>
-      </div>
-      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <button
-          v-for="participant in participants"
-          :key="participant.id"
-          type="button"
-          class="flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-left text-sm transition-colors"
-          :class="
-            isParticipantSelected(participant.id)
-              ? 'border-board bg-board text-dark'
-              : 'border-gray-700 text-gray-300 hover:border-board/50'
-          "
-          :aria-pressed="isParticipantSelected(participant.id)"
-          @click="toggleParticipant(participant.id)"
-        >
-          <Icon
-            :icon="
-              isParticipantSelected(participant.id)
-                ? 'mdi:check-circle'
-                : 'mdi:circle-outline'
-            "
-            class="h-5 w-5 shrink-0"
-            aria-hidden="true"
-          />
-          <span class="min-w-0 flex-1 truncate">{{ participant.displayName }}</span>
-        </button>
-      </div>
-    </div>
+    <SessionParticipantPicker
+      v-model="form.selectedParticipants"
+      :participants="participants"
+      :self-participant-id="selfParticipantId"
+      :create-participant="createParticipant"
+      accent="board"
+    />
 
     <label class="block space-y-2">
       <span class="text-sm text-gray-400">Notas (opcional)</span>

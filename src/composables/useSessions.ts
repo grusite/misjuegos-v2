@@ -4,6 +4,8 @@ import type { EscapeRoomCatalogEntry, GameCatalog } from "@/domain/types/catalog
 import type { Participant } from "@/domain/types/participant"
 import type { SessionMemberPreview } from "@/domain/types/session"
 import type { GameType, SessionOutcome, SessionStatus } from "@/domain/types/rows"
+import { participantFormSchema } from "@/domain/schemas/participant"
+import { getAvatarColor } from "@/lib/utils/avatarColor"
 import { getDbErrorMessage } from "@/services/errors"
 import { catalogRepository } from "@/services/catalog/catalogRepository"
 import {
@@ -173,6 +175,42 @@ export function useSessions() {
     bggResults.value = await searchBoardGames(query)
   }
 
+  async function createFriendParticipant(displayName: string): Promise<Participant | null> {
+    if (!ownerId.value) return null
+
+    const parsed = participantFormSchema.safeParse({ displayName })
+    if (!parsed.success) return null
+
+    const normalizedName = parsed.data.displayName
+
+    try {
+      const existing = await participantsRepository.findByDisplayName(
+        ownerId.value,
+        normalizedName,
+      )
+
+      if (existing) {
+        await loadParticipants()
+        return existing
+      }
+
+      await participantsRepository.create(ownerId.value, {
+        displayName: normalizedName,
+        color: getAvatarColor(normalizedName),
+      })
+
+      await loadParticipants()
+      return (
+        participants.value.find(
+          participant => participant.displayName.toLowerCase() === normalizedName.toLowerCase(),
+        ) ?? null
+      )
+    } catch (error) {
+      errorMessage.value = getDbErrorMessage(error)
+      return null
+    }
+  }
+
   async function createSession(payload: CreateSessionPayload): Promise<string | null> {
     if (!ownerId.value) return null
 
@@ -286,5 +324,6 @@ export function useSessions() {
     searchBgg,
     createSession,
     createEscapeSession,
+    createFriendParticipant,
   }
 }
