@@ -1,6 +1,8 @@
 import { computed, onMounted, onUnmounted, ref } from "vue"
 import { useAuthStore } from "@/stores/authStore"
-import type { SessionOutcome } from "@/domain/types/rows"
+import type { EscapeRoomDetails } from "@/domain/types/catalog"
+import type { EscapeSessionDetails } from "@/domain/types/escapeSession"
+import type { GameType, SessionOutcome } from "@/domain/types/rows"
 import type {
   PlaySession,
   SessionMessage,
@@ -26,6 +28,9 @@ export function useSessionDetail(sessionId: string) {
 
   const session = ref<PlaySession | null>(null)
   const gameTitle = ref("Juego")
+  const gameType = ref<GameType>("board_game")
+  const escapeRoom = ref<EscapeRoomDetails | null>(null)
+  const escapeDetails = ref<EscapeSessionDetails | null>(null)
   const members = ref<SessionMember[]>([])
   const messages = ref<SessionMessage[]>([])
   const scores = ref<SessionScore[]>([])
@@ -55,6 +60,8 @@ export function useSessionDetail(sessionId: string) {
   const canWrite = computed(() => {
     return authStore.profile?.id && session.value?.createdBy === authStore.profile.id
   })
+
+  const isEscapeSession = computed(() => gameType.value === "escape_room")
 
   function setTicker(active: boolean) {
     if (intervalId) {
@@ -86,13 +93,26 @@ export function useSessionDetail(sessionId: string) {
 
       const catalog = await catalogRepository.getById(found.gameCatalogId)
       gameTitle.value = catalog?.title ?? "Juego"
+      gameType.value = catalog?.type ?? "board_game"
+
+      if (catalog?.type === "escape_room") {
+        const escapeEntry = await catalogRepository.getEscapeRoomById(found.gameCatalogId)
+        escapeRoom.value = escapeEntry?.escapeRoomDetails ?? null
+        escapeDetails.value = await sessionsRepository.getEscapeSessionDetails(found.id)
+      } else {
+        escapeRoom.value = null
+        escapeDetails.value = null
+      }
 
       const participantRows = await sessionsRepository.listParticipants(found.id)
       members.value = await resolveMembers(participantRows)
 
       messages.value = await sessionsRepository.listMessages(found.id)
-      scores.value = await sessionsRepository.listScores(found.id)
-      setTicker(!found.isPaused)
+      scores.value =
+        catalog?.type === "board_game"
+          ? await sessionsRepository.listScores(found.id)
+          : []
+      setTicker(catalog?.type === "board_game" && !found.isPaused)
     } catch (error) {
       errorMessage.value = getDbErrorMessage(error)
     } finally {
@@ -179,7 +199,7 @@ export function useSessionDetail(sessionId: string) {
     })
   }
 
-  async function setOutcome(outcome: SessionOutcome) {
+  async function saveBoardOutcome(outcome: SessionOutcome) {
     if (!session.value || !canWrite.value) return
 
     await patchSession({
@@ -215,6 +235,45 @@ export function useSessionDetail(sessionId: string) {
     }
   }
 
+  async function saveEscapeDetails(payload: {
+    cluesUsed: number | null
+    timeResult: string | null
+    timeSeconds: number | null
+    price: number | null
+    priceCurrency: string
+    escaped: boolean | null
+  }) {
+    if (!session.value || !canWrite.value) return
+
+    isSaving.value = true
+    errorMessage.value = null
+
+    try {
+      const sessionId = session.value.id
+
+      escapeDetails.value = await sessionsRepository.upsertEscapeSessionDetails(
+        sessionId,
+        payload,
+      )
+
+      if (payload.escaped !== null) {
+        const outcome: SessionOutcome = payload.escaped ? "escaped" : "failed"
+
+        session.value = await sessionsRepository.update(sessionId, {
+          outcome,
+          status: "completed",
+          endedAt: new Date().toISOString(),
+          isPaused: true,
+          lastStartedAt: null,
+        })
+      }
+    } catch (error) {
+      errorMessage.value = getDbErrorMessage(error)
+    } finally {
+      isSaving.value = false
+    }
+  }
+
   async function saveScores(payload: SessionScoreInput[]) {
     if (!session.value || !canWrite.value) return
 
@@ -240,6 +299,10 @@ export function useSessionDetail(sessionId: string) {
   return {
     session,
     gameTitle,
+    gameType,
+    escapeRoom,
+    escapeDetails,
+    isEscapeSession,
     members,
     messages,
     scores,
@@ -253,8 +316,9 @@ export function useSessionDetail(sessionId: string) {
     startTimer,
     pauseTimer,
     resetTimer,
-    setOutcome,
+    saveBoardOutcome,
     addMessage,
     saveScores,
+    saveEscapeDetails,
   }
 }

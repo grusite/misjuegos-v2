@@ -8,7 +8,7 @@ defineProps<{
 
 <template>
   <section class="space-y-4 py-8">
-    <p class="text-sm uppercase tracking-widest text-secondary">{{ phase }}</p>
+    <p class="text-sm uppercase tracking-widest text-gray-500">{{ phase }}</p>
     <h1 class="text-3xl font-bold text-primary">{{ title }}</h1>
     <p class="text-gray-400">
       {{

@@ -154,6 +154,28 @@ export function createCatalogRepository(client: SupabaseClient<AppDatabase>) {
 
       return toEscapeRoomCatalogEntry(catalogRow, unwrap(detailsResult))
     },
+
+    async listEscapeRooms(): Promise<EscapeRoomCatalogEntry[]> {
+      const catalogs = await client
+        .from("game_catalog")
+        .select("*")
+        .eq("type", "escape_room")
+        .order("title")
+
+      const entries: EscapeRoomCatalogEntry[] = []
+
+      for (const catalog of unwrap(catalogs)) {
+        const detailsResult = await client
+          .from("escape_room_details")
+          .select("*")
+          .eq("game_catalog_id", catalog.id)
+          .single()
+
+        entries.push(toEscapeRoomCatalogEntry(catalog, unwrap(detailsResult)))
+      }
+
+      return entries
+    },
   }
 }
 

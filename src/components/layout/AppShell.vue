@@ -7,7 +7,7 @@ import AppTopBar from "@/components/layout/AppTopBar.vue"
   <div class="min-h-screen bg-dark">
     <AppTopBar />
 
-    <main class="m-auto min-h-screen max-w-lg p-4 pt-20">
+    <main class="m-auto min-h-screen max-w-lg scroll-pt-24 p-4 pt-[calc(4.75rem+env(safe-area-inset-top))]">
       <RouterView />
     </main>
   </div>

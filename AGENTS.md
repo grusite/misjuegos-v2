@@ -18,8 +18,8 @@ This repo is a ground-up rebuild of MisJuegos (private app at [misjuegos.net](ht
 | **3** | ✅ Done | App shell + v1 nav animations |
 | **4** | ✅ Done | Participants migrations + UI |
 | **5** | ✅ Done | Board games + sessions + messages + scores |
-| 6 | 🔜 Next | Escape rooms |
-| 7 | Pending | Dashboard |
+| **6** | ✅ Done | Escape rooms — create flow, detail panel, list filters |
+| 7 | 🔜 Next | Dashboard |
 | 8 | Pending | Import pipeline (Escape Babel spreadsheet) |
 | 9 | Pending | Photos / Storage |
 | 10 | Pending | Utilities (dice, roulette, timer) |
@@ -127,12 +127,13 @@ See [`docs/ROADMAP.md`](docs/ROADMAP.md#target-folder-structure) for the full tr
 
 ## Brand & UX
 
-| Token | Hex |
-|-------|-----|
-| dark | `#0f0e17` |
-| primary | `#facc15` |
-| secondary | `#f25f4c` |
-| tertiary | `#e53170` |
+| Token | Hex | Use |
+|-------|-----|-----|
+| dark | `#0f0e17` | Background |
+| primary | `#facc15` | App chrome, nav, yellow actions |
+| secondary | `#f25f4c` | Errors, destructive actions |
+| board | `#38bdf8` | Board games theme |
+| tertiary | `#e53170` | Escape rooms theme |
 
 - Font: **Changa** (Google Fonts)
 - Logo: `public/logo.svg`

@@ -15,6 +15,7 @@ describe("BrandPalette.vue", () => {
     expect(wrapper.text()).toContain("#facc15")
     expect(wrapper.text()).toContain("#f25f4c")
     expect(wrapper.text()).toContain("#e53170")
-    expect(wrapper.findAll('[aria-label]')).toHaveLength(4)
+    expect(wrapper.text()).toContain("#38bdf8")
+    expect(wrapper.findAll('[aria-label]')).toHaveLength(5)
   })
 })

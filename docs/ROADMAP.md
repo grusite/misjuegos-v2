@@ -59,14 +59,14 @@ Repositories use `AppDatabase` (`src/domain/types/schema.ts`) for tables not yet
 - [x] Board game scores UI
 - [x] Port Home FAB slide animation for “Nueva partida”
 
-## Phase 6 — Escape rooms (in progress)
+## Phase 6 — Escape rooms ✅
 
 - [x] Migrations: escape_room_details + escape_session_details
-- [ ] New escape session form
-- [ ] Escape detail panel (clues, time, price, escaped)
-- [ ] Catalog browse + session list filters
+- [x] New escape session form
+- [x] Escape detail panel (clues, time, price, escaped)
+- [x] Catalog browse + session list filters
 
-## Phase 7 — Dashboard
+## Phase 7 — Dashboard (next)
 
 - [ ] `dashboardRepository.getStats`
 - [ ] Stat cards, charts (top games, trends, partners)

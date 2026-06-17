@@ -75,15 +75,15 @@ function handleSubmit() {
 </script>
 
 <template>
-  <section class="space-y-4 rounded-2xl border-4 border-primary bg-dark p-4">
-    <h2 class="text-2xl font-bold text-primary">Nueva partida</h2>
+  <section class="space-y-4 rounded-2xl border-4 border-board bg-dark p-4">
+    <h2 class="text-2xl font-bold text-board">Nueva partida</h2>
 
     <label class="block space-y-2">
       <span class="text-sm text-gray-400">Nombre del juego</span>
       <input
         v-model="form.title"
         type="text"
-        class="w-full rounded-lg border-4 border-gray-700 bg-dark px-4 py-2 text-gray-100 focus:border-primary focus:outline-none"
+        class="w-full rounded-lg border-4 border-gray-700 bg-dark px-4 py-2 text-gray-100 focus:border-board focus:outline-none"
         placeholder="Ej. Azul, Terraforming Mars..."
       />
     </label>
@@ -94,7 +94,7 @@ function handleSubmit() {
         <input
           v-model="form.bggQuery"
           type="search"
-          class="min-w-0 flex-1 rounded-lg border-4 border-gray-700 bg-dark px-4 py-2 text-gray-100 focus:border-primary focus:outline-none"
+          class="min-w-0 flex-1 rounded-lg border-4 border-gray-700 bg-dark px-4 py-2 text-gray-100 focus:border-board focus:outline-none"
           placeholder="BoardGameGeek search..."
         />
         <UiButton
@@ -109,7 +109,7 @@ function handleSubmit() {
       <select
         v-if="bggResults.length > 0"
         v-model="form.bggSelectionId"
-        class="w-full rounded-lg border-4 border-gray-700 bg-dark px-4 py-2 text-gray-100 focus:border-primary focus:outline-none"
+        class="w-full rounded-lg border-4 border-gray-700 bg-dark px-4 py-2 text-gray-100 focus:border-board focus:outline-none"
       >
         <option value="">Sin selección</option>
         <option
@@ -135,8 +135,8 @@ function handleSubmit() {
           class="flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-left text-sm transition-colors"
           :class="
             isParticipantSelected(participant.id)
-              ? 'border-primary bg-primary/20 text-primary'
-              : 'border-gray-700 text-gray-300 hover:border-primary/50'
+              ? 'border-board bg-board text-dark'
+              : 'border-gray-700 text-gray-300 hover:border-board/50'
           "
           :aria-pressed="isParticipantSelected(participant.id)"
           @click="toggleParticipant(participant.id)"
@@ -160,7 +160,7 @@ function handleSubmit() {
       <textarea
         v-model="form.notes"
         rows="3"
-        class="w-full rounded-lg border-4 border-gray-700 bg-dark px-4 py-2 text-gray-100 focus:border-primary focus:outline-none"
+        class="w-full rounded-lg border-4 border-gray-700 bg-dark px-4 py-2 text-gray-100 focus:border-board focus:outline-none"
         placeholder="Detalles de la sesión..."
       />
     </label>
@@ -168,6 +168,7 @@ function handleSubmit() {
     <div class="flex gap-2">
       <UiButton
         type="button"
+        variant="board"
         class="flex-1"
         :disabled="!canSubmit || isSaving"
         @click="handleSubmit"

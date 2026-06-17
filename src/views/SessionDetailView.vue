@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue"
+import { computed, reactive, ref, watch } from "vue"
 import { useRoute } from "vue-router"
 import UiButton from "@/components/ui/UiButton.vue"
 import UiConfirmDialog from "@/components/ui/UiConfirmDialog.vue"
+import BoardOutcomePicker from "@/components/sessions/BoardOutcomePicker.vue"
 import SessionMessageItem from "@/components/sessions/SessionMessageItem.vue"
+import EscapeSessionDetailsPanel from "@/components/sessions/EscapeSessionDetailsPanel.vue"
 import { useSessionDetail } from "@/composables/useSessionDetail"
+import { boardOutcomeLabelClass } from "@/lib/utils/outcomeStyles"
 import type { SessionOutcome } from "@/domain/types/rows"
 import type { SessionScoreInput } from "@/domain/types/session"
 
@@ -14,6 +17,9 @@ const sessionId = String(route.params.id ?? "")
 const {
   session,
   gameTitle,
+  escapeRoom,
+  escapeDetails,
+  isEscapeSession,
   members,
   messages,
   scores,
@@ -26,24 +32,40 @@ const {
   startTimer,
   pauseTimer,
   resetTimer,
-  setOutcome,
+  saveBoardOutcome,
   addMessage,
   saveScores,
+  saveEscapeDetails,
 } = useSessionDetail(sessionId)
 
 const messageDraft = ref("")
 const showResetConfirm = ref(false)
 const showMessagesSheet = ref(false)
 const scoreDraft = reactive<Record<string, string>>({})
+const draftOutcome = ref<SessionOutcome>("unknown")
 
-const outcomeOptions: Array<{ label: string; value: SessionOutcome }> = [
-  { label: "Victoria", value: "win" },
-  { label: "Derrota", value: "loss" },
-  { label: "Empate", value: "draw" },
-  { label: "Desconocido", value: "unknown" },
-]
+const outcomeLabels: Record<SessionOutcome, string> = {
+  win: "Victoria",
+  loss: "Derrota",
+  draw: "Empate",
+  unknown: "Sin definir",
+  escaped: "Escapasteis",
+  failed: "No escapasteis",
+}
 
-const isPlaying = computed(() => session.value?.status === "in_progress")
+const draftOutcomeLabelClass = computed(() => boardOutcomeLabelClass(draftOutcome.value))
+
+watch(
+  () => session.value?.id,
+  () => {
+    draftOutcome.value = session.value?.outcome ?? "unknown"
+  },
+  { immediate: true },
+)
+
+const isPlaying = computed(
+  () => !isEscapeSession.value && session.value?.status === "in_progress",
+)
 const elapsedSeconds = computed(() => Math.floor(elapsedMs.value / 1000))
 const isTimerPaused = computed(() => session.value?.isPaused ?? true)
 
@@ -73,6 +95,10 @@ function buildScorePayload(): SessionScoreInput[] {
       score: Number.isFinite(parsed) ? parsed : null,
     }
   })
+}
+
+async function handleSaveOutcome() {
+  await saveBoardOutcome(draftOutcome.value)
 }
 
 async function handleSaveScores() {
@@ -106,20 +132,45 @@ async function handleResetConfirm() {
       {{ errorMessage }}
     </p>
 
-    <article v-if="session && !isLoading" class="space-y-5 rounded-2xl border-4 border-primary/40 p-4 sm:p-5">
+    <article
+      v-if="session && !isLoading"
+      class="space-y-5 rounded-2xl border-4 p-4 sm:p-5"
+      :class="isEscapeSession ? 'border-tertiary/40' : 'border-board/40'"
+    >
       <header class="space-y-1">
-        <p class="text-sm uppercase tracking-widest text-secondary">Detalle de sesión</p>
-        <h1 class="text-2xl font-bold text-primary sm:text-3xl">{{ gameTitle }}</h1>
+        <p
+          class="text-sm uppercase tracking-widest"
+          :class="isEscapeSession ? 'text-tertiary' : 'text-board'"
+        >
+          {{ isEscapeSession ? "Escape room" : "Juego de mesa" }}
+        </p>
+        <h1
+          class="text-2xl font-bold sm:text-3xl"
+          :class="isEscapeSession ? 'text-tertiary' : 'text-board'"
+        >
+          {{ gameTitle }}
+        </h1>
         <p class="text-sm text-gray-400">{{ formatDate(session.playedAt) }}</p>
       </header>
 
+      <EscapeSessionDetailsPanel
+        v-if="isEscapeSession"
+        :session-id="sessionId"
+        :escape-room="escapeRoom"
+        :details="escapeDetails"
+        :can-write="Boolean(canWrite)"
+        :is-saving="isSaving"
+        @save="saveEscapeDetails"
+      />
+
+      <template v-if="!isEscapeSession">
       <section class="space-y-3 rounded-xl border-2 border-gray-700 p-4">
         <div class="flex w-full items-start justify-between gap-4">
           <div class="min-w-0 flex-1">
             <p class="text-xs uppercase tracking-wide text-gray-500">Temporizador</p>
-            <p class="text-3xl font-bold tabular-nums text-primary">{{ elapsedLabel }}</p>
+            <p class="text-3xl font-bold tabular-nums text-board">{{ elapsedLabel }}</p>
           </div>
-          <span class="shrink-0 rounded-full border border-tertiary/40 px-3 py-1 text-xs tabular-nums uppercase text-tertiary">
+          <span class="shrink-0 rounded-full border border-board/40 px-3 py-1 text-xs tabular-nums uppercase text-board">
             {{ elapsedSeconds }}s
           </span>
         </div>
@@ -191,21 +242,27 @@ async function handleResetConfirm() {
           </span>
         </summary>
         <div class="space-y-3 pt-2">
-          <div class="grid grid-cols-2 gap-2">
+          <BoardOutcomePicker
+            v-model="draftOutcome"
+            :disabled="!canWrite || isSaving"
+          />
+          <p class="text-sm text-gray-300">
+            Resultado:
+            <span class="font-semibold" :class="draftOutcomeLabelClass">
+              {{ outcomeLabels[draftOutcome] }}
+            </span>
+          </p>
+          <p class="text-xs text-gray-500">Se guarda al pulsar «Guardar resultado».</p>
+          <div class="flex justify-end">
             <UiButton
-              v-for="option in outcomeOptions"
-              :key="option.value"
-              variant="ghost"
+              variant="board"
+              size="compact"
               :disabled="!canWrite || isSaving"
-              @click="setOutcome(option.value)"
+              @click="handleSaveOutcome"
             >
-              {{ option.label }}
+              {{ isSaving ? "Guardando..." : "Guardar resultado" }}
             </UiButton>
           </div>
-          <p class="text-sm text-gray-300">
-            Actual:
-            <span class="font-semibold capitalize">{{ session.outcome ?? "sin definir" }}</span>
-          </p>
         </div>
       </details>
 
@@ -230,15 +287,23 @@ async function handleResetConfirm() {
                 type="number"
                 inputmode="decimal"
                 :placeholder="scoreByParticipant.get(member.participantId ?? '')?.toString() ?? '0'"
-                class="w-24 rounded-lg border-2 border-gray-600 bg-dark px-2 py-1 text-right text-sm text-gray-100 focus:border-primary focus:outline-none"
+                class="w-24 rounded-lg border-2 border-gray-600 bg-dark px-2 py-1 text-right text-sm text-gray-100 focus:border-board focus:outline-none"
               />
             </label>
           </div>
-          <UiButton :disabled="!canWrite || isSaving" @click="handleSaveScores">
-            Guardar puntuaciones
-          </UiButton>
+          <div class="flex justify-end">
+            <UiButton
+              variant="board"
+              size="compact"
+              :disabled="!canWrite || isSaving"
+              @click="handleSaveScores"
+            >
+              Guardar puntuaciones
+            </UiButton>
+          </div>
         </div>
       </details>
+      </template>
 
       <section
         v-if="!isPlaying"
@@ -306,12 +371,12 @@ async function handleResetConfirm() {
           @click="showMessagesSheet = false"
         />
 
-        <div class="relative mx-auto max-h-[80dvh] w-full max-w-lg rounded-t-2xl border-4 border-primary bg-dark p-4">
+        <div class="relative mx-auto max-h-[80dvh] w-full max-w-lg rounded-t-2xl border-4 border-board bg-dark p-4">
           <div class="mb-4 flex items-center justify-between gap-3">
-            <h2 class="text-lg font-bold text-primary">Chat de partida</h2>
+            <h2 class="text-lg font-bold text-board">Chat de partida</h2>
             <button
               type="button"
-              class="rounded-full p-2 text-gray-400 hover:text-primary"
+              class="rounded-full p-2 text-gray-400 hover:text-board"
               aria-label="Cerrar"
               @click="showMessagesSheet = false"
             >

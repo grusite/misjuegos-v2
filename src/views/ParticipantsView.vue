@@ -79,7 +79,7 @@ async function handleRemove(id: string) {
 <template>
   <section class="space-y-4">
     <div class="space-y-2">
-      <p class="text-sm uppercase tracking-widest text-secondary">Amigos</p>
+      <p class="text-sm uppercase tracking-widest text-gray-500">Amigos</p>
       <h1 class="text-3xl font-bold text-primary">Participantes</h1>
       <p class="text-gray-400">
         Jugadores sin cuenta y alias para importar partidas.

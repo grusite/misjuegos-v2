@@ -74,6 +74,13 @@ export type SessionMemberInput = {
   participantId?: string | null
 }
 
+export type SessionMemberPreview = {
+  id: string
+  displayName: string
+  avatarUrl: string | null
+  colorClass: string | null
+}
+
 export type SessionMessageInput = {
   content: string
   authorProfileId: string

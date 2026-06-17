@@ -5,6 +5,7 @@ import type {
   ListSessionsOptions,
   PlaySession,
   SessionMemberInput,
+  SessionMemberPreview,
   SessionMessage,
   SessionMessageInput,
   SessionParticipant,
@@ -15,7 +16,13 @@ import type {
 import type { AppDatabase } from "@/domain/types/schema"
 import { unwrap, unwrapNullable, fromPostgrestError } from "@/services/errors"
 import {
+  mapEscapeSessionDetails,
+  toEscapeSessionDetailsUpsert,
+} from "@/services/sessions/escapeSessionMapper"
+import type { EscapeSessionDetails, UpsertEscapeSessionDetailsInput } from "@/domain/types/escapeSession"
+import {
   mapPlaySession,
+  mapSessionMemberPreview,
   mapSessionParticipant,
   toPlaySessionInsert,
   toPlaySessionUpdate,
@@ -23,6 +30,23 @@ import {
 
 const MESSAGE_SELECT =
   "id, session_id, author_profile_id, content, created_at, author:profiles!session_messages_author_profile_id_fkey(display_name)"
+
+const SESSION_MEMBER_PREVIEW_SELECT = `
+  id,
+  session_id,
+  participant:participants (
+    display_name,
+    color,
+    linked_profile:profiles!participants_profile_id_fkey (
+      display_name,
+      avatar_url
+    )
+  ),
+  profile:profiles!session_participants_profile_id_fkey (
+    display_name,
+    avatar_url
+  )
+`
 
 type SessionMessageRow = AppDatabase["public"]["Tables"]["session_messages"]["Row"]
 type SessionMessageAuthorRow = { display_name: string }
@@ -112,6 +136,28 @@ export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
         .eq("session_id", sessionId)
 
       return unwrap(result).map(mapSessionParticipant)
+    },
+
+    async listMemberPreviewsBySessionIds(
+      sessionIds: string[],
+    ): Promise<Map<string, SessionMemberPreview[]>> {
+      const grouped = new Map<string, SessionMemberPreview[]>()
+
+      if (sessionIds.length === 0) return grouped
+
+      const result = await client
+        .from("session_participants")
+        .select(SESSION_MEMBER_PREVIEW_SELECT)
+        .in("session_id", sessionIds)
+
+      for (const row of unwrap(result)) {
+        const { sessionId, member } = mapSessionMemberPreview(row)
+        const members = grouped.get(sessionId) ?? []
+        members.push(member)
+        grouped.set(sessionId, members)
+      }
+
+      return grouped
     },
 
     async setParticipants(
@@ -205,6 +251,34 @@ export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
         .select("*")
 
       return unwrap(result).map(mapSessionScore)
+    },
+
+    async getEscapeSessionDetails(
+      sessionId: string,
+    ): Promise<EscapeSessionDetails | null> {
+      const result = await client
+        .from("escape_session_details")
+        .select("*")
+        .eq("session_id", sessionId)
+        .maybeSingle()
+
+      const row = unwrapNullable(result)
+      return row ? mapEscapeSessionDetails(row) : null
+    },
+
+    async upsertEscapeSessionDetails(
+      sessionId: string,
+      input: UpsertEscapeSessionDetailsInput,
+    ): Promise<EscapeSessionDetails> {
+      const result = await client
+        .from("escape_session_details")
+        .upsert(toEscapeSessionDetailsUpsert(sessionId, input), {
+          onConflict: "session_id",
+        })
+        .select("*")
+        .single()
+
+      return mapEscapeSessionDetails(unwrap(result))
     },
   }
 }

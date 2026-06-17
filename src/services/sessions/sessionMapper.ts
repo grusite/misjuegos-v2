@@ -1,6 +1,7 @@
 import type {
   CreateSessionInput,
   PlaySession,
+  SessionMemberPreview,
   SessionParticipant,
   UpdateSessionInput,
 } from "@/domain/types/session"
@@ -40,6 +41,62 @@ export function mapSessionParticipant(
     sessionId: row.session_id,
     profileId: row.profile_id,
     participantId: row.participant_id,
+  }
+}
+
+type SessionMemberPreviewRow = {
+  id: string
+  session_id: string
+  participant: {
+    display_name: string
+    color: string | null
+    linked_profile: {
+      display_name: string
+      avatar_url: string | null
+    } | null
+  } | null
+  profile: {
+    display_name: string
+    avatar_url: string | null
+  } | null
+}
+
+export function mapSessionMemberPreview(row: SessionMemberPreviewRow): {
+  sessionId: string
+  member: SessionMemberPreview
+} {
+  if (row.participant) {
+    return {
+      sessionId: row.session_id,
+      member: {
+        id: row.id,
+        displayName: row.participant.display_name,
+        avatarUrl: row.participant.linked_profile?.avatar_url ?? null,
+        colorClass: row.participant.color,
+      },
+    }
+  }
+
+  if (row.profile) {
+    return {
+      sessionId: row.session_id,
+      member: {
+        id: row.id,
+        displayName: row.profile.display_name,
+        avatarUrl: row.profile.avatar_url ?? null,
+        colorClass: null,
+      },
+    }
+  }
+
+  return {
+    sessionId: row.session_id,
+    member: {
+      id: row.id,
+      displayName: "Jugador",
+      avatarUrl: null,
+      colorClass: null,
+    },
   }
 }
 
