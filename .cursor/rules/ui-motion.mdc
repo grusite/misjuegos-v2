@@ -1,0 +1,20 @@
+---
+description: Preserve v1 UI motion and playful layout when editing Vue/CSS
+globs: "**/*.{vue,css}"
+alwaysApply: false
+---
+
+# UI motion (required)
+
+Read `docs/UI_ANIMATIONS.md` before changing layout or navigation.
+
+**Must port from v1** (`../misjuegos-master`):
+
+1. Circular clip-path nav from hamburger origin (1000ms in / 500ms out)
+2. Hamburger → X morph (0.2s)
+3. Home FAB: main `-translate-y-full` + FAB 180° + plus 45° (1000ms)
+4. List slide transitions; roulette springs; timer SVG sand; 3D dice (Phase 10)
+
+**Brand:** dashed `border-4`, primary yellow on `#0f0e17`, Changa font. Avoid generic modal/nav patterns that replace these motions.
+
+Phase 0 shell is simplified — Phase 3 completes animation parity.

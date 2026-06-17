@@ -1,0 +1,16 @@
+---
+description: Supabase schema, migrations, and RLS conventions
+globs: "supabase/**/*"
+alwaysApply: false
+---
+
+# Supabase / database
+
+Full schema: `docs/DATABASE.md`. Migrations in `supabase/migrations/` — never edit applied migrations.
+
+- RLS on every table from day one; `authenticated` required
+- Imports: store `source_raw` + `source_hash` on `play_sessions`; idempotent upserts
+- `session_messages` replaces v1 JSONB chat on board_games
+- Trigger: create `profiles` row on `auth.users` insert
+
+After schema changes: regenerate types (`pnpm db:types` when script exists).

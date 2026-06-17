@@ -1,0 +1,23 @@
+---
+description: Vue 3 architecture and TypeScript conventions for MisJuegos
+globs: "**/*.{vue,ts}"
+alwaysApply: false
+---
+
+# Vue architecture
+
+- No Supabase calls in `.vue` views — use composables → `src/services/`
+- Pinia: `authStore`, `uiStore` only; don't cache full DB tables
+- Double quotes, camelCase files, PascalCase components
+- Domain types in `src/domain/types/`; Zod in `src/domain/schemas/`
+- Import alias: `@/` → `src/`
+
+```typescript
+// ✅ composable orchestrates
+const { sessions, loadSessions } = useSessions()
+
+// ❌ direct in view
+const { data } = await supabase.from("play_sessions").select()
+```
+
+Tests: Vitest in `tests/unit/`, AAA pattern, `describe` per module.

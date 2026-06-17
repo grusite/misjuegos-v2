@@ -1,0 +1,37 @@
+---
+description: MisJuegos harness — read AGENTS.md first; locked decisions and workflow
+alwaysApply: true
+---
+
+# MisJuegos v2 harness
+
+**Start every session:** read `AGENTS.md` at repo root.
+
+## Locked decisions (do not change without Jorge)
+
+- No anonymous login → use `participants`
+- Private group RLS (authenticated members read shared data)
+- `session_messages` + `board_game_scores` in Phase 5 migrations
+- Fresh start — no v1 DB migration; Sheets/Drive = one-time import only
+- Catalog (`game_catalog`) separate from sessions (`play_sessions`)
+
+## Architecture
+
+Views → Composables → Services → Supabase. Pinia for auth/UI only — not a DB cache.
+
+## When finishing work
+
+1. Run `pnpm test`, `pnpm lint`, `pnpm build`
+2. Suggest a **Conventional Commits** message to Jorge
+3. Do **not** commit unless asked
+4. Update phase status in `AGENTS.md` / `docs/ROADMAP.md` if a phase completed
+
+## UX
+
+- Spanish UI copy; brand colors in Tailwind (`dark`, `primary`, `secondary`, `tertiary`)
+- **Preserve v1 animations** — see `docs/UI_ANIMATIONS.md` (Phase 3+)
+
+## Reference
+
+- v1 UX reference: [`docs/V1_REFERENCE.md`](docs/V1_REFERENCE.md) · local: `/Users/jorgemartin/repo/misjuegos-master`
+- Schema: `docs/DATABASE.md` | Tasks: `docs/ROADMAP.md`
