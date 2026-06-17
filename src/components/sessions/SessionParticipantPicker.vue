@@ -248,6 +248,7 @@ function participantLabel(participant: Participant) {
             v-for="(participant, index) in visibleSelected"
             :key="participant.id"
             :display-name="participant.displayName"
+            :avatar-url="participant.avatarUrl"
             :color-class="participant.color"
             class="-ml-2 first:ml-0"
             :style="{ zIndex: visibleSelected.length - index }"
@@ -397,6 +398,7 @@ function participantLabel(participant: Participant) {
               >
                 <ParticipantBubble
                   :display-name="participant.displayName"
+                  :avatar-url="participant.avatarUrl"
                   :color-class="participant.color"
                   size="md"
                 />

@@ -21,8 +21,25 @@ describe("participantMapper", () => {
       profileId: null,
       displayName: "Ana",
       color: "#ff0000",
+      avatarUrl: null,
       createdAt: "2025-01-01T00:00:00Z",
     })
+  })
+
+  it("mapParticipant reads linked profile avatar", () => {
+    const participant = mapParticipant({
+      id: "p1",
+      owner_id: "o1",
+      profile_id: "profile-1",
+      display_name: "Jorge",
+      color: null,
+      created_at: "2025-01-01T00:00:00Z",
+      linked_profile: {
+        avatar_url: "https://example.com/avatar.jpg",
+      },
+    })
+
+    expect(participant.avatarUrl).toBe("https://example.com/avatar.jpg")
   })
 
   it("toParticipantInsert maps create input", () => {

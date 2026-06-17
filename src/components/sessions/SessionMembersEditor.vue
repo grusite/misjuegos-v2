@@ -10,6 +10,7 @@ type SessionMemberView = {
   displayName: string
   participantId: string | null
   color: string | null
+  avatarUrl: string | null
 }
 
 const props = withDefaults(
@@ -60,6 +61,7 @@ const memberSummaries = computed(() =>
     return {
       ...member,
       color: member.color ?? participant?.color ?? null,
+      avatarUrl: member.avatarUrl ?? participant?.avatarUrl ?? null,
     }
   }),
 )
@@ -105,6 +107,7 @@ function openPicker() {
             v-for="(member, index) in memberSummaries.slice(0, 6)"
             :key="member.id"
             :display-name="member.displayName"
+            :avatar-url="member.avatarUrl"
             :color-class="member.color"
             size="md"
             class="-ml-3 first:ml-0"

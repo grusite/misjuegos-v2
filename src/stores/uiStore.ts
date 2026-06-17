@@ -18,7 +18,7 @@ export const useUiStore = defineStore("ui", () => {
 
   function toggleNav() {
     if (isNavOpen.value) {
-      closeNav()
+      closeNav(false)
     } else {
       openNav()
     }

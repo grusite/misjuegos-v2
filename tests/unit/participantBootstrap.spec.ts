@@ -13,6 +13,7 @@ describe("participantBootstrap", () => {
       profileId: null,
       displayName: "Edush",
       color: null,
+      avatarUrl: null,
       createdAt: "2026-01-01T00:00:00.000Z",
     },
     {
@@ -21,6 +22,7 @@ describe("participantBootstrap", () => {
       profileId: "profile-jorge",
       displayName: "Jorge",
       color: null,
+      avatarUrl: null,
       createdAt: "2026-01-01T00:00:00.000Z",
     },
   ]

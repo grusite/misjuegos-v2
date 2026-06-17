@@ -30,6 +30,7 @@ type SessionMember = {
   participantId: string | null
   profileId: string | null
   color: string | null
+  avatarUrl: string | null
 }
 
 export function useSessionDetail(sessionId: string) {
@@ -149,6 +150,7 @@ export function useSessionDetail(sessionId: string) {
           participantId: row.participantId,
           profileId: row.profileId,
           color: participant?.color ?? null,
+          avatarUrl: participant?.avatarUrl ?? null,
         })
       } else if (row.profileId && authStore.profile?.id === row.profileId) {
         resolved.push({
@@ -157,6 +159,7 @@ export function useSessionDetail(sessionId: string) {
           participantId: null,
           profileId: row.profileId,
           color: getAvatarColor(authStore.profile.displayName),
+          avatarUrl: authStore.profile.avatarUrl,
         })
       }
     }

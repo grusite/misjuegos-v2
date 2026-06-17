@@ -4,6 +4,7 @@ export type Participant = {
   profileId: string | null
   displayName: string
   color: string | null
+  avatarUrl: string | null
   createdAt: string
 }
 

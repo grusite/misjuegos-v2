@@ -15,12 +15,19 @@ import {
   toParticipantUpdate,
 } from "@/services/participants/participantMapper"
 
+const PARTICIPANT_WITH_PROFILE_SELECT = `
+  *,
+  linked_profile:profiles!participants_profile_id_fkey (
+    avatar_url
+  )
+`
+
 export function createParticipantsRepository(client: SupabaseClient<AppDatabase>) {
   return {
     async listForOwner(ownerId: string): Promise<Participant[]> {
       const result = await client
         .from("participants")
-        .select("*")
+        .select(PARTICIPANT_WITH_PROFILE_SELECT)
         .eq("owner_id", ownerId)
         .order("display_name")
 
@@ -32,7 +39,7 @@ export function createParticipantsRepository(client: SupabaseClient<AppDatabase>
     ): Promise<ParticipantWithAliases[]> {
       const result = await client
         .from("participants")
-        .select("*, participant_aliases(*)")
+        .select(`${PARTICIPANT_WITH_PROFILE_SELECT}, participant_aliases(*)`)
         .eq("owner_id", ownerId)
         .order("display_name")
 
@@ -45,7 +52,7 @@ export function createParticipantsRepository(client: SupabaseClient<AppDatabase>
     async search(ownerId: string, query: string): Promise<Participant[]> {
       const result = await client
         .from("participants")
-        .select("*")
+        .select(PARTICIPANT_WITH_PROFILE_SELECT)
         .eq("owner_id", ownerId)
         .ilike("display_name", `%${query}%`)
         .order("display_name")
@@ -56,7 +63,7 @@ export function createParticipantsRepository(client: SupabaseClient<AppDatabase>
     async getById(id: string): Promise<Participant | null> {
       const result = await client
         .from("participants")
-        .select("*")
+        .select(PARTICIPANT_WITH_PROFILE_SELECT)
         .eq("id", id)
         .maybeSingle()
 
@@ -70,7 +77,7 @@ export function createParticipantsRepository(client: SupabaseClient<AppDatabase>
     ): Promise<Participant | null> {
       const result = await client
         .from("participants")
-        .select("*")
+        .select(PARTICIPANT_WITH_PROFILE_SELECT)
         .eq("owner_id", ownerId)
         .eq("profile_id", profileId)
         .maybeSingle()
@@ -85,7 +92,7 @@ export function createParticipantsRepository(client: SupabaseClient<AppDatabase>
     ): Promise<Participant | null> {
       const result = await client
         .from("participants")
-        .select("*")
+        .select(PARTICIPANT_WITH_PROFILE_SELECT)
         .eq("owner_id", ownerId)
         .ilike("display_name", displayName)
         .maybeSingle()
@@ -101,7 +108,7 @@ export function createParticipantsRepository(client: SupabaseClient<AppDatabase>
       const result = await client
         .from("participants")
         .insert(toParticipantInsert(ownerId, input))
-        .select("*")
+        .select(PARTICIPANT_WITH_PROFILE_SELECT)
         .single()
 
       return mapParticipant(unwrap(result))
@@ -115,7 +122,7 @@ export function createParticipantsRepository(client: SupabaseClient<AppDatabase>
         .from("participants")
         .update(toParticipantUpdate(input))
         .eq("id", id)
-        .select("*")
+        .select(PARTICIPANT_WITH_PROFILE_SELECT)
         .single()
 
       return mapParticipant(unwrap(result))

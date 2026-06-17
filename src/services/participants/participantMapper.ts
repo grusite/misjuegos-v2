@@ -11,13 +11,18 @@ import type {
   ParticipantUpdate,
 } from "@/domain/types/rows"
 
-export function mapParticipant(row: ParticipantRow): Participant {
+type ParticipantRowWithProfile = ParticipantRow & {
+  linked_profile?: { avatar_url: string | null } | null
+}
+
+export function mapParticipant(row: ParticipantRowWithProfile): Participant {
   return {
     id: row.id,
     ownerId: row.owner_id,
     profileId: row.profile_id,
     displayName: row.display_name,
     color: row.color,
+    avatarUrl: row.linked_profile?.avatar_url ?? null,
     createdAt: row.created_at,
   }
 }
