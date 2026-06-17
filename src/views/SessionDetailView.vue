@@ -4,6 +4,7 @@ import { useRoute } from "vue-router"
 import UiButton from "@/components/ui/UiButton.vue"
 import UiConfirmDialog from "@/components/ui/UiConfirmDialog.vue"
 import BoardOutcomePicker from "@/components/sessions/BoardOutcomePicker.vue"
+import SessionMembersEditor from "@/components/sessions/SessionMembersEditor.vue"
 import SessionMessageItem from "@/components/sessions/SessionMessageItem.vue"
 import EscapeSessionDetailsPanel from "@/components/sessions/EscapeSessionDetailsPanel.vue"
 import { useSessionDetail } from "@/composables/useSessionDetail"
@@ -21,6 +22,8 @@ const {
   escapeDetails,
   isEscapeSession,
   members,
+  participants,
+  selfParticipantId,
   messages,
   scores,
   isLoading,
@@ -36,6 +39,8 @@ const {
   addMessage,
   saveScores,
   saveEscapeDetails,
+  saveMembers,
+  createFriendParticipant,
 } = useSessionDetail(sessionId)
 
 const messageDraft = ref("")
@@ -54,6 +59,8 @@ const outcomeLabels: Record<SessionOutcome, string> = {
 }
 
 const draftOutcomeLabelClass = computed(() => boardOutcomeLabelClass(draftOutcome.value))
+
+const sessionAccent = computed(() => (isEscapeSession.value ? "tertiary" : "board"))
 
 watch(
   () => session.value?.id,
@@ -152,6 +159,17 @@ async function handleResetConfirm() {
         </h1>
         <p class="text-sm text-gray-400">{{ formatDate(session.playedAt) }}</p>
       </header>
+
+      <SessionMembersEditor
+        :members="members"
+        :participants="participants"
+        :self-participant-id="selfParticipantId"
+        :accent="sessionAccent"
+        :can-write="Boolean(canWrite)"
+        :is-saving="isSaving"
+        :create-participant="createFriendParticipant"
+        :apply-selection="saveMembers"
+      />
 
       <EscapeSessionDetailsPanel
         v-if="isEscapeSession"

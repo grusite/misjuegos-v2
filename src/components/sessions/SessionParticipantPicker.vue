@@ -17,18 +17,32 @@ const props = withDefaults(
     selfParticipantId?: string | null
     accent?: "board" | "tertiary"
     createParticipant?: (displayName: string) => Promise<Participant | null>
+    applySelection?: (participantIds: string[]) => Promise<boolean>
+    label?: string
+    triggerLabel?: string
+    doneLabel?: string
+    hideTrigger?: boolean
+    disabled?: boolean
   }>(),
   {
     selfParticipantId: null,
     accent: "board",
     createParticipant: undefined,
+    applySelection: undefined,
+    label: "Participantes",
+    triggerLabel: "Elegir",
+    doneLabel: "Listo",
+    hideTrigger: false,
+    disabled: false,
   },
 )
 
 const isOpen = ref(false)
 const searchQuery = ref("")
 const isCreating = ref(false)
+const isApplying = ref(false)
 const createError = ref<string | null>(null)
+let snapshotOnOpen: string[] = []
 
 const trimmedQuery = computed(() => searchQuery.value.trim())
 
@@ -115,6 +129,7 @@ const filteredParticipants = computed(() => {
 })
 
 function openPicker() {
+  snapshotOnOpen = [...selectedIds.value]
   searchQuery.value = ""
   createError.value = null
   isOpen.value = true
@@ -124,6 +139,38 @@ function closePicker() {
   isOpen.value = false
   createError.value = null
 }
+
+function cancelPicker() {
+  if (props.applySelection) {
+    selectedIds.value = [...snapshotOnOpen]
+  }
+
+  closePicker()
+}
+
+async function handleDone() {
+  if (props.applySelection) {
+    isApplying.value = true
+    createError.value = null
+
+    try {
+      const saved = await props.applySelection(selectedIds.value)
+      if (!saved) {
+        createError.value = "No se pudieron guardar los jugadores"
+        return
+      }
+    } catch (error) {
+      createError.value = getDbErrorMessage(error)
+      return
+    } finally {
+      isApplying.value = false
+    }
+  }
+
+  closePicker()
+}
+
+defineExpose({ openPicker })
 
 async function handleCreateFromSearch() {
   if (!props.createParticipant || !canCreateFromSearch.value || isCreating.value) return
@@ -176,15 +223,20 @@ function participantLabel(participant: Participant) {
 
 <template>
   <div class="space-y-2">
-    <div class="flex items-baseline justify-between gap-2">
-      <p class="text-sm text-gray-400">Participantes</p>
+    <div
+      v-if="!hideTrigger"
+      class="flex items-baseline justify-between gap-2"
+    >
+      <p class="text-sm text-gray-400">{{ label }}</p>
       <p class="text-xs text-gray-500">{{ countLabel }}</p>
     </div>
 
     <button
+      v-if="!hideTrigger"
       type="button"
-      class="flex w-full items-center gap-3 rounded-lg border-2 border-gray-700 bg-dark/60 px-3 py-3 text-left transition-colors"
+      class="flex w-full items-center gap-3 rounded-lg border-2 border-gray-700 bg-dark/60 px-3 py-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60"
       :class="accentHoverClass"
+      :disabled="disabled"
       @click="openPicker"
     >
       <div
@@ -220,7 +272,7 @@ function participantLabel(participant: Participant) {
         class="shrink-0 text-sm font-semibold"
         :class="accentTextClass"
       >
-        Elegir
+        {{ triggerLabel }}
       </span>
     </button>
 
@@ -236,7 +288,7 @@ function participantLabel(participant: Participant) {
           type="button"
           class="absolute inset-0 bg-black/60"
           aria-label="Cerrar selector de participantes"
-          @click="closePicker"
+          @click="cancelPicker"
         />
 
         <div
@@ -259,7 +311,7 @@ function participantLabel(participant: Participant) {
               type="button"
               class="rounded-full p-2 text-gray-400 transition-colors hover:text-gray-100"
               aria-label="Cerrar"
-              @click="closePicker"
+              @click="cancelPicker"
             >
               <Icon
                 icon="mdi:close"
@@ -376,9 +428,10 @@ function participantLabel(participant: Participant) {
             type="button"
             :variant="accent"
             class="mt-3 w-full"
-            @click="closePicker"
+            :disabled="isApplying || isCreating"
+            @click="handleDone"
           >
-            Listo
+            {{ isApplying ? "Guardando..." : doneLabel }}
           </UiButton>
         </div>
       </div>

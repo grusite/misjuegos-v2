@@ -2,7 +2,10 @@ import { computed, onMounted, onUnmounted, ref } from "vue"
 import { useAuthStore } from "@/stores/authStore"
 import type { EscapeRoomDetails } from "@/domain/types/catalog"
 import type { EscapeSessionDetails } from "@/domain/types/escapeSession"
+import type { Participant } from "@/domain/types/participant"
 import type { GameType, SessionOutcome } from "@/domain/types/rows"
+import { participantFormSchema } from "@/domain/schemas/participant"
+import { getAvatarColor } from "@/lib/utils/avatarColor"
 import type {
   PlaySession,
   SessionMessage,
@@ -13,6 +16,11 @@ import type {
 } from "@/domain/types/session"
 import { catalogRepository } from "@/services/catalog/catalogRepository"
 import { getDbErrorMessage } from "@/services/errors"
+import {
+  ensureSelfParticipant,
+  sortParticipantsWithSelfFirst,
+  syncFriendsFromSession,
+} from "@/services/participants/participantBootstrap"
 import { participantsRepository } from "@/services/participants/participantsRepository"
 import { sessionsRepository } from "@/services/sessions/sessionsRepository"
 
@@ -21,6 +29,7 @@ type SessionMember = {
   displayName: string
   participantId: string | null
   profileId: string | null
+  color: string | null
 }
 
 export function useSessionDetail(sessionId: string) {
@@ -32,6 +41,7 @@ export function useSessionDetail(sessionId: string) {
   const escapeRoom = ref<EscapeRoomDetails | null>(null)
   const escapeDetails = ref<EscapeSessionDetails | null>(null)
   const members = ref<SessionMember[]>([])
+  const participants = ref<Participant[]>([])
   const messages = ref<SessionMessage[]>([])
   const scores = ref<SessionScore[]>([])
 
@@ -62,6 +72,12 @@ export function useSessionDetail(sessionId: string) {
   })
 
   const isEscapeSession = computed(() => gameType.value === "escape_room")
+
+  const selfParticipantId = computed(
+    () =>
+      participants.value.find(participant => participant.profileId === authStore.profile?.id)
+        ?.id ?? null,
+  )
 
   function setTicker(active: boolean) {
     if (intervalId) {
@@ -105,6 +121,7 @@ export function useSessionDetail(sessionId: string) {
       }
 
       const participantRows = await sessionsRepository.listParticipants(found.id)
+      await loadParticipants()
       members.value = await resolveMembers(participantRows)
 
       messages.value = await sessionsRepository.listMessages(found.id)
@@ -131,6 +148,7 @@ export function useSessionDetail(sessionId: string) {
           displayName: participant?.displayName ?? "Participante",
           participantId: row.participantId,
           profileId: row.profileId,
+          color: participant?.color ?? null,
         })
       } else if (row.profileId && authStore.profile?.id === row.profileId) {
         resolved.push({
@@ -138,11 +156,95 @@ export function useSessionDetail(sessionId: string) {
           displayName: authStore.profile.displayName,
           participantId: null,
           profileId: row.profileId,
+          color: getAvatarColor(authStore.profile.displayName),
         })
       }
     }
 
     return resolved
+  }
+
+  async function loadParticipants() {
+    if (!authStore.profile?.id) return
+
+    const selfParticipant = await ensureSelfParticipant(authStore.profile)
+    const list = await participantsRepository.listForOwner(authStore.profile.id)
+    participants.value = sortParticipantsWithSelfFirst(list, authStore.profile.id)
+
+    return selfParticipant
+  }
+
+  async function createFriendParticipant(displayName: string): Promise<Participant | null> {
+    if (!authStore.profile?.id) return null
+
+    const parsed = participantFormSchema.safeParse({ displayName })
+    if (!parsed.success) return null
+
+    const normalizedName = parsed.data.displayName
+
+    try {
+      const existing = await participantsRepository.findByDisplayName(
+        authStore.profile.id,
+        normalizedName,
+      )
+
+      if (existing) {
+        await loadParticipants()
+        return existing
+      }
+
+      await participantsRepository.create(authStore.profile.id, {
+        displayName: normalizedName,
+        color: getAvatarColor(normalizedName),
+      })
+
+      await loadParticipants()
+      return (
+        participants.value.find(
+          participant =>
+            participant.displayName.toLowerCase() === normalizedName.toLowerCase(),
+        ) ?? null
+      )
+    } catch (error) {
+      errorMessage.value = getDbErrorMessage(error)
+      return null
+    }
+  }
+
+  async function saveMembers(selectedParticipantIds: string[]): Promise<boolean> {
+    if (!session.value || !canWrite.value || !authStore.profile) return false
+
+    isSaving.value = true
+    errorMessage.value = null
+
+    try {
+      const selfParticipant = await ensureSelfParticipant(authStore.profile)
+      const memberIds = new Set(selectedParticipantIds)
+      memberIds.add(selfParticipant.id)
+
+      const rows = await sessionsRepository.setParticipants(
+        session.value.id,
+        Array.from(memberIds).map(participantId => ({ participantId })),
+      )
+
+      members.value = await resolveMembers(rows)
+      await syncFriendsFromSession(
+        session.value.id,
+        authStore.profile.id,
+        selfParticipant.id,
+      )
+
+      if (gameType.value === "board_game") {
+        scores.value = await sessionsRepository.listScores(session.value.id)
+      }
+
+      return true
+    } catch (error) {
+      errorMessage.value = getDbErrorMessage(error)
+      return false
+    } finally {
+      isSaving.value = false
+    }
   }
 
   async function patchSession(partial: UpdateSessionInput) {
@@ -304,6 +406,8 @@ export function useSessionDetail(sessionId: string) {
     escapeDetails,
     isEscapeSession,
     members,
+    participants,
+    selfParticipantId,
     messages,
     scores,
     isLoading,
@@ -320,5 +424,7 @@ export function useSessionDetail(sessionId: string) {
     addMessage,
     saveScores,
     saveEscapeDetails,
+    saveMembers,
+    createFriendParticipant,
   }
 }
