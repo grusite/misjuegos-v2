@@ -4,11 +4,15 @@ import ParticipantAliasManager from "@/components/participants/ParticipantAliasM
 import UserAvatar from "@/components/ui/UserAvatar.vue"
 import type { ParticipantWithAliases } from "@/domain/types/participant"
 
-defineProps<{
-  participant: ParticipantWithAliases
-  isExpanded: boolean
-  isSaving?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    participant: ParticipantWithAliases
+    isExpanded: boolean
+    isSaving?: boolean
+    canRemove?: boolean
+  }>(),
+  { canRemove: true },
+)
 
 const emit = defineEmits<{
   toggle: []
@@ -58,6 +62,7 @@ function handleRemove() {
           Editar
         </button>
         <button
+          v-if="props.canRemove"
           type="button"
           class="rounded-lg px-2 py-1 text-sm"
           :class="

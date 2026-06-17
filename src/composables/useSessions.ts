@@ -2,10 +2,16 @@ import { computed, onMounted, ref } from "vue"
 import { useAuthStore } from "@/stores/authStore"
 import type { EscapeRoomCatalogEntry, GameCatalog } from "@/domain/types/catalog"
 import type { Participant } from "@/domain/types/participant"
-import type { SessionMemberInput, SessionMemberPreview } from "@/domain/types/session"
+import type { SessionMemberPreview } from "@/domain/types/session"
 import type { GameType, SessionOutcome, SessionStatus } from "@/domain/types/rows"
 import { getDbErrorMessage } from "@/services/errors"
 import { catalogRepository } from "@/services/catalog/catalogRepository"
+import {
+  ensureSelfParticipant,
+  sortParticipantsWithSelfFirst,
+  syncFriendsFromAllSessions,
+  syncFriendsFromSession,
+} from "@/services/participants/participantBootstrap"
 import { participantsRepository } from "@/services/participants/participantsRepository"
 import { sessionsRepository } from "@/services/sessions/sessionsRepository"
 import { searchBoardGames, type BggSearchResult } from "@/services/bgg/bggService"
@@ -63,6 +69,31 @@ export function useSessions() {
     return sessions.value.filter(session => session.gameType === sessionFilter.value)
   })
 
+  const selfParticipantId = computed(
+    () => participants.value.find(participant => participant.profileId === ownerId.value)?.id ?? null,
+  )
+
+  async function resolveSessionMembers(selectedParticipantIds: string[]) {
+    if (!ownerId.value || !authStore.profile) return []
+
+    const selfParticipant = await ensureSelfParticipant(authStore.profile)
+    const memberIds = new Set(selectedParticipantIds)
+    memberIds.add(selfParticipant.id)
+
+    return Array.from(memberIds).map(participantId => ({ participantId }))
+  }
+
+  async function saveSessionMembers(sessionId: string, selectedParticipantIds: string[]) {
+    if (!ownerId.value || !authStore.profile) return
+
+    const selfParticipant = await ensureSelfParticipant(authStore.profile)
+    const members = await resolveSessionMembers(selectedParticipantIds)
+
+    await sessionsRepository.setParticipants(sessionId, members)
+    await syncFriendsFromSession(sessionId, ownerId.value, selfParticipant.id)
+    await loadParticipants()
+  }
+
   async function loadSessions() {
     if (!ownerId.value) return
 
@@ -117,10 +148,14 @@ export function useSessions() {
   }
 
   async function loadParticipants() {
-    if (!ownerId.value) return
+    if (!ownerId.value || !authStore.profile) return
 
     try {
-      participants.value = await participantsRepository.listForOwner(ownerId.value)
+      const selfParticipant = await ensureSelfParticipant(authStore.profile)
+      await syncFriendsFromAllSessions(ownerId.value, selfParticipant.id)
+
+      const list = await participantsRepository.listForOwner(ownerId.value)
+      participants.value = sortParticipantsWithSelfFirst(list, ownerId.value)
     } catch (error) {
       errorMessage.value = getDbErrorMessage(error)
     }
@@ -169,13 +204,7 @@ export function useSessions() {
         lastStartedAt: new Date().toISOString(),
       })
 
-      const members: SessionMemberInput[] = payload.selectedParticipants.map(
-        participantId => ({
-          participantId,
-        }),
-      )
-
-      await sessionsRepository.setParticipants(session.id, members)
+      await saveSessionMembers(session.id, payload.selectedParticipants)
       await loadSessions()
 
       return session.id
@@ -223,13 +252,7 @@ export function useSessions() {
         priceCurrency: "EUR",
       })
 
-      const members: SessionMemberInput[] = payload.selectedParticipants.map(
-        participantId => ({
-          participantId,
-        }),
-      )
-
-      await sessionsRepository.setParticipants(session.id, members)
+      await saveSessionMembers(session.id, payload.selectedParticipants)
       await Promise.all([loadSessions(), loadEscapeCatalog()])
 
       return session.id
@@ -257,6 +280,7 @@ export function useSessions() {
     isLoading,
     isSaving,
     errorMessage,
+    selfParticipantId,
     loadSessions,
     loadEscapeCatalog,
     searchBgg,

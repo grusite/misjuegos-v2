@@ -18,11 +18,21 @@ export function useParticipants() {
 
   const ownerId = computed(() => authStore.profile?.id ?? null)
 
+  const friendParticipants = computed(() => {
+    if (!ownerId.value) return participants.value
+
+    return participants.value.filter(
+      participant => participant.profileId !== ownerId.value,
+    )
+  })
+
   const filteredParticipants = computed(() => {
     const query = searchQuery.value.trim().toLowerCase()
-    if (!query) return participants.value
+    const list = friendParticipants.value
 
-    return participants.value.filter(participant => {
+    if (!query) return list
+
+    return list.filter(participant => {
       const matchesName = participant.displayName.toLowerCase().includes(query)
       const matchesAlias = participant.aliases.some(alias =>
         alias.alias.includes(query),
@@ -31,6 +41,11 @@ export function useParticipants() {
       return matchesName || matchesAlias
     })
   })
+
+  function isSelfParticipant(participantId: string): boolean {
+    const participant = participants.value.find(item => item.id === participantId)
+    return participant?.profileId === ownerId.value
+  }
 
   async function load() {
     if (!ownerId.value) return
@@ -99,6 +114,11 @@ export function useParticipants() {
   }
 
   async function removeParticipant(id: string) {
+    if (isSelfParticipant(id)) {
+      errorMessage.value = "No puedes eliminar tu propio participante"
+      return
+    }
+
     isSaving.value = true
     errorMessage.value = null
 
@@ -177,6 +197,7 @@ export function useParticipants() {
   return {
     participants,
     filteredParticipants,
+    ownerId,
     isLoading,
     isSaving,
     errorMessage,

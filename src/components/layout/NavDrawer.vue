@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, toRef, watch } from "vue"
+import { computed, onUnmounted, ref, toRef, watch } from "vue"
 import { Icon } from "@iconify/vue"
 import { RouterLink, useRoute } from "vue-router"
 import NavIcon from "@/components/ui/NavIcon.vue"
@@ -50,8 +50,14 @@ watch(
   isMenuOpen => {
     if (isMenuOpen && isInTools.value) toolsExpanded.value = true
     if (isMenuOpen && !isInTools.value) toolsExpanded.value = false
+
+    document.body.style.overflow = isMenuOpen ? "hidden" : ""
   },
 )
+
+onUnmounted(() => {
+  document.body.style.overflow = ""
+})
 
 function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -129,21 +135,22 @@ async function handleLogout() {
 </script>
 
 <template>
-  <Transition
-    :css="false"
-    @enter="onEnter"
-    @leave="onLeave"
-  >
-    <nav
-      v-if="open"
-      class="nav-drawer fixed inset-0 z-40 flex bg-primary"
-      :style="navStyle"
+  <Teleport to="body">
+    <Transition
+      :css="false"
+      @enter="onEnter"
+      @leave="onLeave"
     >
+      <nav
+        v-if="open"
+        class="nav-drawer fixed inset-0 z-[100] flex bg-primary"
+        :style="navStyle"
+      >
       <div class="mx-auto flex max-w-lg flex-1 flex-col p-4">
         <RouterLink
-          to="/"
+          :to="{ name: 'sessions' }"
           class="w-6"
-          @click="uiStore.closeNav(true)"
+          @click="uiStore.notifyHomeClick()"
         >
           <img
             src="/logo.svg"
@@ -252,8 +259,9 @@ async function handleLogout() {
           </button>
         </div>
       </div>
-    </nav>
-  </Transition>
+      </nav>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>

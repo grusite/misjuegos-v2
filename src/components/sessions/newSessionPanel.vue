@@ -7,6 +7,7 @@ import type { BggSearchResult } from "@/services/bgg/bggService"
 
 const props = defineProps<{
   participants: Participant[]
+  selfParticipantId?: string | null
   bggResults: BggSearchResult[]
   isSaving?: boolean
 }>()
@@ -33,11 +34,12 @@ const form = reactive({
 })
 
 watch(
-  () => props.participants,
-  participants => {
-    if (form.selectedParticipants.length === 0 && participants.length > 0) {
-      form.selectedParticipants = [participants[0].id]
-    }
+  () => [props.participants, props.selfParticipantId] as const,
+  ([participants, selfParticipantId]) => {
+    if (form.selectedParticipants.length > 0) return
+
+    const defaultId = selfParticipantId ?? participants[0]?.id
+    if (defaultId) form.selectedParticipants = [defaultId]
   },
   { immediate: true },
 )

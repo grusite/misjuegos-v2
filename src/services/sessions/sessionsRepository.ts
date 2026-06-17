@@ -138,6 +138,15 @@ export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
       return unwrap(result).map(mapSessionParticipant)
     },
 
+    async listSessionIdsForParticipant(participantId: string): Promise<string[]> {
+      const result = await client
+        .from("session_participants")
+        .select("session_id")
+        .eq("participant_id", participantId)
+
+      return [...new Set(unwrap(result).map(row => row.session_id))]
+    },
+
     async listMemberPreviewsBySessionIds(
       sessionIds: string[],
     ): Promise<Map<string, SessionMemberPreview[]>> {

@@ -2,6 +2,11 @@ import { defineStore } from "pinia"
 import { computed, ref } from "vue"
 import type { UserMetadata } from "@supabase/supabase-js"
 import * as authService from "@/services/auth/authService"
+import {
+  deduplicateLinkedParticipants,
+  ensureSelfParticipant,
+  syncFriendsFromAllSessions,
+} from "@/services/participants/participantBootstrap"
 
 export type AuthProfile = {
   id: string
@@ -21,14 +26,21 @@ export const useAuthStore = defineStore("auth", () => {
 
     if (fromDb) {
       profile.value = fromDb
-      return
-    }
-
-    if (metadata) {
-      // Ensure profile row exists (important after local db resets + stale sessions).
+    } else if (metadata) {
       await authService.ensureProfile(userId, metadata)
       profile.value = (await authService.fetchProfile(userId)) ??
         authService.profileFromMetadata(userId, metadata)
+    }
+
+    if (!profile.value) return
+
+    try {
+      const selfParticipant = await ensureSelfParticipant(profile.value)
+      await deduplicateLinkedParticipants(profile.value.id)
+      await syncFriendsFromAllSessions(profile.value.id, selfParticipant.id)
+      await deduplicateLinkedParticipants(profile.value.id)
+    } catch {
+      // Participant bootstrap is best-effort; auth should still succeed.
     }
   }
 

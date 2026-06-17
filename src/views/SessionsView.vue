@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
+import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import NewEscapeSessionPanel from "@/components/sessions/NewEscapeSessionPanel.vue"
 import NewSessionPanel from "@/components/sessions/newSessionPanel.vue"
@@ -14,6 +14,7 @@ const {
   filteredSessions,
   sessionFilter,
   participants,
+  selfParticipantId,
   escapeCatalog,
   bggResults,
   isLoading,
@@ -40,6 +41,14 @@ watch(
     if (isNavOpen) isCreating.value = false
   },
 )
+
+onMounted(() => {
+  const unregister = uiStore.onHomeClick(() => {
+    isCreating.value = false
+  })
+
+  onUnmounted(unregister)
+})
 
 function formatDate(isoDate: string): string {
   return new Intl.DateTimeFormat("es-ES", {
@@ -238,6 +247,7 @@ async function handleCreateEscape(payload: {
           <NewSessionPanel
             v-if="createKind === 'board_game'"
             :participants="participants"
+            :self-participant-id="selfParticipantId"
             :bgg-results="bggResults"
             :is-saving="isSaving"
             @search-bgg="searchBgg"
@@ -247,6 +257,7 @@ async function handleCreateEscape(payload: {
           <NewEscapeSessionPanel
             v-else
             :participants="participants"
+            :self-participant-id="selfParticipantId"
             :escape-catalog="escapeCatalog"
             :is-saving="isSaving"
             @submit="handleCreateEscape"
