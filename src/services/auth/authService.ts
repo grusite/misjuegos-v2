@@ -47,6 +47,24 @@ export async function fetchProfile(userId: string): Promise<AuthProfile | null> 
   return mapProfile(data)
 }
 
+export async function ensureProfile(
+  userId: string,
+  metadata: UserMetadata | null,
+): Promise<void> {
+  const fallback = profileFromMetadata(userId, metadata ?? {})
+
+  const { error } = await supabase.from("profiles").upsert(
+    {
+      id: userId,
+      display_name: fallback.displayName,
+      avatar_url: fallback.avatarUrl,
+    },
+    { onConflict: "id" },
+  )
+
+  if (error) throw error
+}
+
 export async function signInWithGoogle(): Promise<void> {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",

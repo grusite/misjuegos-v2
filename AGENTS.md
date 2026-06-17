@@ -17,8 +17,8 @@ This repo is a ground-up rebuild of MisJuegos (private app at [misjuegos.net](ht
 | **2** | ✅ Done | Repository layer (DbError, repos, mappers) |
 | **3** | ✅ Done | App shell + v1 nav animations |
 | **4** | ✅ Done | Participants migrations + UI |
-| 5 | 🔜 Next | Board games + sessions + messages + scores |
-| 6 | Pending | Escape rooms |
+| **5** | ✅ Done | Board games + sessions + messages + scores |
+| 6 | 🔜 Next | Escape rooms |
 | 7 | Pending | Dashboard |
 | 8 | Pending | Import pipeline (Escape Babel spreadsheet) |
 | 9 | Pending | Photos / Storage |
@@ -203,6 +203,7 @@ chore: scaffold Vue 3 app with Tailwind brand tokens
 ```bash
 nvm use && pnpm install
 pnpm dev          # http://localhost:5173
+pnpm dev --host   # LAN URL for phone testing — see docs/LOCAL_MOBILE_TESTING.md
 pnpm test
 pnpm lint
 pnpm build
@@ -222,6 +223,8 @@ VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
 SUPABASE_PROJECT_ID=
 ```
+
+**Phone testing on LAN:** set `VITE_SUPABASE_URL` to `http://<LAN_IP>:54321`, run `pnpm dev --host`, transfer session from desktop — full steps in [`docs/LOCAL_MOBILE_TESTING.md`](docs/LOCAL_MOBILE_TESTING.md).
 
 ---
 

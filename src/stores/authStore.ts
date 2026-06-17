@@ -25,7 +25,10 @@ export const useAuthStore = defineStore("auth", () => {
     }
 
     if (metadata) {
-      profile.value = authService.profileFromMetadata(userId, metadata)
+      // Ensure profile row exists (important after local db resets + stale sessions).
+      await authService.ensureProfile(userId, metadata)
+      profile.value = (await authService.fetchProfile(userId)) ??
+        authService.profileFromMetadata(userId, metadata)
     }
   }
 

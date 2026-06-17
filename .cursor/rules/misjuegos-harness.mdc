@@ -35,3 +35,4 @@ Views → Composables → Services → Supabase. Pinia for auth/UI only — not 
 
 - v1 UX reference: [`docs/V1_REFERENCE.md`](docs/V1_REFERENCE.md) · local: `/Users/jorgemartin/repo/misjuegos-master`
 - Schema: `docs/DATABASE.md` | Tasks: `docs/ROADMAP.md`
+- Mobile LAN testing: [`docs/LOCAL_MOBILE_TESTING.md`](docs/LOCAL_MOBILE_TESTING.md)

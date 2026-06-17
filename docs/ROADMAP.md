@@ -47,7 +47,7 @@ Repositories use `AppDatabase` (`src/domain/types/schema.ts`) for tables not yet
 - [x] Add/edit form (Zod)
 - [x] Alias management
 
-## Phase 5 — Board game flow (in progress)
+## Phase 5 — Board game flow ✅
 
 - [x] Migrations: catalog, board_game_details, play_sessions, session_participants
 - [x] Migrations: **session_messages**, **board_game_scores**
@@ -57,11 +57,11 @@ Repositories use `AppDatabase` (`src/domain/types/schema.ts`) for tables not yet
 - [x] Session timer composable
 - [x] Outcome toggle + session messages UI
 - [x] Board game scores UI
-- [ ] Port Home FAB slide animation for “Nueva partida”
+- [x] Port Home FAB slide animation for “Nueva partida”
 
-## Phase 6 — Escape rooms
+## Phase 6 — Escape rooms (in progress)
 
-- [ ] Migrations: escape_room_details + escape_session_details
+- [x] Migrations: escape_room_details + escape_session_details
 - [ ] New escape session form
 - [ ] Escape detail panel (clues, time, price, escaped)
 - [ ] Catalog browse + session list filters

@@ -137,6 +137,76 @@ export type Database = {
           },
         ]
       }
+      escape_room_details: {
+        Row: {
+          city: string | null
+          company: string | null
+          game_catalog_id: string
+          room_name: string | null
+          venue: string | null
+        }
+        Insert: {
+          city?: string | null
+          company?: string | null
+          game_catalog_id: string
+          room_name?: string | null
+          venue?: string | null
+        }
+        Update: {
+          city?: string | null
+          company?: string | null
+          game_catalog_id?: string
+          room_name?: string | null
+          venue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escape_room_details_game_catalog_id_fkey"
+            columns: ["game_catalog_id"]
+            isOneToOne: true
+            referencedRelation: "game_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      escape_session_details: {
+        Row: {
+          clues_used: number | null
+          escaped: boolean | null
+          price: number | null
+          price_currency: string
+          session_id: string
+          time_result: string | null
+          time_seconds: number | null
+        }
+        Insert: {
+          clues_used?: number | null
+          escaped?: boolean | null
+          price?: number | null
+          price_currency?: string
+          session_id: string
+          time_result?: string | null
+          time_seconds?: number | null
+        }
+        Update: {
+          clues_used?: number | null
+          escaped?: boolean | null
+          price?: number | null
+          price_currency?: string
+          session_id?: string
+          time_result?: string | null
+          time_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escape_session_details_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "play_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_catalog: {
         Row: {
           created_at: string
