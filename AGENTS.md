@@ -21,8 +21,8 @@ This repo is a ground-up rebuild of MisJuegos (private app at [misjuegos.net](ht
 | **6** | ✅ Done | Escape rooms — create flow, detail panel, list filters |
 | **7** | ✅ Done | Dashboard — stats, charts, partners, escape summary |
 | **8** | ✅ Done | Desired games wishlist — board games + escapes to play |
-| 9 | 🔜 Next | Player teams — reusable participant groups |
-| 10 | Pending | Import pipeline (Escape Babel CSV) |
+| **9** | ✅ Done | Player teams — reusable participant groups |
+| 10 | 🔜 Next | Import pipeline (Escape Babel CSV) |
 | 11 | Pending | Photos / Storage |
 | 12 | Pending | Utilities (dice, roulette, timer) |
 | 13 | Pending | Production cutover |

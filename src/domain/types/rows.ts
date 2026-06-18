@@ -111,6 +111,7 @@ export type PlaySessionRow = {
   id: string
   game_catalog_id: string
   created_by: string
+  player_team_id: string | null
   played_at: string
   status: SessionStatus
   outcome: SessionOutcome | null
@@ -130,6 +131,7 @@ export type PlaySessionInsert = {
   id?: string
   game_catalog_id: string
   created_by: string
+  player_team_id?: string | null
   played_at: string
   status?: SessionStatus
   outcome?: SessionOutcome | null
@@ -148,6 +150,7 @@ export type PlaySessionInsert = {
 export type PlaySessionUpdate = {
   game_catalog_id?: string
   created_by?: string
+  player_team_id?: string | null
   played_at?: string
   status?: SessionStatus
   outcome?: SessionOutcome | null
@@ -177,5 +180,5 @@ export type SessionParticipantInsert = {
   participant_id?: string | null
 }
 
-/** Tables not yet in generated `database.ts` — empty after Phase 8 migrations. */
+/** Tables not yet in generated `database.ts`. */
 export type PendingTables = Record<string, never>

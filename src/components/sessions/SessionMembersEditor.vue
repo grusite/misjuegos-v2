@@ -2,8 +2,10 @@
 import { computed, ref, watch } from "vue"
 import { Icon } from "@iconify/vue"
 import SessionParticipantPicker from "@/components/sessions/SessionParticipantPicker.vue"
+import TeamBadge from "@/components/teams/TeamBadge.vue"
 import ParticipantBubble from "@/components/ui/ParticipantBubble.vue"
 import type { Participant } from "@/domain/types/participant"
+import type { PlayerTeamWithMembers } from "@/domain/types/playerTeam"
 
 type SessionMemberView = {
   id: string
@@ -17,14 +19,21 @@ const props = withDefaults(
   defineProps<{
     members: SessionMemberView[]
     participants: Participant[]
+    teams?: PlayerTeamWithMembers[]
+    playerTeamId?: string | null
     selfParticipantId?: string | null
     accent?: "board" | "tertiary"
     canWrite?: boolean
     isSaving?: boolean
     createParticipant?: (displayName: string) => Promise<Participant | null>
-    applySelection: (participantIds: string[]) => Promise<boolean>
+    applySelection: (
+      participantIds: string[],
+      teamId: string | null,
+    ) => Promise<boolean>
   }>(),
   {
+    teams: () => [],
+    playerTeamId: null,
     selfParticipantId: null,
     accent: "board",
     canWrite: false,
@@ -34,6 +43,8 @@ const props = withDefaults(
 )
 
 const selectedIds = ref<string[]>([])
+const selectedTeamId = ref<string | null>(null)
+const showTeamRoster = ref(false)
 const pickerRef = ref<InstanceType<typeof SessionParticipantPicker> | null>(null)
 
 const accentBorderClass = computed(() =>
@@ -52,6 +63,10 @@ const accentHoverClass = computed(() =>
     : "",
 )
 
+const sessionTeam = computed(
+  () => props.teams.find(team => team.id === props.playerTeamId) ?? null,
+)
+
 const memberSummaries = computed(() =>
   props.members.map(member => {
     const participant = props.participants.find(
@@ -67,6 +82,10 @@ const memberSummaries = computed(() =>
 )
 
 const namesSummary = computed(() => {
+  if (sessionTeam.value) {
+    return `Equipo «${sessionTeam.value.name}»`
+  }
+
   const names = memberSummaries.value.map(member => member.displayName)
   if (names.length === 0) return "Sin jugadores"
   if (names.length === 1) return names[0]
@@ -84,6 +103,14 @@ watch(
   { immediate: true, deep: true },
 )
 
+watch(
+  () => props.playerTeamId,
+  teamId => {
+    selectedTeamId.value = teamId
+  },
+  { immediate: true },
+)
+
 function openPicker() {
   if (!props.canWrite || props.isSaving) return
   pickerRef.value?.openPicker()
@@ -99,29 +126,45 @@ function openPicker() {
       <div class="min-w-0 flex-1 space-y-3">
         <p class="text-xs uppercase tracking-wide text-gray-500">Jugadores</p>
 
-        <div
-          v-if="memberSummaries.length > 0"
-          class="flex items-center"
-        >
-          <ParticipantBubble
-            v-for="(member, index) in memberSummaries.slice(0, 6)"
-            :key="member.id"
-            :display-name="member.displayName"
-            :avatar-url="member.avatarUrl"
-            :color-class="member.color"
-            size="md"
-            class="-ml-3 first:ml-0"
-            :style="{ zIndex: memberSummaries.length - index }"
+        <div class="flex flex-wrap items-center gap-2">
+          <TeamBadge
+            v-if="sessionTeam"
+            :team="sessionTeam"
+            :accent="accent"
+            interactive
+            @click="showTeamRoster = true"
           />
-          <span
-            v-if="memberSummaries.length > 6"
-            class="-ml-3 flex h-8 w-8 items-center justify-center rounded-full bg-gray-700 text-xs font-semibold text-gray-200 ring-2 ring-dark"
+
+          <div
+            v-else-if="memberSummaries.length > 0"
+            class="flex items-center"
           >
-            +{{ memberSummaries.length - 6 }}
-          </span>
+            <ParticipantBubble
+              v-for="(member, index) in memberSummaries.slice(0, 6)"
+              :key="member.id"
+              :display-name="member.displayName"
+              :avatar-url="member.avatarUrl"
+              :color-class="member.color"
+              size="md"
+              class="-ml-3 first:ml-0"
+              :style="{ zIndex: memberSummaries.length - index }"
+            />
+            <span
+              v-if="memberSummaries.length > 6"
+              class="-ml-3 flex h-8 w-8 items-center justify-center rounded-full bg-gray-700 text-xs font-semibold text-gray-200 ring-2 ring-dark"
+            >
+              +{{ memberSummaries.length - 6 }}
+            </span>
+          </div>
         </div>
 
         <p class="text-sm text-gray-300">{{ namesSummary }}</p>
+        <p
+          v-if="sessionTeam"
+          class="text-xs text-gray-500"
+        >
+          Toca el equipo para ver quién jugó.
+        </p>
       </div>
 
       <button
@@ -154,7 +197,9 @@ function openPicker() {
     <SessionParticipantPicker
       ref="pickerRef"
       v-model="selectedIds"
+      v-model:selected-team-id="selectedTeamId"
       :participants="participants"
+      :teams="teams"
       :self-participant-id="selfParticipantId"
       :accent="accent"
       :create-participant="createParticipant"
@@ -164,5 +209,67 @@ function openPicker() {
       done-label="Guardar jugadores"
       hide-trigger
     />
+
+    <Teleport to="body">
+      <div
+        v-if="showTeamRoster && sessionTeam"
+        class="fixed inset-0 z-50 flex flex-col justify-end"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="`Jugadores de ${sessionTeam.name}`"
+      >
+        <button
+          type="button"
+          class="absolute inset-0 bg-black/60"
+          aria-label="Cerrar"
+          @click="showTeamRoster = false"
+        />
+
+        <div
+          class="relative mx-auto w-full max-w-lg rounded-t-2xl border-4 bg-dark p-4"
+          :class="accentBorderClass"
+        >
+          <div class="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <h2
+                class="text-lg font-bold"
+                :class="accentTextClass"
+              >
+                {{ sessionTeam.name }}
+              </h2>
+              <p class="text-xs text-gray-500">Jugadores del equipo</p>
+            </div>
+            <button
+              type="button"
+              class="rounded-full p-2 text-gray-400 hover:text-gray-100"
+              aria-label="Cerrar"
+              @click="showTeamRoster = false"
+            >
+              <Icon
+                icon="mdi:close"
+                class="h-6 w-6"
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+
+          <ul class="max-h-[50dvh] space-y-2 overflow-y-auto">
+            <li
+              v-for="member in sessionTeam.members"
+              :key="member.id"
+              class="flex items-center gap-3 rounded-lg border-2 border-gray-700 px-3 py-2"
+            >
+              <ParticipantBubble
+                :display-name="member.displayName"
+                :avatar-url="member.avatarUrl"
+                :color-class="member.color"
+                size="md"
+              />
+              <span class="font-medium text-gray-100">{{ member.displayName }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </Teleport>
   </section>
 </template>

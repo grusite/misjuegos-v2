@@ -4,9 +4,11 @@ import SessionParticipantPicker from "@/components/sessions/SessionParticipantPi
 import UiButton from "@/components/ui/UiButton.vue"
 import type { EscapeRoomCatalogEntry } from "@/domain/types/catalog"
 import type { Participant } from "@/domain/types/participant"
+import type { PlayerTeamWithMembers } from "@/domain/types/playerTeam"
 
 const props = defineProps<{
   participants: Participant[]
+  playerTeams?: PlayerTeamWithMembers[]
   selfParticipantId?: string | null
   escapeCatalog: EscapeRoomCatalogEntry[]
   isSaving?: boolean
@@ -23,6 +25,7 @@ const emit = defineEmits<{
       company?: string
       notes?: string
       selectedParticipants: string[]
+      playerTeamId?: string | null
     },
   ]
   cancel: []
@@ -37,6 +40,7 @@ const form = reactive({
   company: "",
   notes: "",
   selectedParticipants: [] as string[],
+  selectedTeamId: null as string | null,
 })
 
 watch(
@@ -81,6 +85,7 @@ function handleSubmit() {
     company: form.company.trim() || undefined,
     notes: form.notes.trim() || undefined,
     selectedParticipants: form.selectedParticipants,
+    playerTeamId: form.selectedTeamId,
   })
 }
 </script>
@@ -187,7 +192,9 @@ function handleSubmit() {
 
     <SessionParticipantPicker
       v-model="form.selectedParticipants"
+      v-model:selected-team-id="form.selectedTeamId"
       :participants="participants"
+      :teams="playerTeams"
       :self-participant-id="selfParticipantId"
       :create-participant="createParticipant"
       accent="tertiary"

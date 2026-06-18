@@ -3,6 +3,7 @@ import { useAuthStore } from "@/stores/authStore"
 import type { EscapeRoomDetails } from "@/domain/types/catalog"
 import type { EscapeSessionDetails } from "@/domain/types/escapeSession"
 import type { Participant } from "@/domain/types/participant"
+import type { PlayerTeamWithMembers } from "@/domain/types/playerTeam"
 import type { GameType, SessionOutcome } from "@/domain/types/rows"
 import { participantFormSchema } from "@/domain/schemas/participant"
 import { getAvatarColor } from "@/lib/utils/avatarColor"
@@ -22,6 +23,7 @@ import {
   syncFriendsFromSession,
 } from "@/services/participants/participantBootstrap"
 import { participantsRepository } from "@/services/participants/participantsRepository"
+import { playerTeamsRepository } from "@/services/playerTeams/playerTeamsRepository"
 import { sessionsRepository } from "@/services/sessions/sessionsRepository"
 
 type SessionMember = {
@@ -43,6 +45,7 @@ export function useSessionDetail(sessionId: string) {
   const escapeDetails = ref<EscapeSessionDetails | null>(null)
   const members = ref<SessionMember[]>([])
   const participants = ref<Participant[]>([])
+  const playerTeams = ref<PlayerTeamWithMembers[]>([])
   const messages = ref<SessionMessage[]>([])
   const scores = ref<SessionScore[]>([])
 
@@ -123,6 +126,7 @@ export function useSessionDetail(sessionId: string) {
 
       const participantRows = await sessionsRepository.listParticipants(found.id)
       await loadParticipants()
+      await loadPlayerTeams()
       members.value = await resolveMembers(participantRows)
 
       messages.value = await sessionsRepository.listMessages(found.id)
@@ -177,6 +181,12 @@ export function useSessionDetail(sessionId: string) {
     return selfParticipant
   }
 
+  async function loadPlayerTeams() {
+    if (!authStore.profile?.id) return
+
+    playerTeams.value = await playerTeamsRepository.listForOwner(authStore.profile.id)
+  }
+
   async function createFriendParticipant(displayName: string): Promise<Participant | null> {
     if (!authStore.profile?.id) return null
 
@@ -214,7 +224,10 @@ export function useSessionDetail(sessionId: string) {
     }
   }
 
-  async function saveMembers(selectedParticipantIds: string[]): Promise<boolean> {
+  async function saveMembers(
+    selectedParticipantIds: string[],
+    playerTeamId: string | null = null,
+  ): Promise<boolean> {
     if (!session.value || !canWrite.value || !authStore.profile) return false
 
     isSaving.value = true
@@ -222,23 +235,29 @@ export function useSessionDetail(sessionId: string) {
 
     try {
       const selfParticipant = await ensureSelfParticipant(authStore.profile)
+      const currentSessionId = session.value.id
       const memberIds = new Set(selectedParticipantIds)
       memberIds.add(selfParticipant.id)
 
       const rows = await sessionsRepository.setParticipants(
-        session.value.id,
+        currentSessionId,
         Array.from(memberIds).map(participantId => ({ participantId })),
       )
 
+      const updated = (await sessionsRepository.update(currentSessionId, {
+        playerTeamId,
+      })) as PlaySession
+      session.value = updated
+
       members.value = await resolveMembers(rows)
       await syncFriendsFromSession(
-        session.value.id,
+        currentSessionId,
         authStore.profile.id,
         selfParticipant.id,
       )
 
       if (gameType.value === "board_game") {
-        scores.value = await sessionsRepository.listScores(session.value.id)
+        scores.value = await sessionsRepository.listScores(currentSessionId)
       }
 
       return true
@@ -410,6 +429,7 @@ export function useSessionDetail(sessionId: string) {
     isEscapeSession,
     members,
     participants,
+    playerTeams,
     selfParticipantId,
     messages,
     scores,

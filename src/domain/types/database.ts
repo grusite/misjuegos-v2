@@ -401,6 +401,7 @@ export type Database = {
           notes: string | null
           outcome: Database["public"]["Enums"]["session_outcome"] | null
           played_at: string
+          player_team_id: string | null
           source: string | null
           source_hash: string | null
           source_raw: Json | null
@@ -419,6 +420,7 @@ export type Database = {
           notes?: string | null
           outcome?: Database["public"]["Enums"]["session_outcome"] | null
           played_at: string
+          player_team_id?: string | null
           source?: string | null
           source_hash?: string | null
           source_raw?: Json | null
@@ -437,6 +439,7 @@ export type Database = {
           notes?: string | null
           outcome?: Database["public"]["Enums"]["session_outcome"] | null
           played_at?: string
+          player_team_id?: string | null
           source?: string | null
           source_hash?: string | null
           source_raw?: Json | null
@@ -456,6 +459,84 @@ export type Database = {
             columns: ["game_catalog_id"]
             isOneToOne: false
             referencedRelation: "game_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "play_sessions_player_team_id_fkey"
+            columns: ["player_team_id"]
+            isOneToOne: false
+            referencedRelation: "player_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_team_members: {
+        Row: {
+          id: string
+          participant_id: string
+          team_id: string
+        }
+        Insert: {
+          id?: string
+          participant_id: string
+          team_id: string
+        }
+        Update: {
+          id?: string
+          participant_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_team_members_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "player_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_teams: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          photo_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          photo_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          photo_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_teams_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

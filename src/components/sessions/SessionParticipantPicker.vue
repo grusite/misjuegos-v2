@@ -1,23 +1,34 @@
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import { Icon } from "@iconify/vue"
+import TeamBadge from "@/components/teams/TeamBadge.vue"
 import ParticipantBubble from "@/components/ui/ParticipantBubble.vue"
 import SearchInput from "@/components/ui/SearchInput.vue"
 import UiButton from "@/components/ui/UiButton.vue"
 import { participantFormSchema } from "@/domain/schemas/participant"
 import type { Participant } from "@/domain/types/participant"
+import type { PlayerTeamWithMembers } from "@/domain/types/playerTeam"
 import { getAvatarColor } from "@/lib/utils/avatarColor"
+import {
+  findMatchingTeamId,
+  teamMemberIds,
+} from "@/lib/utils/teamSelection"
 import { getDbErrorMessage } from "@/services/errors"
 
 const selectedIds = defineModel<string[]>({ required: true })
+const selectedTeamId = defineModel<string | null>("selectedTeamId", { default: null })
 
 const props = withDefaults(
   defineProps<{
     participants: Participant[]
+    teams?: PlayerTeamWithMembers[]
     selfParticipantId?: string | null
     accent?: "board" | "tertiary"
     createParticipant?: (displayName: string) => Promise<Participant | null>
-    applySelection?: (participantIds: string[]) => Promise<boolean>
+    applySelection?: (
+      participantIds: string[],
+      teamId: string | null,
+    ) => Promise<boolean>
     label?: string
     triggerLabel?: string
     doneLabel?: string
@@ -25,6 +36,7 @@ const props = withDefaults(
     disabled?: boolean
   }>(),
   {
+    teams: () => [],
     selfParticipantId: null,
     accent: "board",
     createParticipant: undefined,
@@ -43,12 +55,18 @@ const isCreating = ref(false)
 const isApplying = ref(false)
 const createError = ref<string | null>(null)
 let snapshotOnOpen: string[] = []
+let snapshotTeamOnOpen: string | null = null
 
 const trimmedQuery = computed(() => searchQuery.value.trim())
 
+const selectedTeam = computed(
+  () => props.teams.find(team => team.id === selectedTeamId.value) ?? null,
+)
+
 const listCountLabel = computed(() => {
-  const count = props.participants.length
-  return count === 1 ? "1 en tu lista" : `${count} en tu lista`
+  const teamCount = props.teams.length
+  const peopleCount = props.participants.length
+  return `${teamCount} equipos · ${peopleCount} amigos`
 })
 
 const canCreateFromSearch = computed(() => {
@@ -56,6 +74,11 @@ const canCreateFromSearch = computed(() => {
 
   const parsed = participantFormSchema.safeParse({ displayName: trimmedQuery.value })
   if (!parsed.success) return false
+
+  const matchesTeam = props.teams.some(
+    team => team.name.toLowerCase() === parsed.data.displayName.toLowerCase(),
+  )
+  if (matchesTeam) return false
 
   return !props.participants.some(
     participant =>
@@ -77,6 +100,10 @@ const selectedParticipants = computed(() =>
 )
 
 const countLabel = computed(() => {
+  if (selectedTeam.value) {
+    return `Equipo «${selectedTeam.value.name}» · ${selectedIds.value.length} jugadores`
+  }
+
   const count = selectedIds.value.length
   return count === 1 ? "1 jugador seleccionado" : `${count} jugadores seleccionados`
 })
@@ -105,6 +132,22 @@ const hiddenSelectedCount = computed(() =>
   Math.max(0, selectedParticipants.value.length - maxVisible),
 )
 
+const filteredTeams = computed(() => {
+  const query = trimmedQuery.value.toLowerCase()
+
+  const list = query
+    ? props.teams.filter(team => {
+        const matchesName = team.name.toLowerCase().includes(query)
+        const matchesMember = team.members.some(member =>
+          member.displayName.toLowerCase().includes(query),
+        )
+        return matchesName || matchesMember
+      })
+    : [...props.teams]
+
+  return list.sort((left, right) => left.name.localeCompare(right.name, "es"))
+})
+
 const filteredParticipants = computed(() => {
   const query = trimmedQuery.value.toLowerCase()
   const selected = new Set(selectedIds.value)
@@ -128,8 +171,17 @@ const filteredParticipants = computed(() => {
   })
 })
 
+function syncTeamFromParticipants() {
+  selectedTeamId.value = findMatchingTeamId(props.teams, selectedIds.value)
+}
+
+watch(selectedIds, () => {
+  if (!isOpen.value) syncTeamFromParticipants()
+})
+
 function openPicker() {
   snapshotOnOpen = [...selectedIds.value]
+  snapshotTeamOnOpen = selectedTeamId.value
   searchQuery.value = ""
   createError.value = null
   isOpen.value = true
@@ -143,18 +195,24 @@ function closePicker() {
 function cancelPicker() {
   if (props.applySelection) {
     selectedIds.value = [...snapshotOnOpen]
+    selectedTeamId.value = snapshotTeamOnOpen
   }
 
   closePicker()
 }
 
 async function handleDone() {
+  syncTeamFromParticipants()
+
   if (props.applySelection) {
     isApplying.value = true
     createError.value = null
 
     try {
-      const saved = await props.applySelection(selectedIds.value)
+      const saved = await props.applySelection(
+        selectedIds.value,
+        selectedTeamId.value,
+      )
       if (!saved) {
         createError.value = "No se pudieron guardar los jugadores"
         return
@@ -187,6 +245,7 @@ async function handleCreateFromSearch() {
 
     if (!isSelected(created.id)) {
       selectedIds.value = [...selectedIds.value, created.id]
+      selectedTeamId.value = null
     }
 
     searchQuery.value = ""
@@ -201,15 +260,34 @@ function isSelected(participantId: string) {
   return selectedIds.value.includes(participantId)
 }
 
+function isTeamSelected(teamId: string) {
+  return selectedTeamId.value === teamId
+}
+
+function selectTeam(team: PlayerTeamWithMembers) {
+  if (isTeamSelected(team.id)) {
+    selectedTeamId.value = null
+    if (props.selfParticipantId) {
+      selectedIds.value = [props.selfParticipantId]
+    }
+    return
+  }
+
+  selectedTeamId.value = team.id
+  selectedIds.value = teamMemberIds(team)
+}
+
 function toggleParticipant(participantId: string) {
   if (isSelected(participantId)) {
     if (selectedIds.value.length === 1) return
 
     selectedIds.value = selectedIds.value.filter(id => id !== participantId)
+    selectedTeamId.value = null
     return
   }
 
   selectedIds.value = [...selectedIds.value, participantId]
+  selectedTeamId.value = null
 }
 
 function participantLabel(participant: Participant) {
@@ -228,7 +306,7 @@ function participantLabel(participant: Participant) {
       class="flex items-baseline justify-between gap-2"
     >
       <p class="text-sm text-gray-400">{{ label }}</p>
-      <p class="text-xs text-gray-500">{{ countLabel }}</p>
+      <p class="max-w-[55%] truncate text-right text-xs text-gray-500">{{ countLabel }}</p>
     </div>
 
     <button
@@ -240,7 +318,19 @@ function participantLabel(participant: Participant) {
       @click="openPicker"
     >
       <div
-        v-if="selectedParticipants.length > 0"
+        v-if="selectedTeam"
+        class="min-w-0 flex-1"
+      >
+        <TeamBadge
+          :team="selectedTeam"
+          :accent="accent"
+          size="sm"
+          :show-name="true"
+        />
+      </div>
+
+      <div
+        v-else-if="selectedParticipants.length > 0"
         class="flex min-w-0 flex-1 items-center"
       >
         <div class="flex items-center">
@@ -266,7 +356,7 @@ function participantLabel(participant: Participant) {
         v-else
         class="min-w-0 flex-1 text-sm text-gray-500"
       >
-        Elige quién jugó
+        Elige equipo o jugadores
       </p>
 
       <span
@@ -283,12 +373,12 @@ function participantLabel(participant: Participant) {
         class="fixed inset-0 z-50 flex flex-col justify-end"
         role="dialog"
         aria-modal="true"
-        aria-label="Elegir participantes"
+        aria-label="Elegir jugadores y equipos"
       >
         <button
           type="button"
           class="absolute inset-0 bg-black/60"
-          aria-label="Cerrar selector de participantes"
+          aria-label="Cerrar selector"
           @click="cancelPicker"
         />
 
@@ -302,10 +392,10 @@ function participantLabel(participant: Participant) {
                 class="text-lg font-bold"
                 :class="accentTextClass"
               >
-                Participantes
+                Jugadores y equipos
               </h3>
               <p class="text-xs text-gray-500">
-                {{ listCountLabel }} · todos visibles al desplazar
+                {{ listCountLabel }}
               </p>
             </div>
             <button
@@ -324,7 +414,7 @@ function participantLabel(participant: Participant) {
 
           <SearchInput
             v-model="searchQuery"
-            placeholder="Buscar o escribir nombre nuevo"
+            placeholder="Buscar equipo, amigo o crear uno nuevo"
             class="mb-3"
           />
 
@@ -370,61 +460,116 @@ function participantLabel(participant: Participant) {
             {{ createValidationError }}
           </p>
 
-          <p
-            v-if="participants.length === 0 && !trimmedQuery"
-            class="rounded-lg border-2 border-dashed border-gray-700 p-4 text-center text-sm text-gray-500"
-          >
-            Aún no tienes amigos. Escribe un nombre arriba para crear uno.
-          </p>
+          <div class="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pb-2">
+            <section v-if="filteredTeams.length > 0">
+              <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Equipos
+              </p>
+              <ul class="space-y-2">
+                <li
+                  v-for="team in filteredTeams"
+                  :key="team.id"
+                >
+                  <button
+                    type="button"
+                    class="flex w-full items-center gap-3 rounded-lg border-2 px-3 py-2.5 text-left transition-colors"
+                    :class="
+                      isTeamSelected(team.id)
+                        ? accentSelectedRowClass
+                        : `border-gray-700 text-gray-200 ${accentHoverClass}`
+                    "
+                    :aria-pressed="isTeamSelected(team.id)"
+                    @click="selectTeam(team)"
+                  >
+                    <TeamBadge
+                      :team="team"
+                      :accent="accent"
+                      size="sm"
+                      :show-name="false"
+                    />
+                    <div class="min-w-0 flex-1">
+                      <p class="truncate font-medium">{{ team.name }}</p>
+                      <p class="text-xs text-gray-500">
+                        {{ team.members.length }} jugadores
+                      </p>
+                    </div>
+                    <Icon
+                      :icon="
+                        isTeamSelected(team.id)
+                          ? 'mdi:check-circle'
+                          : 'mdi:circle-outline'
+                      "
+                      class="h-6 w-6 shrink-0"
+                      :class="isTeamSelected(team.id) ? accentTextClass : 'text-gray-500'"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </li>
+              </ul>
+            </section>
 
-          <ul
-            v-else-if="participants.length > 0"
-            class="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pb-2"
-          >
-            <li
-              v-for="participant in filteredParticipants"
-              :key="participant.id"
-            >
-              <button
-                type="button"
-                class="flex w-full items-center gap-3 rounded-lg border-2 px-3 py-2.5 text-left transition-colors"
-                :class="
-                  isSelected(participant.id)
-                    ? accentSelectedRowClass
-                    : `border-gray-700 text-gray-200 ${accentHoverClass}`
-                "
-                :aria-pressed="isSelected(participant.id)"
-                @click="toggleParticipant(participant.id)"
+            <section>
+              <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Amigos
+              </p>
+
+              <p
+                v-if="participants.length === 0 && !trimmedQuery"
+                class="rounded-lg border-2 border-dashed border-gray-700 p-4 text-center text-sm text-gray-500"
               >
-                <ParticipantBubble
-                  :display-name="participant.displayName"
-                  :avatar-url="participant.avatarUrl"
-                  :color-class="participant.color"
-                  size="md"
-                />
-                <span class="min-w-0 flex-1 truncate font-medium">
-                  {{ participantLabel(participant) }}
-                </span>
-                <Icon
-                  :icon="
-                    isSelected(participant.id)
-                      ? 'mdi:check-circle'
-                      : 'mdi:circle-outline'
-                  "
-                  class="h-6 w-6 shrink-0"
-                  :class="isSelected(participant.id) ? accentTextClass : 'text-gray-500'"
-                  aria-hidden="true"
-                />
-              </button>
-            </li>
+                Aún no tienes amigos. Escribe un nombre arriba para crear uno.
+              </p>
 
-            <li
-              v-if="filteredParticipants.length === 0 && trimmedQuery && !canCreateFromSearch"
-              class="rounded-lg border-2 border-dashed border-gray-700 p-4 text-center text-sm text-gray-500"
-            >
-              No hay coincidencias para «{{ trimmedQuery }}».
-            </li>
-          </ul>
+              <ul
+                v-else-if="participants.length > 0"
+                class="space-y-2"
+              >
+                <li
+                  v-for="participant in filteredParticipants"
+                  :key="participant.id"
+                >
+                  <button
+                    type="button"
+                    class="flex w-full items-center gap-3 rounded-lg border-2 px-3 py-2.5 text-left transition-colors"
+                    :class="
+                      isSelected(participant.id)
+                        ? accentSelectedRowClass
+                        : `border-gray-700 text-gray-200 ${accentHoverClass}`
+                    "
+                    :aria-pressed="isSelected(participant.id)"
+                    @click="toggleParticipant(participant.id)"
+                  >
+                    <ParticipantBubble
+                      :display-name="participant.displayName"
+                      :avatar-url="participant.avatarUrl"
+                      :color-class="participant.color"
+                      size="md"
+                    />
+                    <span class="min-w-0 flex-1 truncate font-medium">
+                      {{ participantLabel(participant) }}
+                    </span>
+                    <Icon
+                      :icon="
+                        isSelected(participant.id)
+                          ? 'mdi:check-circle'
+                          : 'mdi:circle-outline'
+                      "
+                      class="h-6 w-6 shrink-0"
+                      :class="isSelected(participant.id) ? accentTextClass : 'text-gray-500'"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </li>
+
+                <li
+                  v-if="filteredParticipants.length === 0 && trimmedQuery && !canCreateFromSearch"
+                  class="rounded-lg border-2 border-dashed border-gray-700 p-4 text-center text-sm text-gray-500"
+                >
+                  No hay coincidencias para «{{ trimmedQuery }}».
+                </li>
+              </ul>
+            </section>
+          </div>
 
           <UiButton
             type="button"

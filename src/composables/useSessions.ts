@@ -2,6 +2,7 @@ import { computed, onMounted, ref } from "vue"
 import { useAuthStore } from "@/stores/authStore"
 import type { EscapeRoomCatalogEntry, GameCatalog } from "@/domain/types/catalog"
 import type { Participant } from "@/domain/types/participant"
+import type { PlayerTeamWithMembers } from "@/domain/types/playerTeam"
 import type { SessionMemberPreview } from "@/domain/types/session"
 import type { GameType, SessionOutcome, SessionStatus } from "@/domain/types/rows"
 import { participantFormSchema } from "@/domain/schemas/participant"
@@ -15,6 +16,7 @@ import {
   syncFriendsFromSession,
 } from "@/services/participants/participantBootstrap"
 import { participantsRepository } from "@/services/participants/participantsRepository"
+import { playerTeamsRepository } from "@/services/playerTeams/playerTeamsRepository"
 import { sessionsRepository } from "@/services/sessions/sessionsRepository"
 import {
   bggSearchFeedbackForError,
@@ -43,6 +45,7 @@ export type CreateSessionPayload = {
   title: string
   notes?: string
   selectedParticipants: string[]
+  playerTeamId?: string | null
   bggSelection?: BggSearchResult | null
 }
 
@@ -55,6 +58,7 @@ export type CreateEscapeSessionPayload = {
   company?: string
   notes?: string
   selectedParticipants: string[]
+  playerTeamId?: string | null
 }
 
 export function useSessions() {
@@ -63,6 +67,7 @@ export function useSessions() {
 
   const sessions = ref<SessionListItem[]>([])
   const participants = ref<Participant[]>([])
+  const playerTeams = ref<PlayerTeamWithMembers[]>([])
   const escapeCatalog = ref<EscapeRoomCatalogEntry[]>([])
   const bggResults = ref<BggSearchResult[]>([])
   const bggSearchFeedback = ref<BggSearchFeedback | null>(null)
@@ -94,13 +99,18 @@ export function useSessions() {
     return Array.from(memberIds).map(participantId => ({ participantId }))
   }
 
-  async function saveSessionMembers(sessionId: string, selectedParticipantIds: string[]) {
+  async function saveSessionMembers(
+    sessionId: string,
+    selectedParticipantIds: string[],
+    playerTeamId: string | null = null,
+  ) {
     if (!ownerId.value || !authStore.profile) return
 
     const selfParticipant = await ensureSelfParticipant(authStore.profile)
     const members = await resolveSessionMembers(selectedParticipantIds)
 
     await sessionsRepository.setParticipants(sessionId, members)
+    await sessionsRepository.update(sessionId, { playerTeamId })
     await syncFriendsFromSession(sessionId, ownerId.value, selfParticipant.id)
     await loadParticipants()
   }
@@ -167,6 +177,16 @@ export function useSessions() {
 
       const list = await participantsRepository.listForOwner(ownerId.value)
       participants.value = sortParticipantsWithSelfFirst(list, ownerId.value)
+    } catch (error) {
+      errorMessage.value = getDbErrorMessage(error)
+    }
+  }
+
+  async function loadPlayerTeams() {
+    if (!ownerId.value) return
+
+    try {
+      playerTeams.value = await playerTeamsRepository.listForOwner(ownerId.value)
     } catch (error) {
       errorMessage.value = getDbErrorMessage(error)
     }
@@ -298,6 +318,7 @@ export function useSessions() {
       const session = await sessionsRepository.create({
         gameCatalogId: game.id,
         createdBy: ownerId.value,
+        playerTeamId: payload.playerTeamId ?? null,
         playedAt: new Date().toISOString(),
         status: "in_progress",
         notes: payload.notes?.trim() || null,
@@ -308,7 +329,11 @@ export function useSessions() {
         lastStartedAt: new Date().toISOString(),
       })
 
-      await saveSessionMembers(session.id, payload.selectedParticipants)
+      await saveSessionMembers(
+        session.id,
+        payload.selectedParticipants,
+        payload.playerTeamId ?? null,
+      )
       await loadSessions()
 
       return session.id
@@ -347,6 +372,7 @@ export function useSessions() {
       const session = await sessionsRepository.create({
         gameCatalogId: catalogId,
         createdBy: ownerId.value,
+        playerTeamId: payload.playerTeamId ?? null,
         playedAt: new Date().toISOString(),
         status: "planned",
         notes: payload.notes?.trim() || null,
@@ -356,7 +382,11 @@ export function useSessions() {
         priceCurrency: "EUR",
       })
 
-      await saveSessionMembers(session.id, payload.selectedParticipants)
+      await saveSessionMembers(
+        session.id,
+        payload.selectedParticipants,
+        payload.playerTeamId ?? null,
+      )
       await Promise.all([loadSessions(), loadEscapeCatalog()])
 
       return session.id
@@ -371,6 +401,7 @@ export function useSessions() {
   onMounted(() => {
     void loadSessions()
     void loadParticipants()
+    void loadPlayerTeams()
     void loadEscapeCatalog()
   })
 
@@ -379,6 +410,7 @@ export function useSessions() {
     filteredSessions,
     sessionFilter,
     participants,
+    playerTeams,
     escapeCatalog,
     bggResults,
     bggSearchFeedback,

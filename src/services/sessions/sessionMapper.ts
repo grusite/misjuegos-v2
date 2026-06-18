@@ -17,6 +17,7 @@ export function mapPlaySession(row: PlaySessionRow): PlaySession {
     id: row.id,
     gameCatalogId: row.game_catalog_id,
     createdBy: row.created_by,
+    playerTeamId: row.player_team_id ?? null,
     playedAt: row.played_at,
     status: row.status,
     outcome: row.outcome,
@@ -104,6 +105,7 @@ export function toPlaySessionInsert(input: CreateSessionInput): PlaySessionInser
   return {
     game_catalog_id: input.gameCatalogId,
     created_by: input.createdBy,
+    player_team_id: input.playerTeamId ?? null,
     played_at: input.playedAt,
     status: input.status ?? "planned",
     outcome: input.outcome ?? null,
@@ -128,5 +130,6 @@ export function toPlaySessionUpdate(
     }),
     ...(input.endedAt !== undefined && { ended_at: input.endedAt }),
     ...(input.notes !== undefined && { notes: input.notes }),
+    ...(input.playerTeamId !== undefined && { player_team_id: input.playerTeamId }),
   }
 }

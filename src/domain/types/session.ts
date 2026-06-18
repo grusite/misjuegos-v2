@@ -5,6 +5,7 @@ export type PlaySession = {
   id: string
   gameCatalogId: string
   createdBy: string
+  playerTeamId: string | null
   playedAt: string
   status: SessionStatus
   outcome: SessionOutcome | null
@@ -49,6 +50,7 @@ export type SessionScore = {
 export type CreateSessionInput = {
   gameCatalogId: string
   createdBy: string
+  playerTeamId?: string | null
   playedAt: string
   status?: SessionStatus
   outcome?: SessionOutcome | null
@@ -67,6 +69,7 @@ export type UpdateSessionInput = {
   lastStartedAt?: string | null
   endedAt?: string | null
   notes?: string | null
+  playerTeamId?: string | null
 }
 
 export type SessionMemberInput = {

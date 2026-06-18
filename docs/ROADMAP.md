@@ -90,27 +90,25 @@ Personal “want to play” list — board games and escape rooms you haven’t 
 - [x] Add/edit form (manual entry; BGG search reuse for board games)
 - [x] Mobile-first cards (notes, city/venue visible at a glance for escapes)
 
-## Phase 9 — Player teams (next)
+## Phase 9 — Player teams ✅
 
 Reusable groups of participants for fast session setup (same crew every week, escape group, etc.).
 
-**Placement (proposed):**
+**Placement:**
 
 - Route: `/teams` (nav near Participantes)
 - Used when creating sessions: “Seleccionar equipo” fills participant checkboxes in one tap
-- Team photo stored via Storage (Phase 11) — schema ready now, upload UI can land with photos phase or a minimal upload here
+- Team photo stored via Storage (Phase 11) — schema ready now, upload UI can land with photos phase
 
 **Tasks:**
 
-- [ ] Migration: `player_teams`, `player_team_members` (+ RLS)
-  - Team: `name`, `description`, `photo_path` (nullable until Storage), `created_by`
-  - Members: `team_id`, `participant_id` (FK → participants)
-- [ ] `playerTeamsRepository` + Zod schemas
-- [ ] Teams list + create/edit UI (name, description, member multi-select)
-- [ ] Team card with avatar grid or single team image placeholder
-- [ ] Hook into new session flows (`useSessions`, escape create): pick team → pre-select members
+- [x] Migration: `player_teams`, `player_team_members` (+ RLS)
+- [x] `playerTeamsRepository` + Zod schemas
+- [x] Teams list + create/edit UI (name, description, member multi-select)
+- [x] Team card with avatar grid or single team image placeholder
+- [x] Hook into new session flows (`useSessions`, escape create): pick team → pre-select members
 
-## Phase 10 — Import pipeline
+## Phase 10 — Import pipeline (next)
 
 One-time historical import from Escape Babel (and future sources). **Prefer CSV + local files over live Google APIs** for the initial cutover.
 

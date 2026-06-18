@@ -3,10 +3,12 @@ import { computed, reactive, watch } from "vue"
 import SessionParticipantPicker from "@/components/sessions/SessionParticipantPicker.vue"
 import UiButton from "@/components/ui/UiButton.vue"
 import type { Participant } from "@/domain/types/participant"
+import type { PlayerTeamWithMembers } from "@/domain/types/playerTeam"
 import type { BggSearchFeedback, BggSearchResult } from "@/services/bgg/bggService"
 
 const props = defineProps<{
   participants: Participant[]
+  playerTeams?: PlayerTeamWithMembers[]
   selfParticipantId?: string | null
   bggResults: BggSearchResult[]
   bggSearchFeedback?: BggSearchFeedback | null
@@ -24,6 +26,7 @@ const emit = defineEmits<{
       title: string
       notes?: string
       selectedParticipants: string[]
+      playerTeamId?: string | null
       bggSelection?: BggSearchResult | null
     },
   ]
@@ -35,6 +38,7 @@ const form = reactive({
   notes: "",
   bggQuery: "",
   selectedParticipants: [] as string[],
+  selectedTeamId: null as string | null,
   bggSelectionId: "",
 })
 
@@ -90,6 +94,7 @@ function handleSubmit() {
     title: form.title,
     notes: form.notes,
     selectedParticipants: form.selectedParticipants,
+    playerTeamId: form.selectedTeamId,
     bggSelection: selectedBgg.value,
   })
 }
@@ -164,7 +169,9 @@ function handleSubmit() {
 
     <SessionParticipantPicker
       v-model="form.selectedParticipants"
+      v-model:selected-team-id="form.selectedTeamId"
       :participants="participants"
+      :teams="playerTeams"
       :self-participant-id="selfParticipantId"
       :create-participant="createParticipant"
       accent="board"

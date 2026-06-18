@@ -24,6 +24,7 @@ const {
   isEscapeSession,
   members,
   participants,
+  playerTeams,
   selfParticipantId,
   messages,
   scores,
@@ -164,6 +165,8 @@ async function handleResetConfirm() {
       <SessionMembersEditor
         :members="members"
         :participants="participants"
+        :teams="playerTeams"
+        :player-team-id="session.playerTeamId"
         :self-participant-id="selfParticipantId"
         :accent="sessionAccent"
         :can-write="Boolean(canWrite)"

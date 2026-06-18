@@ -14,6 +14,7 @@ const {
   filteredSessions,
   sessionFilter,
   participants,
+  playerTeams,
   selfParticipantId,
   escapeCatalog,
   bggResults,
@@ -266,6 +267,7 @@ async function handleCreateEscape(payload: {
           <NewSessionPanel
             v-if="createKind === 'board_game'"
             :participants="participants"
+            :player-teams="playerTeams"
             :self-participant-id="selfParticipantId"
             :bgg-results="bggResults"
             :bgg-search-feedback="bggSearchFeedback"
@@ -281,6 +283,7 @@ async function handleCreateEscape(payload: {
           <NewEscapeSessionPanel
             v-else
             :participants="participants"
+            :player-teams="playerTeams"
             :self-participant-id="selfParticipantId"
             :escape-catalog="escapeCatalog"
             :is-saving="isSaving"

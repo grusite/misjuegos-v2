@@ -109,6 +109,29 @@ Personal wishlist — games/escapes you want to play, separate from catalog and 
 | created_by | uuid FK → profiles | |
 | created_at, updated_at | timestamptz | |
 
+### player_teams (Phase 9)
+
+Reusable participant groups for quick session setup.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid PK | |
+| name | text | |
+| description | text NULL | |
+| photo_path | text NULL | Storage path (Phase 11) |
+| created_by | uuid FK → profiles | |
+| created_at, updated_at | timestamptz | |
+
+### player_team_members
+
+| Column | Type |
+|--------|------|
+| id | uuid PK |
+| team_id | uuid FK → player_teams |
+| participant_id | uuid FK → participants |
+
+UNIQUE(team_id, participant_id)
+
 ### play_sessions
 A single play instance.
 
