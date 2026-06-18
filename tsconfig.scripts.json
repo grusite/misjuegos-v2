@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "moduleResolution": "bundler"
+  },
+  "include": ["scripts/**/*.ts", "src/services/import/**/*.ts", "src/services/**/*.ts", "src/domain/**/*.ts", "src/lib/**/*.ts"]
+}

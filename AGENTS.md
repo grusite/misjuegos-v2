@@ -22,10 +22,11 @@ This repo is a ground-up rebuild of MisJuegos (private app at [misjuegos.net](ht
 | **7** | ✅ Done | Dashboard — stats, charts, partners, escape summary |
 | **8** | ✅ Done | Desired games wishlist — board games + escapes to play |
 | **9** | ✅ Done | Player teams — reusable participant groups |
-| 10 | 🔜 Next | Import pipeline (Escape Babel CSV) |
-| 11 | Pending | Photos / Storage |
-| 12 | Pending | Utilities (dice, roulette, timer) |
-| 13 | Pending | Production cutover |
+| **10** | ✅ Done | Import pipeline — Escape Babel CSV + CLI |
+| 11 | 🔜 Next | Account linking — first-login friend match modal |
+| 12 | Pending | Photos / Storage |
+| 13 | Pending | Utilities (dice, roulette, timer) |
+| 14 | Pending | Production cutover |
 
 Full task breakdown: [`docs/ROADMAP.md`](docs/ROADMAP.md)
 
@@ -85,7 +86,8 @@ MisJuegos tracks games played with friends:
 | Validation | Zod (forms + import rows) |
 | Tests | Vitest + `@vue/test-utils` |
 | Package manager | pnpm |
-| Node | ≥ 20 (see `.nvmrc`) |
+| Node | ≥ 22.13 (see `.nvmrc` — LTS 22; 24 also works) |
+| pnpm | 11.x (see `packageManager` in `package.json`) |
 
 ---
 
@@ -213,6 +215,7 @@ pnpm build
 pnpm ts
 # Phase 1+:
 pnpm db:types     # generate Supabase types from local DB
+pnpm import:escapes --dry-run data/import/escape-babel.csv  # CSV import (see data/import/README.md)
 ```
 
 ---

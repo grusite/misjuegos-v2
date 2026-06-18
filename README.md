@@ -11,11 +11,13 @@ Vue 3 · TypeScript · Vite · Tailwind CSS 4 · Pinia · Vue Router · Supabase
 ## Quick start
 
 ```bash
-nvm use
+nvm use          # Node 22 LTS (pnpm 11 requires ≥22.13)
 pnpm install
 cp .env.dist .env   # Supabase vars — Phase 1
 pnpm dev
 ```
+
+> **Node / pnpm:** This project targets **Node 22+** and **pnpm 11**. `pnpm-workspace.yaml` only whitelists the esbuild postinstall (pnpm 11 security default) — this is **not** a monorepo.
 
 Open http://localhost:5173 → login screen → **Entrar con Google**.
 

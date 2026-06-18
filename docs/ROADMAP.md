@@ -108,7 +108,7 @@ Reusable groups of participants for fast session setup (same crew every week, es
 - [x] Team card with avatar grid or single team image placeholder
 - [x] Hook into new session flows (`useSessions`, escape create): pick team → pre-select members
 
-## Phase 10 — Import pipeline (next)
+## Phase 10 — Import pipeline ✅
 
 One-time historical import from Escape Babel (and future sources). **Prefer CSV + local files over live Google APIs** for the initial cutover.
 
@@ -122,27 +122,38 @@ One-time historical import from Escape Babel (and future sources). **Prefer CSV 
 
 **Tasks:**
 
-- [ ] Migrations: `import_runs` + `import_errors`
-- [ ] Zod schema + parser for Escape Babel CSV columns
-- [ ] Alias resolver (`Participantes` string → `participants` / `participant_aliases`)
-- [ ] Idempotent importer (`source_hash`, keep `source_raw`)
-- [ ] CLI script: read CSV path, dry-run + commit modes, summary report
-- [ ] Import debug UI (optional — view last run, errors, row counts)
+- [x] Migrations: `import_runs` + `import_errors`
+- [x] Zod schema + parser for Escape Babel CSV columns
+- [x] Alias resolver (`Participantes` string → `participants` / `participant_aliases`)
+- [x] Idempotent importer (`source_hash`, keep `source_raw`)
+- [x] CLI script: read CSV path, dry-run + commit modes, summary report
+- [x] Bootstrap friends + aliases from CSV catalog (incl. alias merges)
+- [x] Bootstrap teams: **Babel 4**, **Primos**
+- [x] CLI `--fresh` one-shot (reset data + bootstrap + import)
 
-## Phase 11 — Photos / Storage
+## Phase 11 — Account linking (next)
+
+On **first Google login only** (not every session):
+
+- [ ] Modal: “¿Eres alguno de estos amigos?” — suggest `participants` matched by display name / Google name
+- [ ] Confirm → link `participants.profile_id` to reuse imported sessions and stats
+- [ ] Decline → create a new participant for this account
+- [ ] Persist “already asked” flag on profile so the prompt never repeats
+
+## Phase 12 — Photos / Storage
 
 - [ ] Storage bucket + RLS
 - [ ] Upload composable + gallery (sessions, teams, etc.)
 - [ ] **Local batch script:** upload folder of images from disk → Storage paths + `photos` rows (pairs with Phase 10 CSV import)
 - [ ] Google Drive one-time migration script (optional — only if local download is impractical)
 
-## Phase 12 — Utilities
+## Phase 13 — Utilities
 
 - [ ] Roulette (CSS/spring — port from v1)
 - [ ] Sand timer SVG animation
 - [ ] 3D dice roller (Three.js + Cannon — lazy route)
 
-## Phase 13 — Production
+## Phase 14 — Production
 
 - [ ] Apply migrations to prod Supabase
 - [ ] Run Escape Babel CSV import + photo batch upload

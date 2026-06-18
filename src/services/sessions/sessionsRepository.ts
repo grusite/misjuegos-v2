@@ -108,6 +108,17 @@ export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
       return row ? mapPlaySession(row) : null
     },
 
+    async getBySourceHash(sourceHash: string): Promise<PlaySession | null> {
+      const result = await client
+        .from("play_sessions")
+        .select("*")
+        .eq("source_hash", sourceHash)
+        .maybeSingle()
+
+      const row = unwrapNullable(result)
+      return row ? mapPlaySession(row) : null
+    },
+
     async create(input: CreateSessionInput): Promise<PlaySession> {
       const result = await client
         .from("play_sessions")

@@ -12,11 +12,16 @@
     "lint": "eslint .",
     "pretty": "prettier --write .",
     "ts": "vue-tsc -b --noEmit",
-    "db:types": "supabase gen types typescript --local > src/domain/types/database.ts"
+    "db:types": "supabase gen types typescript --local > src/domain/types/database.ts",
+    "import:escapes": "tsx --tsconfig tsconfig.scripts.json scripts/importEscapes.ts",
+    "import:list-participants": "tsx --tsconfig tsconfig.scripts.json scripts/listImportParticipants.ts",
+    "import:list-profiles": "tsx --tsconfig tsconfig.scripts.json scripts/listProfiles.ts",
+    "db:reset-data": "supabase db query --local -f scripts/resetLocalData.sql"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.13"
   },
+  "packageManager": "pnpm@11.7.0",
   "dependencies": {
     "@iconify/vue": "^5.0.1",
     "@supabase/supabase-js": "^2.108.2",
@@ -43,6 +48,7 @@
     "prettier-plugin-tailwindcss": "^0.8.0",
     "tailwind-scrollbar": "^4.0.2",
     "tailwindcss": "^4.3.1",
+    "tsx": "^4.22.4",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.61.1",
     "vite": "^8.0.12",

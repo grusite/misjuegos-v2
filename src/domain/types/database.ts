@@ -317,6 +317,103 @@ export type Database = {
           },
         ]
       }
+      import_errors: {
+        Row: {
+          created_at: string
+          field_name: string | null
+          id: string
+          import_run_id: string
+          message: string
+          row_number: number
+          row_raw: Json | null
+        }
+        Insert: {
+          created_at?: string
+          field_name?: string | null
+          id?: string
+          import_run_id: string
+          message: string
+          row_number: number
+          row_raw?: Json | null
+        }
+        Update: {
+          created_at?: string
+          field_name?: string | null
+          id?: string
+          import_run_id?: string
+          message?: string
+          row_number?: number
+          row_raw?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_errors_import_run_id_fkey"
+            columns: ["import_run_id"]
+            isOneToOne: false
+            referencedRelation: "import_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          dry_run: boolean
+          file_name: string | null
+          id: string
+          rows_failed: number
+          rows_imported: number
+          rows_skipped: number
+          rows_total: number
+          source: Database["public"]["Enums"]["import_source"]
+          started_at: string
+          status: Database["public"]["Enums"]["import_status"]
+          summary: Json | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          dry_run?: boolean
+          file_name?: string | null
+          id?: string
+          rows_failed?: number
+          rows_imported?: number
+          rows_skipped?: number
+          rows_total?: number
+          source?: Database["public"]["Enums"]["import_source"]
+          started_at?: string
+          status?: Database["public"]["Enums"]["import_status"]
+          summary?: Json | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          dry_run?: boolean
+          file_name?: string | null
+          id?: string
+          rows_failed?: number
+          rows_imported?: number
+          rows_skipped?: number
+          rows_total?: number
+          source?: Database["public"]["Enums"]["import_source"]
+          started_at?: string
+          status?: Database["public"]["Enums"]["import_status"]
+          summary?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_runs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       participant_aliases: {
         Row: {
           alias: string

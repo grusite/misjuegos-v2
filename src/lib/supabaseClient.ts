@@ -1,8 +1,17 @@
 import { createClient } from "@supabase/supabase-js"
 import type { AppDatabase } from "@/domain/types/schema"
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+function readEnv(key: "VITE_SUPABASE_URL" | "VITE_SUPABASE_ANON_KEY"): string | undefined {
+  const viteEnv =
+    typeof import.meta !== "undefined" ? import.meta.env : undefined
+  const nodeEnv = (globalThis as { process?: { env?: Record<string, string> } })
+    .process?.env
+
+  return viteEnv?.[key] ?? nodeEnv?.[key]
+}
+
+const supabaseUrl = readEnv("VITE_SUPABASE_URL")
+const supabaseAnonKey = readEnv("VITE_SUPABASE_ANON_KEY")
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
