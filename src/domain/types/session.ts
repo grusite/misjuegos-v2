@@ -100,6 +100,12 @@ export type SessionScoreInput = {
 
 export type ListSessionsOptions = {
   gameCatalogId?: string
+  gameType?: GameType
+  search?: string
+  participantIds?: string[]
+  playerTeamId?: string
+  playedAtFrom?: string
+  playedAtTo?: string
   limit?: number
   offset?: number
 }

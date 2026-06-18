@@ -1,4 +1,4 @@
-import { computed, onMounted, ref } from "vue"
+import { computed, onMounted, ref, watch } from "vue"
 import { useAuthStore } from "@/stores/authStore"
 import type { EscapeRoomCatalogEntry } from "@/domain/types/catalog"
 import type { Participant } from "@/domain/types/participant"
@@ -19,13 +19,20 @@ import { participantsRepository } from "@/services/participants/participantsRepo
 import { playerTeamsRepository } from "@/services/playerTeams/playerTeamsRepository"
 import { sessionsRepository } from "@/services/sessions/sessionsRepository"
 import {
+  countActiveSessionFilters,
+  createDefaultSessionListFilters,
+  hashListSessionsOptions,
+  toListSessionsOptions,
+  type SessionListFilterState,
+} from "@/services/sessions/sessionListFilters"
+import {
   bggSearchFeedbackForError,
   searchBoardGames,
   type BggSearchFeedback,
   type BggSearchResult,
 } from "@/services/bgg/bggService"
 
-export type SessionFilter = "all" | GameType
+export type { SessionFilter } from "@/services/sessions/sessionListFilters"
 
 export type SessionListItem = {
   id: string
@@ -63,6 +70,7 @@ export type CreateEscapeSessionPayload = {
 }
 
 const SESSIONS_PAGE_SIZE = 25
+const SEARCH_DEBOUNCE_MS = 300
 
 function invalidateSessionsCache(ownerId: string) {
   appDataCache.invalidate(`sessions:${ownerId}`)
@@ -81,7 +89,8 @@ export function useSessions() {
   const isBggSearching = ref(false)
   const bggAutoFillTitle = ref<string | null>(null)
   const bggAutoSelectId = ref<number | null>(null)
-  const sessionFilter = ref<SessionFilter>("all")
+  const sessionFilters = ref<SessionListFilterState>(createDefaultSessionListFilters())
+  const debouncedSearch = ref("")
 
   const isLoading = ref(false)
   const isLoadingMore = ref(false)
@@ -90,13 +99,55 @@ export function useSessions() {
   const errorMessage = ref<string | null>(null)
   const sessionsOffset = ref(0)
 
-  const filteredSessions = computed(() => {
-    if (sessionFilter.value === "all") return sessions.value
-    return sessions.value.filter(session => session.gameType === sessionFilter.value)
+  const sessionFilter = computed({
+    get: () => sessionFilters.value.gameType,
+    set: value => {
+      sessionFilters.value = { ...sessionFilters.value, gameType: value }
+    },
   })
+
+  const hasActiveSessionFilters = computed(
+    () => countActiveSessionFilters(sessionFilters.value) > 0,
+  )
 
   const selfParticipantId = computed(
     () => participants.value.find(participant => participant.profileId === ownerId.value)?.id ?? null,
+  )
+
+  const listSessionsOptions = computed(() =>
+    toListSessionsOptions(sessionFilters.value, selfParticipantId.value),
+  )
+
+  let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+
+  watch(
+    () => sessionFilters.value.search,
+    value => {
+      if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+      searchDebounceTimer = setTimeout(() => {
+        debouncedSearch.value = value.trim()
+      }, SEARCH_DEBOUNCE_MS)
+    },
+  )
+
+  const filtersReady = ref(false)
+
+  watch(
+    [
+      () => sessionFilters.value.gameType,
+      debouncedSearch,
+      () => sessionFilters.value.onlyMine,
+      () => sessionFilters.value.participantIds,
+      () => sessionFilters.value.playerTeamId,
+      () => sessionFilters.value.datePreset,
+      () => sessionFilters.value.dateFrom,
+      () => sessionFilters.value.dateTo,
+      ownerId,
+    ],
+    () => {
+      if (!filtersReady.value || !ownerId.value) return
+      void loadSessions({ force: true })
+    },
   )
 
   async function resolveSessionMembers(selectedParticipantIds: string[]) {
@@ -135,7 +186,13 @@ export function useSessions() {
     const append = options?.append ?? false
     const force = options?.force ?? false
     const offset = append ? sessionsOffset.value : 0
-    const cacheKey = `sessions:${ownerId.value}:${offset}`
+    const queryOptions = {
+      ...listSessionsOptions.value,
+      limit: SESSIONS_PAGE_SIZE + 1,
+      offset,
+    }
+    const queryKey = hashListSessionsOptions(listSessionsOptions.value)
+    const cacheKey = `sessions:${ownerId.value}:${queryKey}:${offset}`
 
     if (!force && !append) {
       const cached = appDataCache.get<SessionListItem[]>(cacheKey)
@@ -155,10 +212,7 @@ export function useSessions() {
     errorMessage.value = null
 
     try {
-      const summaries = await sessionsRepository.listSummaries({
-        limit: SESSIONS_PAGE_SIZE + 1,
-        offset,
-      })
+      const summaries = await sessionsRepository.listSummaries(queryOptions)
 
       hasMoreSessions.value = summaries.length > SESSIONS_PAGE_SIZE
       const page = hasMoreSessions.value
@@ -203,6 +257,11 @@ export function useSessions() {
   async function loadMoreSessions() {
     if (!hasMoreSessions.value || isLoadingMore.value || isLoading.value) return
     await loadSessions({ append: true })
+  }
+
+  function clearSessionFilters() {
+    sessionFilters.value = createDefaultSessionListFilters()
+    debouncedSearch.value = ""
   }
 
   async function loadParticipants(force = false) {
@@ -473,6 +532,7 @@ export function useSessions() {
   }
 
   onMounted(() => {
+    filtersReady.value = true
     void loadSessions()
     void loadParticipants()
     void loadPlayerTeams()
@@ -481,8 +541,9 @@ export function useSessions() {
 
   return {
     sessions,
-    filteredSessions,
+    sessionFilters,
     sessionFilter,
+    hasActiveSessionFilters,
     participants,
     playerTeams,
     escapeCatalog,
@@ -497,6 +558,7 @@ export function useSessions() {
     isSaving,
     errorMessage,
     selfParticipantId,
+    clearSessionFilters,
     loadSessions,
     loadMoreSessions,
     loadEscapeCatalog,

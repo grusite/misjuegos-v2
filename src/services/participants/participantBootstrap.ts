@@ -124,7 +124,7 @@ export async function syncFriendsFromAllSessions(
   profileId: string,
   selfParticipantId: string,
 ): Promise<void> {
-  const sessionIds = await sessionsRepository.listSessionIdsForParticipant(selfParticipantId)
+  const sessionIds = await sessionsRepository.listSessionIdsForProfile(profileId)
   if (sessionIds.length === 0) return
 
   const coParticipants = await sessionsRepository.listDistinctCoParticipants(

@@ -1,8 +1,10 @@
 import { computed } from "vue"
+import { useRouter } from "vue-router"
 import { useAuthStore } from "@/stores/authStore"
 
 export function useAuth() {
   const authStore = useAuthStore()
+  const router = useRouter()
 
   const profile = computed(() => authStore.profile)
   const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -12,8 +14,9 @@ export function useAuth() {
     return authStore.loginWithGoogle()
   }
 
-  function logout() {
-    return authStore.logout()
+  async function logout() {
+    await authStore.logout()
+    await router.push({ name: "login" })
   }
 
   return {

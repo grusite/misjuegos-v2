@@ -131,16 +131,16 @@ One-time historical import from Escape Babel (and future sources). **Prefer CSV 
 - [x] Bootstrap teams: **Babel 4**, **Primos**
 - [x] CLI `--fresh` one-shot (reset data + bootstrap + import)
 
-## Phase 11 — Account linking (next)
+## Phase 11 — Account linking ✅
 
 On **first Google login only** (not every session):
 
-- [ ] Modal: “¿Eres alguno de estos amigos?” — suggest `participants` matched by display name / Google name
-- [ ] Confirm → link `participants.profile_id` to reuse imported sessions and stats
-- [ ] Decline → create a new participant for this account
-- [ ] Persist “already asked” flag on profile so the prompt never repeats
+- [x] Modal: “¿Eres alguno de estos amigos?” — suggest `participants` matched by display name / Google name
+- [x] Confirm → link `participants.profile_id` to reuse imported sessions and stats
+- [x] Decline → create a new participant for this account
+- [x] Persist “already asked” flag on profile so the prompt never repeats
 
-## Phase 12 — Session list filters (home)
+## Phase 12 — Session list filters ✅
 
 Richer filtering on the home sessions list (`SessionsView`) — today only type chips exist (Todas / Juegos de mesa / Escape rooms).
 
@@ -160,16 +160,16 @@ Richer filtering on the home sessions list (`SessionsView`) — today only type 
 
 **Tasks:**
 
-- [ ] Extend `listSessions` query: participant ids, `player_team_id`, date range, title search (ilike)
-- [ ] Composable: filter state + debounced search; reset pagination when filters change
-- [ ] Mobile-first filter bar / expandable panel on home
-- [ ] “Yo” shortcut chip (hidden or disabled until participant is linked to profile)
-- [ ] Participant + team pickers (reuse existing participant/team data from `useSessions`)
-- [ ] Date range UI (native date inputs or preset chips)
-- [ ] Empty state copy when no sessions match filters
-- [ ] Unit tests for filter → query mapping
+- [x] Extend `listSessions` query: participant ids, `player_team_id`, date range, title search (ilike)
+- [x] Composable: filter state + debounced search; reset pagination when filters change
+- [x] Mobile-first filter bar / expandable panel on home
+- [x] “Yo” shortcut chip (hidden or disabled until participant is linked to profile)
+- [x] Participant + team pickers (reuse existing participant/team data from `useSessions`)
+- [x] Date range UI (native date inputs or preset chips)
+- [x] Empty state copy when no sessions match filters
+- [x] Unit tests for filter → query mapping
 
-## Phase 13 — Photos / Storage
+## Phase 13 — Photos / Storage (next)
 
 - [ ] Storage bucket + RLS
 - [ ] Upload composable + gallery (sessions, teams, etc.)

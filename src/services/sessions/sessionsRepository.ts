@@ -41,23 +41,90 @@ import {
   toPlaySessionUpdate,
 } from "@/services/sessions/sessionMapper"
 
-const SESSION_LIST_SELECT = `
-  id,
-  game_catalog_id,
-  played_at,
-  status,
-  outcome,
-  notes,
-  player_team_id,
-  game_catalog:game_catalog_id (
-    title,
-    type,
-    escape_room_details (
-      city,
-      venue
-    )
+import {
+  escapeIlikePattern,
+} from "@/services/sessions/sessionListFilters"
+
+const SESSION_CATALOG_EMBED = `
+  title,
+  type,
+  escape_room_details (
+    city,
+    venue
   )
 `
+
+function buildSessionListSelect(options: ListSessionsOptions): string {
+  const needsCatalogInner = Boolean(options.search || options.gameType)
+  const catalogEmbed = needsCatalogInner
+    ? `game_catalog!inner (${SESSION_CATALOG_EMBED})`
+    : `game_catalog:game_catalog_id (${SESSION_CATALOG_EMBED})`
+
+  const participantEmbed =
+    options.participantIds && options.participantIds.length > 0
+      ? ", session_participants!inner(participant_id)"
+      : ""
+
+  return `
+    id,
+    game_catalog_id,
+    played_at,
+    status,
+    outcome,
+    notes,
+    player_team_id,
+    ${catalogEmbed}
+    ${participantEmbed}
+  `
+}
+
+type FilterableQuery = {
+  eq: (column: string, value: unknown) => FilterableQuery
+  gte: (column: string, value: unknown) => FilterableQuery
+  lte: (column: string, value: unknown) => FilterableQuery
+  in: (column: string, values: readonly unknown[]) => FilterableQuery
+  or: (filters: string) => FilterableQuery
+}
+
+function applyListFilters(
+  query: FilterableQuery,
+  options: ListSessionsOptions,
+): FilterableQuery {
+  let next = query
+
+  if (options.gameCatalogId) {
+    next = next.eq("game_catalog_id", options.gameCatalogId)
+  }
+
+  if (options.gameType) {
+    next = next.eq("game_catalog.type", options.gameType)
+  }
+
+  if (options.search) {
+    const pattern = `%${escapeIlikePattern(options.search)}%`
+    next = next.or(
+      `game_catalog.title.ilike.${pattern},game_catalog.escape_room_details.city.ilike.${pattern},game_catalog.escape_room_details.venue.ilike.${pattern}`,
+    )
+  }
+
+  if (options.participantIds && options.participantIds.length > 0) {
+    next = next.in("session_participants.participant_id", options.participantIds)
+  }
+
+  if (options.playerTeamId) {
+    next = next.eq("player_team_id", options.playerTeamId)
+  }
+
+  if (options.playedAtFrom) {
+    next = next.gte("played_at", options.playedAtFrom)
+  }
+
+  if (options.playedAtTo) {
+    next = next.lte("played_at", options.playedAtTo)
+  }
+
+  return next
+}
 
 const MESSAGE_SELECT =
   "id, session_id, author_profile_id, content, created_at, author:profiles!session_messages_author_profile_id_fkey(display_name)"
@@ -161,6 +228,18 @@ export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
         query = query.eq("game_catalog_id", options.gameCatalogId)
       }
 
+      if (options.playerTeamId) {
+        query = query.eq("player_team_id", options.playerTeamId)
+      }
+
+      if (options.playedAtFrom) {
+        query = query.gte("played_at", options.playedAtFrom)
+      }
+
+      if (options.playedAtTo) {
+        query = query.lte("played_at", options.playedAtTo)
+      }
+
       if (options.limit !== undefined) {
         const offset = options.offset ?? 0
         query = query.range(offset, offset + options.limit - 1)
@@ -177,12 +256,10 @@ export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
     ): Promise<SessionListSummary[]> {
       let query = client
         .from("play_sessions")
-        .select(SESSION_LIST_SELECT)
+        .select(buildSessionListSelect(options))
         .order("played_at", { ascending: false })
 
-      if (options.gameCatalogId) {
-        query = query.eq("game_catalog_id", options.gameCatalogId)
-      }
+      query = applyListFilters(query as FilterableQuery, options) as typeof query
 
       if (options.limit !== undefined) {
         const offset = options.offset ?? 0
@@ -192,7 +269,9 @@ export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
       }
 
       const result = await query
-      return unwrap(result).map(row => mapSessionListSummary(row as SessionListRow))
+      return unwrap(result).map(row =>
+        mapSessionListSummary(row as unknown as SessionListRow),
+      )
     },
 
     async getById(id: string): Promise<PlaySession | null> {
@@ -252,6 +331,15 @@ export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
         .from("session_participants")
         .select("session_id")
         .eq("participant_id", participantId)
+
+      return [...new Set(unwrap(result).map(row => row.session_id))]
+    },
+
+    async listSessionIdsForProfile(profileId: string): Promise<string[]> {
+      const result = await client
+        .from("session_participants")
+        .select("session_id, participants!inner(profile_id)")
+        .eq("participants.profile_id", profileId)
 
       return [...new Set(unwrap(result).map(row => row.session_id))]
     },

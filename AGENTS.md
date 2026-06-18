@@ -23,9 +23,9 @@ This repo is a ground-up rebuild of MisJuegos (private app at [misjuegos.net](ht
 | **8** | ✅ Done | Desired games wishlist — board games + escapes to play |
 | **9** | ✅ Done | Player teams — reusable participant groups |
 | **10** | ✅ Done | Import pipeline — Escape Babel CSV + CLI |
-| 11 | 🔜 Next | Account linking — first-login friend match modal |
-| 12 | Pending | Session list filters — home search, player, me, team, dates |
-| 13 | Pending | Photos / Storage |
+| **11** | ✅ Done | Account linking — first-login friend match modal |
+| **12** | ✅ Done | Session list filters — search, Yo, jugador, equipo, fechas |
+| 13 | 🔜 Next | Photos / Storage |
 | 14 | Pending | Utilities (dice, roulette, timer) |
 | 15 | Pending | Game ratings — escapes first (1–5 stars TBD) |
 | 16 | Pending | Production cutover |

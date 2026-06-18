@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import { useRouter } from "vue-router"
+import SessionListFilters from "@/components/sessions/SessionListFilters.vue"
 import NewEscapeSessionPanel from "@/components/sessions/NewEscapeSessionPanel.vue"
 import NewSessionPanel from "@/components/sessions/newSessionPanel.vue"
 import ParticipantAvatarStack from "@/components/sessions/ParticipantAvatarStack.vue"
@@ -11,7 +12,7 @@ const router = useRouter()
 const uiStore = useUiStore()
 const {
   sessions,
-  filteredSessions,
+  sessionFilters,
   sessionFilter,
   participants,
   playerTeams,
@@ -29,6 +30,7 @@ const {
   errorMessage,
   searchBgg,
   clearBggSearchState,
+  clearSessionFilters,
   createSession,
   createEscapeSession,
   createFriendParticipant,
@@ -181,6 +183,14 @@ async function handleCreateEscape(payload: {
         <p class="text-gray-400">Historial y creación rápida de partidas.</p>
       </div>
 
+      <SessionListFilters
+        v-model="sessionFilters"
+        :participants="participants"
+        :player-teams="playerTeams"
+        :self-participant-id="selfParticipantId"
+        @clear="clearSessionFilters"
+      />
+
       <div class="flex flex-wrap gap-2">
         <button
           v-for="option in filterOptions"
@@ -202,7 +212,7 @@ async function handleCreateEscape(payload: {
         <p v-if="isLoading" class="text-gray-400">Cargando sesiones...</p>
 
         <article
-          v-for="session in filteredSessions"
+          v-for="session in sessions"
           :key="session.id"
           class="rounded-xl border-4 p-4 transition-colors"
           :class="sessionCardHoverClass(session.gameType)"
@@ -244,7 +254,7 @@ async function handleCreateEscape(payload: {
         </article>
 
         <button
-          v-if="!isLoading && hasMoreSessions && sessionFilter === 'all'"
+          v-if="!isLoading && hasMoreSessions"
           type="button"
           class="w-full rounded-xl border-2 border-dashed border-gray-600 px-4 py-3 text-sm font-semibold text-gray-300 transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
           :disabled="isLoadingMore"
@@ -254,10 +264,10 @@ async function handleCreateEscape(payload: {
         </button>
 
         <p
-          v-if="!isLoading && filteredSessions.length === 0"
+          v-if="!isLoading && sessions.length === 0"
           class="rounded-xl border-4 border-dashed border-gray-700 p-6 text-center text-gray-500"
         >
-          No hay sesiones con este filtro.
+          No hay sesiones con estos filtros.
         </p>
       </div>
     </div>
