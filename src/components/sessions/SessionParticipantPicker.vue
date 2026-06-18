@@ -34,6 +34,7 @@ const props = withDefaults(
     doneLabel?: string
     hideTrigger?: boolean
     disabled?: boolean
+    minSelection?: number
   }>(),
   {
     teams: () => [],
@@ -46,6 +47,7 @@ const props = withDefaults(
     doneLabel: "Listo",
     hideTrigger: false,
     disabled: false,
+    minSelection: 1,
   },
 )
 
@@ -105,6 +107,9 @@ const countLabel = computed(() => {
   }
 
   const count = selectedIds.value.length
+  if (count === 0) {
+    return props.minSelection === 0 ? "Sin filtro de jugadores" : "0 jugadores"
+  }
   return count === 1 ? "1 jugador seleccionado" : `${count} jugadores seleccionados`
 })
 
@@ -267,8 +272,10 @@ function isTeamSelected(teamId: string) {
 function selectTeam(team: PlayerTeamWithMembers) {
   if (isTeamSelected(team.id)) {
     selectedTeamId.value = null
-    if (props.selfParticipantId) {
+    if (props.minSelection > 0 && props.selfParticipantId) {
       selectedIds.value = [props.selfParticipantId]
+    } else {
+      selectedIds.value = []
     }
     return
   }
@@ -279,7 +286,7 @@ function selectTeam(team: PlayerTeamWithMembers) {
 
 function toggleParticipant(participantId: string) {
   if (isSelected(participantId)) {
-    if (selectedIds.value.length === 1) return
+    if (selectedIds.value.length <= props.minSelection) return
 
     selectedIds.value = selectedIds.value.filter(id => id !== participantId)
     selectedTeamId.value = null

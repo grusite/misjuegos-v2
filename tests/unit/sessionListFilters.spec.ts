@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
+  buildSessionSearchOrFilter,
   countActiveSessionFilters,
   createDefaultSessionListFilters,
   escapeIlikePattern,
@@ -11,6 +12,30 @@ import {
 describe("sessionListFilters", () => {
   it("escapeIlikePattern escapes wildcard characters", () => {
     expect(escapeIlikePattern("50%_off")).toBe("50\\%\\_off")
+  })
+
+  it("buildSessionSearchOrFilter quotes ilike patterns for PostgREST", () => {
+    expect(buildSessionSearchOrFilter("ote")).toBe(
+      'game_catalog.title.ilike."%ote%",game_catalog.escape_room_details.city.ilike."%ote%",game_catalog.escape_room_details.venue.ilike."%ote%"',
+    )
+  })
+
+  it("toListSessionsOptions keeps player filters while searching", () => {
+    const options = toListSessionsOptions(
+      {
+        ...createDefaultSessionListFilters(),
+        search: "babel",
+        participantIds: ["p1"],
+        playerTeamId: "team-1",
+      },
+      null,
+    )
+
+    expect(options).toEqual({
+      search: "babel",
+      participantIds: ["p1"],
+      playerTeamId: "team-1",
+    })
   })
 
   it("toListSessionsOptions maps game type and search", () => {

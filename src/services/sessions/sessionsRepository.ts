@@ -42,7 +42,7 @@ import {
 } from "@/services/sessions/sessionMapper"
 
 import {
-  escapeIlikePattern,
+  buildSessionSearchOrFilter,
 } from "@/services/sessions/sessionListFilters"
 
 const SESSION_CATALOG_EMBED = `
@@ -101,10 +101,7 @@ function applyListFilters(
   }
 
   if (options.search) {
-    const pattern = `%${escapeIlikePattern(options.search)}%`
-    next = next.or(
-      `game_catalog.title.ilike.${pattern},game_catalog.escape_room_details.city.ilike.${pattern},game_catalog.escape_room_details.venue.ilike.${pattern}`,
-    )
+    next = next.or(buildSessionSearchOrFilter(options.search))
   }
 
   if (options.participantIds && options.participantIds.length > 0) {

@@ -151,6 +151,7 @@ function clearFilters() {
           label="Jugador"
           trigger-label="Elegir jugadores"
           done-label="Aplicar"
+          :min-selection="0"
           :disabled="filters.onlyMine"
           @update:model-value="onParticipantIdsChange"
         />

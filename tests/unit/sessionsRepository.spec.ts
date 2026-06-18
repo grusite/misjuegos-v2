@@ -72,7 +72,7 @@ describe("sessionsRepository.listSummaries filters", () => {
     expect(chain.gte).toHaveBeenCalledWith("played_at", "2024-01-01T00:00:00.000Z")
     expect(chain.lte).toHaveBeenCalledWith("played_at", "2024-12-31T23:59:59.999Z")
     expect(chain.or).toHaveBeenCalledWith(
-      expect.stringContaining("game_catalog.title.ilike.%babel%"),
+      'game_catalog.title.ilike."%babel%",game_catalog.escape_room_details.city.ilike."%babel%",game_catalog.escape_room_details.venue.ilike."%babel%"',
     )
   })
 })
