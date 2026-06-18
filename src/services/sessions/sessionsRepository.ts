@@ -4,6 +4,7 @@ import type {
   CreateSessionInput,
   ListSessionsOptions,
   PlaySession,
+  SessionListSummary,
   SessionMemberInput,
   SessionMemberPreview,
   SessionMessage,
@@ -13,6 +14,7 @@ import type {
   SessionScoreInput,
   UpdateSessionInput,
 } from "@/domain/types/session"
+import type { GameType } from "@/domain/types/rows"
 import type { AppDatabase } from "@/domain/types/schema"
 import { unwrap, unwrapNullable, fromPostgrestError } from "@/services/errors"
 import {
@@ -28,8 +30,67 @@ import {
   toPlaySessionUpdate,
 } from "@/services/sessions/sessionMapper"
 
+const SESSION_LIST_SELECT = `
+  id,
+  game_catalog_id,
+  played_at,
+  status,
+  outcome,
+  notes,
+  player_team_id,
+  game_catalog:game_catalog_id (
+    title,
+    type,
+    escape_room_details (
+      city,
+      venue
+    )
+  )
+`
+
 const MESSAGE_SELECT =
   "id, session_id, author_profile_id, content, created_at, author:profiles!session_messages_author_profile_id_fkey(display_name)"
+
+type SessionListRow = {
+  id: string
+  game_catalog_id: string
+  played_at: string
+  status: PlaySession["status"]
+  outcome: PlaySession["outcome"]
+  notes: string | null
+  player_team_id: string | null
+  game_catalog: {
+    title: string
+    type: GameType
+    escape_room_details: { city: string | null; venue: string | null } | null
+  } | null
+}
+
+type CoParticipantRow = {
+  participant: {
+    id: string
+    display_name: string
+    profile_id: string | null
+  } | null
+}
+
+function mapSessionListSummary(row: SessionListRow): SessionListSummary {
+  const escapeDetails = row.game_catalog?.escape_room_details ?? null
+
+  return {
+    id: row.id,
+    gameCatalogId: row.game_catalog_id,
+    gameType: row.game_catalog?.type ?? "board_game",
+    playedAt: row.played_at,
+    status: row.status,
+    outcome: row.outcome,
+    notes: row.notes,
+    playerTeamId: row.player_team_id,
+    gameTitle: row.game_catalog?.title ?? "Juego",
+    escapeCity: escapeDetails?.city ?? null,
+    escapeVenue: escapeDetails?.venue ?? null,
+  }
+}
 
 const SESSION_MEMBER_PREVIEW_SELECT = `
   id,
@@ -89,12 +150,38 @@ export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
         query = query.eq("game_catalog_id", options.gameCatalogId)
       }
 
-      if (options.limit) {
-        query = query.limit(options.limit)
+      if (options.limit !== undefined) {
+        const offset = options.offset ?? 0
+        query = query.range(offset, offset + options.limit - 1)
+      } else if (options.offset !== undefined) {
+        query = query.range(options.offset, options.offset + 24)
       }
 
       const result = await query
       return unwrap(result).map(mapPlaySession)
+    },
+
+    async listSummaries(
+      options: ListSessionsOptions = {},
+    ): Promise<SessionListSummary[]> {
+      let query = client
+        .from("play_sessions")
+        .select(SESSION_LIST_SELECT)
+        .order("played_at", { ascending: false })
+
+      if (options.gameCatalogId) {
+        query = query.eq("game_catalog_id", options.gameCatalogId)
+      }
+
+      if (options.limit !== undefined) {
+        const offset = options.offset ?? 0
+        query = query.range(offset, offset + options.limit - 1)
+      } else if (options.offset !== undefined) {
+        query = query.range(options.offset, options.offset + 24)
+      }
+
+      const result = await query
+      return unwrap(result).map(row => mapSessionListSummary(row as SessionListRow))
     },
 
     async getById(id: string): Promise<PlaySession | null> {
@@ -156,6 +243,39 @@ export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
         .eq("participant_id", participantId)
 
       return [...new Set(unwrap(result).map(row => row.session_id))]
+    },
+
+    async listDistinctCoParticipants(
+      sessionIds: string[],
+      excludeParticipantId: string,
+    ): Promise<Array<{ displayName: string; profileId: string | null }>> {
+      if (sessionIds.length === 0) return []
+
+      const result = await client
+        .from("session_participants")
+        .select(`
+          participant:participants (
+            id,
+            display_name,
+            profile_id
+          )
+        `)
+        .in("session_id", sessionIds)
+        .neq("participant_id", excludeParticipantId)
+        .not("participant_id", "is", null)
+
+      const seen = new Map<string, { displayName: string; profileId: string | null }>()
+
+      for (const row of unwrap(result) as CoParticipantRow[]) {
+        if (!row.participant) continue
+
+        seen.set(row.participant.id, {
+          displayName: row.participant.display_name,
+          profileId: row.participant.profile_id,
+        })
+      }
+
+      return Array.from(seen.values())
     },
 
     async listMemberPreviewsBySessionIds(

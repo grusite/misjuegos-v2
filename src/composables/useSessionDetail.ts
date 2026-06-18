@@ -143,11 +143,15 @@ export function useSessionDetail(sessionId: string) {
   }
 
   async function resolveMembers(rows: SessionParticipant[]): Promise<SessionMember[]> {
+    const participantIds = rows
+      .map(row => row.participantId)
+      .filter((id): id is string => Boolean(id))
+    const participantsById = await participantsRepository.getByIds(participantIds)
     const resolved: SessionMember[] = []
 
     for (const row of rows) {
       if (row.participantId) {
-        const participant = await participantsRepository.getById(row.participantId)
+        const participant = participantsById.get(row.participantId)
         resolved.push({
           id: row.id,
           displayName: participant?.displayName ?? "Participante",

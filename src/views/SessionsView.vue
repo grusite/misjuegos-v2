@@ -23,6 +23,8 @@ const {
   bggAutoFillTitle,
   bggAutoSelectId,
   isLoading,
+  isLoadingMore,
+  hasMoreSessions,
   isSaving,
   errorMessage,
   searchBgg,
@@ -30,6 +32,7 @@ const {
   createSession,
   createEscapeSession,
   createFriendParticipant,
+  loadMoreSessions,
 } = useSessions()
 
 const isCreating = ref(false)
@@ -239,6 +242,16 @@ async function handleCreateEscape(payload: {
             <p class="mt-2 text-xs uppercase text-gray-500">{{ session.status }}</p>
           </RouterLink>
         </article>
+
+        <button
+          v-if="!isLoading && hasMoreSessions && sessionFilter === 'all'"
+          type="button"
+          class="w-full rounded-xl border-2 border-dashed border-gray-600 px-4 py-3 text-sm font-semibold text-gray-300 transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+          :disabled="isLoadingMore"
+          @click="loadMoreSessions"
+        >
+          {{ isLoadingMore ? "Cargando más sesiones..." : "Cargar más sesiones" }}
+        </button>
 
         <p
           v-if="!isLoading && filteredSessions.length === 0"

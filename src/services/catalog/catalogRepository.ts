@@ -156,25 +156,21 @@ export function createCatalogRepository(client: SupabaseClient<AppDatabase>) {
     },
 
     async listEscapeRooms(): Promise<EscapeRoomCatalogEntry[]> {
-      const catalogs = await client
+      const result = await client
         .from("game_catalog")
-        .select("*")
+        .select("*, escape_room_details(*)")
         .eq("type", "escape_room")
         .order("title")
 
-      const entries: EscapeRoomCatalogEntry[] = []
+      return unwrap(result).flatMap(row => {
+        const details = Array.isArray(row.escape_room_details)
+          ? row.escape_room_details[0]
+          : row.escape_room_details
 
-      for (const catalog of unwrap(catalogs)) {
-        const detailsResult = await client
-          .from("escape_room_details")
-          .select("*")
-          .eq("game_catalog_id", catalog.id)
-          .single()
+        if (!details) return []
 
-        entries.push(toEscapeRoomCatalogEntry(catalog, unwrap(detailsResult)))
-      }
-
-      return entries
+        return [toEscapeRoomCatalogEntry(row, details)]
+      })
     },
   }
 }

@@ -1,4 +1,4 @@
-import type { UserMetadata } from "@supabase/supabase-js"
+import type { UserMetadata, AuthChangeEvent } from "@supabase/supabase-js"
 import { supabase } from "@/lib/supabaseClient"
 import type { AuthProfile } from "@/stores/authStore"
 
@@ -85,10 +85,14 @@ export async function signOut(): Promise<void> {
 }
 
 export function onAuthStateChange(
-  callback: (userId: string | null, metadata: UserMetadata | null) => void,
+  callback: (
+    event: AuthChangeEvent,
+    userId: string | null,
+    metadata: UserMetadata | null,
+  ) => void,
 ) {
-  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-    callback(session?.user.id ?? null, session?.user.user_metadata ?? null)
+  const { data } = supabase.auth.onAuthStateChange((event, session) => {
+    callback(event, session?.user.id ?? null, session?.user.user_metadata ?? null)
   })
 
   return data.subscription

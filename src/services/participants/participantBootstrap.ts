@@ -1,9 +1,11 @@
-import type { AuthProfile } from "@/stores/authStore"
 import type { Participant } from "@/domain/types/participant"
 import { participantsRepository } from "@/services/participants/participantsRepository"
 import { sessionsRepository } from "@/services/sessions/sessionsRepository"
 
-export async function ensureSelfParticipant(profile: AuthProfile): Promise<Participant> {
+export async function ensureSelfParticipant(profile: {
+  id: string
+  displayName: string
+}): Promise<Participant> {
   const existing = await participantsRepository.findByProfileId(profile.id, profile.id)
   if (existing) {
     if (existing.displayName !== profile.displayName) {
@@ -23,28 +25,39 @@ export async function ensureSelfParticipant(profile: AuthProfile): Promise<Parti
 export async function ensureFriendParticipant(
   ownerId: string,
   input: { profileId?: string | null; displayName: string },
+  existingByProfileId: Map<string, Participant>,
+  existingByName: Map<string, Participant>,
 ): Promise<Participant | null> {
   if (input.profileId === ownerId) {
-    return participantsRepository.findByProfileId(ownerId, ownerId)
+    return existingByProfileId.get(ownerId) ?? null
   }
 
   if (input.profileId) {
-    const byProfile = await participantsRepository.findByProfileId(ownerId, input.profileId)
+    const byProfile = existingByProfileId.get(input.profileId)
     if (byProfile) return byProfile
   }
 
-  const byName = await participantsRepository.findByDisplayName(ownerId, input.displayName)
+  const byName = existingByName.get(input.displayName.toLowerCase())
   if (byName) {
     if (input.profileId && !byName.profileId) {
-      return participantsRepository.update(byName.id, { profileId: input.profileId })
+      const updated = await participantsRepository.update(byName.id, {
+        profileId: input.profileId,
+      })
+      existingByProfileId.set(input.profileId, updated)
+      return updated
     }
     return byName
   }
 
-  return participantsRepository.create(ownerId, {
+  const created = await participantsRepository.create(ownerId, {
     displayName: input.displayName,
     profileId: input.profileId ?? null,
   })
+  existingByName.set(created.displayName.toLowerCase(), created)
+  if (created.profileId) {
+    existingByProfileId.set(created.profileId, created)
+  }
+  return created
 }
 
 export async function deduplicateLinkedParticipants(ownerId: string): Promise<void> {
@@ -78,6 +91,15 @@ export async function syncFriendsFromSession(
   selfParticipantId: string,
 ): Promise<void> {
   const rows = await sessionsRepository.listParticipants(sessionId)
+  const existing = await participantsRepository.listForOwner(ownerId)
+  const existingByProfileId = new Map(
+    existing
+      .filter(participant => participant.profileId)
+      .map(participant => [participant.profileId!, participant]),
+  )
+  const existingByName = new Map(
+    existing.map(participant => [participant.displayName.toLowerCase(), participant]),
+  )
 
   for (const row of rows) {
     if (!row.participantId || row.participantId === selfParticipantId) continue
@@ -86,10 +108,15 @@ export async function syncFriendsFromSession(
     if (!participant) continue
     if (participant.profileId === ownerId) continue
 
-    await ensureFriendParticipant(ownerId, {
-      profileId: participant.profileId,
-      displayName: participant.displayName,
-    })
+    await ensureFriendParticipant(
+      ownerId,
+      {
+        profileId: participant.profileId,
+        displayName: participant.displayName,
+      },
+      existingByProfileId,
+      existingByName,
+    )
   }
 }
 
@@ -98,9 +125,36 @@ export async function syncFriendsFromAllSessions(
   selfParticipantId: string,
 ): Promise<void> {
   const sessionIds = await sessionsRepository.listSessionIdsForParticipant(selfParticipantId)
+  if (sessionIds.length === 0) return
 
-  for (const sessionId of sessionIds) {
-    await syncFriendsFromSession(sessionId, profileId, selfParticipantId)
+  const coParticipants = await sessionsRepository.listDistinctCoParticipants(
+    sessionIds,
+    selfParticipantId,
+  )
+  if (coParticipants.length === 0) return
+
+  const existing = await participantsRepository.listForOwner(profileId)
+  const existingByProfileId = new Map(
+    existing
+      .filter(participant => participant.profileId)
+      .map(participant => [participant.profileId!, participant]),
+  )
+  const existingByName = new Map(
+    existing.map(participant => [participant.displayName.toLowerCase(), participant]),
+  )
+
+  for (const coParticipant of coParticipants) {
+    if (coParticipant.profileId === profileId) continue
+
+    await ensureFriendParticipant(
+      profileId,
+      {
+        profileId: coParticipant.profileId,
+        displayName: coParticipant.displayName,
+      },
+      existingByProfileId,
+      existingByName,
+    )
   }
 }
 

@@ -1,6 +1,6 @@
 import { computed, onMounted, ref } from "vue"
 import { useAuthStore } from "@/stores/authStore"
-import type { EscapeRoomCatalogEntry, GameCatalog } from "@/domain/types/catalog"
+import type { EscapeRoomCatalogEntry } from "@/domain/types/catalog"
 import type { Participant } from "@/domain/types/participant"
 import type { PlayerTeamWithMembers } from "@/domain/types/playerTeam"
 import type { SessionMemberPreview } from "@/domain/types/session"
@@ -8,11 +8,11 @@ import type { GameType, SessionOutcome, SessionStatus } from "@/domain/types/row
 import { participantFormSchema } from "@/domain/schemas/participant"
 import { getAvatarColor } from "@/lib/utils/avatarColor"
 import { getDbErrorMessage } from "@/services/errors"
+import { appDataCache } from "@/services/cache/memoryCache"
 import { catalogRepository } from "@/services/catalog/catalogRepository"
 import {
   ensureSelfParticipant,
   sortParticipantsWithSelfFirst,
-  syncFriendsFromAllSessions,
   syncFriendsFromSession,
 } from "@/services/participants/participantBootstrap"
 import { participantsRepository } from "@/services/participants/participantsRepository"
@@ -62,6 +62,12 @@ export type CreateEscapeSessionPayload = {
   playerTeamId?: string | null
 }
 
+const SESSIONS_PAGE_SIZE = 25
+
+function invalidateSessionsCache(ownerId: string) {
+  appDataCache.invalidate(`sessions:${ownerId}`)
+}
+
 export function useSessions() {
   const authStore = useAuthStore()
   const ownerId = computed(() => authStore.profile?.id ?? null)
@@ -78,8 +84,11 @@ export function useSessions() {
   const sessionFilter = ref<SessionFilter>("all")
 
   const isLoading = ref(false)
+  const isLoadingMore = ref(false)
+  const hasMoreSessions = ref(false)
   const isSaving = ref(false)
   const errorMessage = ref<string | null>(null)
+  const sessionsOffset = ref(0)
 
   const filteredSessions = computed(() => {
     if (sessionFilter.value === "all") return sessions.value
@@ -113,90 +122,149 @@ export function useSessions() {
     await sessionsRepository.setParticipants(sessionId, members)
     await sessionsRepository.update(sessionId, { playerTeamId })
     await syncFriendsFromSession(sessionId, ownerId.value, selfParticipant.id)
-    await loadParticipants()
+    if (ownerId.value) {
+      invalidateSessionsCache(ownerId.value)
+      appDataCache.invalidate(`participants:${ownerId.value}`)
+    }
+    await loadParticipants(true)
   }
 
-  async function loadSessions() {
+  async function loadSessions(options?: { append?: boolean; force?: boolean }) {
     if (!ownerId.value) return
 
-    isLoading.value = true
+    const append = options?.append ?? false
+    const force = options?.force ?? false
+    const offset = append ? sessionsOffset.value : 0
+    const cacheKey = `sessions:${ownerId.value}:${offset}`
+
+    if (!force && !append) {
+      const cached = appDataCache.get<SessionListItem[]>(cacheKey)
+      if (cached) {
+        sessions.value = cached
+        sessionsOffset.value = cached.length
+        hasMoreSessions.value = cached.length >= SESSIONS_PAGE_SIZE
+        return
+      }
+    }
+
+    if (append) {
+      isLoadingMore.value = true
+    } else {
+      isLoading.value = true
+    }
     errorMessage.value = null
 
     try {
-      const sessionRows = await sessionsRepository.list()
+      const summaries = await sessionsRepository.listSummaries({
+        limit: SESSIONS_PAGE_SIZE + 1,
+        offset,
+      })
+
+      hasMoreSessions.value = summaries.length > SESSIONS_PAGE_SIZE
+      const page = hasMoreSessions.value
+        ? summaries.slice(0, SESSIONS_PAGE_SIZE)
+        : summaries
+
       const membersBySession = await sessionsRepository.listMemberPreviewsBySessionIds(
-        sessionRows.map(session => session.id),
+        page.map(session => session.id),
       )
-      const catalogMap = new Map<string, GameCatalog | null>()
-      const escapeMap = new Map<string, EscapeRoomCatalogEntry | null>()
 
-      for (const session of sessionRows) {
-        if (!catalogMap.has(session.gameCatalogId)) {
-          const catalog = await catalogRepository.getById(session.gameCatalogId)
-          catalogMap.set(session.gameCatalogId, catalog)
+      const items: SessionListItem[] = page.map(summary => ({
+        id: summary.id,
+        gameCatalogId: summary.gameCatalogId,
+        gameType: summary.gameType,
+        playedAt: summary.playedAt,
+        status: summary.status,
+        outcome: summary.outcome,
+        notes: summary.notes,
+        gameTitle: summary.gameTitle,
+        escapeCity: summary.escapeCity,
+        escapeVenue: summary.escapeVenue,
+        playerTeamId: summary.playerTeamId,
+        players: membersBySession.get(summary.id) ?? [],
+      }))
 
-          if (catalog?.type === "escape_room") {
-            escapeMap.set(
-              session.gameCatalogId,
-              await catalogRepository.getEscapeRoomById(session.gameCatalogId),
-            )
-          }
-        }
+      if (append) {
+        sessions.value = [...sessions.value, ...items]
+      } else {
+        sessions.value = items
+        appDataCache.set(cacheKey, items)
       }
 
-      sessions.value = sessionRows.map(session => {
-        const catalog = catalogMap.get(session.gameCatalogId)
-        const escape = escapeMap.get(session.gameCatalogId)
-
-        return {
-          id: session.id,
-          gameCatalogId: session.gameCatalogId,
-          gameType: catalog?.type ?? "board_game",
-          playedAt: session.playedAt,
-          status: session.status,
-          outcome: session.outcome,
-          notes: session.notes,
-          gameTitle: catalog?.title ?? "Juego",
-          escapeCity: escape?.escapeRoomDetails.city ?? null,
-          escapeVenue: escape?.escapeRoomDetails.venue ?? null,
-          playerTeamId: session.playerTeamId,
-          players: membersBySession.get(session.id) ?? [],
-        }
-      })
+      sessionsOffset.value = offset + page.length
     } catch (error) {
       errorMessage.value = getDbErrorMessage(error)
     } finally {
       isLoading.value = false
+      isLoadingMore.value = false
     }
   }
 
-  async function loadParticipants() {
+  async function loadMoreSessions() {
+    if (!hasMoreSessions.value || isLoadingMore.value || isLoading.value) return
+    await loadSessions({ append: true })
+  }
+
+  async function loadParticipants(force = false) {
     if (!ownerId.value || !authStore.profile) return
 
+    const cacheKey = `participants:${ownerId.value}`
+
+    if (!force) {
+      const cached = appDataCache.get<Participant[]>(cacheKey)
+      if (cached) {
+        participants.value = sortParticipantsWithSelfFirst(cached, ownerId.value)
+        return
+      }
+    }
+
     try {
-      const selfParticipant = await ensureSelfParticipant(authStore.profile)
-      await syncFriendsFromAllSessions(ownerId.value, selfParticipant.id)
+      await ensureSelfParticipant(authStore.profile)
 
       const list = await participantsRepository.listForOwner(ownerId.value)
-      participants.value = sortParticipantsWithSelfFirst(list, ownerId.value)
+      const sorted = sortParticipantsWithSelfFirst(list, ownerId.value)
+      participants.value = sorted
+      appDataCache.set(cacheKey, sorted)
     } catch (error) {
       errorMessage.value = getDbErrorMessage(error)
     }
   }
 
-  async function loadPlayerTeams() {
+  async function loadPlayerTeams(force = false) {
     if (!ownerId.value) return
+
+    const cacheKey = `playerTeams:${ownerId.value}`
+
+    if (!force) {
+      const cached = appDataCache.get<PlayerTeamWithMembers[]>(cacheKey)
+      if (cached) {
+        playerTeams.value = cached
+        return
+      }
+    }
 
     try {
       playerTeams.value = await playerTeamsRepository.listForOwner(ownerId.value)
+      appDataCache.set(cacheKey, playerTeams.value)
     } catch (error) {
       errorMessage.value = getDbErrorMessage(error)
     }
   }
 
-  async function loadEscapeCatalog() {
+  async function loadEscapeCatalog(force = false) {
+    const cacheKey = "escapeCatalog"
+
+    if (!force) {
+      const cached = appDataCache.get<EscapeRoomCatalogEntry[]>(cacheKey)
+      if (cached) {
+        escapeCatalog.value = cached
+        return
+      }
+    }
+
     try {
       escapeCatalog.value = await catalogRepository.listEscapeRooms()
+      appDataCache.set(cacheKey, escapeCatalog.value)
     } catch (error) {
       errorMessage.value = getDbErrorMessage(error)
     }
@@ -278,7 +346,7 @@ export function useSessions() {
       )
 
       if (existing) {
-        await loadParticipants()
+        await loadParticipants(true)
         return existing
       }
 
@@ -287,7 +355,7 @@ export function useSessions() {
         color: getAvatarColor(normalizedName),
       })
 
-      await loadParticipants()
+      await loadParticipants(true)
       return (
         participants.value.find(
           participant => participant.displayName.toLowerCase() === normalizedName.toLowerCase(),
@@ -336,7 +404,7 @@ export function useSessions() {
         payload.selectedParticipants,
         payload.playerTeamId ?? null,
       )
-      await loadSessions()
+      await loadSessions({ force: true })
 
       return session.id
     } catch (error) {
@@ -389,7 +457,11 @@ export function useSessions() {
         payload.selectedParticipants,
         payload.playerTeamId ?? null,
       )
-      await Promise.all([loadSessions(), loadEscapeCatalog()])
+      if (ownerId.value) {
+        invalidateSessionsCache(ownerId.value)
+        appDataCache.invalidate("escapeCatalog")
+      }
+      await Promise.all([loadSessions({ force: true }), loadEscapeCatalog(true)])
 
       return session.id
     } catch (error) {
@@ -420,10 +492,13 @@ export function useSessions() {
     bggAutoFillTitle,
     bggAutoSelectId,
     isLoading,
+    isLoadingMore,
+    hasMoreSessions,
     isSaving,
     errorMessage,
     selfParticipantId,
     loadSessions,
+    loadMoreSessions,
     loadEscapeCatalog,
     searchBgg,
     clearBggSearchState,

@@ -71,6 +71,18 @@ export function createParticipantsRepository(client: SupabaseClient<AppDatabase>
       return row ? mapParticipant(row) : null
     },
 
+    async getByIds(ids: string[]): Promise<Map<string, Participant>> {
+      const uniqueIds = [...new Set(ids)]
+      if (uniqueIds.length === 0) return new Map()
+
+      const result = await client
+        .from("participants")
+        .select(PARTICIPANT_WITH_PROFILE_SELECT)
+        .in("id", uniqueIds)
+
+      return new Map(unwrap(result).map(row => [row.id, mapParticipant(row)]))
+    },
+
     async findByProfileId(
       ownerId: string,
       profileId: string,

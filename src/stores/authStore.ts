@@ -2,6 +2,7 @@ import { defineStore } from "pinia"
 import { computed, ref } from "vue"
 import type { UserMetadata } from "@supabase/supabase-js"
 import * as authService from "@/services/auth/authService"
+import { appDataCache } from "@/services/cache/memoryCache"
 import {
   deduplicateLinkedParticipants,
   ensureSelfParticipant,
@@ -18,10 +19,26 @@ export const useAuthStore = defineStore("auth", () => {
   const profile = ref<AuthProfile | null>(null)
   const isInitialized = ref(false)
   const isLoading = ref(false)
+  let hasBootstrappedParticipants = false
 
   const isAuthenticated = computed(() => profile.value !== null)
 
-  async function loadProfile(userId: string, metadata?: UserMetadata | null) {
+  async function bootstrapParticipants() {
+    if (!profile.value || hasBootstrappedParticipants) return
+
+    const selfParticipant = await ensureSelfParticipant(profile.value)
+    await deduplicateLinkedParticipants(profile.value.id)
+    await syncFriendsFromAllSessions(profile.value.id, selfParticipant.id)
+    await deduplicateLinkedParticipants(profile.value.id)
+    appDataCache.invalidate(`participants:${profile.value.id}`)
+    hasBootstrappedParticipants = true
+  }
+
+  async function loadProfile(
+    userId: string,
+    metadata?: UserMetadata | null,
+    options?: { bootstrap?: boolean },
+  ) {
     const fromDb = await authService.fetchProfile(userId)
 
     if (fromDb) {
@@ -34,13 +51,12 @@ export const useAuthStore = defineStore("auth", () => {
 
     if (!profile.value) return
 
-    try {
-      const selfParticipant = await ensureSelfParticipant(profile.value)
-      await deduplicateLinkedParticipants(profile.value.id)
-      await syncFriendsFromAllSessions(profile.value.id, selfParticipant.id)
-      await deduplicateLinkedParticipants(profile.value.id)
-    } catch {
-      // Participant bootstrap is best-effort; auth should still succeed.
+    if (options?.bootstrap) {
+      try {
+        await bootstrapParticipants()
+      } catch {
+        // Participant bootstrap is best-effort; auth should still succeed.
+      }
     }
   }
 
@@ -50,15 +66,28 @@ export const useAuthStore = defineStore("auth", () => {
     const { data } = await authService.getSession()
 
     if (data.session?.user) {
-      await loadProfile(data.session.user.id, data.session.user.user_metadata)
+      await loadProfile(data.session.user.id, data.session.user.user_metadata, {
+        bootstrap: true,
+      })
     }
 
-    authService.onAuthStateChange(async (userId, metadata) => {
-      if (userId) {
-        await loadProfile(userId, metadata)
-      } else {
+    authService.onAuthStateChange(async (event, userId, metadata) => {
+      if (!userId) {
         profile.value = null
+        hasBootstrappedParticipants = false
+        appDataCache.clear()
+        return
       }
+
+      if (event === "TOKEN_REFRESHED" && profile.value?.id === userId) {
+        return
+      }
+
+      const isNewUser = profile.value?.id !== userId
+
+      await loadProfile(userId, metadata, {
+        bootstrap: event === "SIGNED_IN" || isNewUser,
+      })
     })
 
     isInitialized.value = true
@@ -76,6 +105,8 @@ export const useAuthStore = defineStore("auth", () => {
   async function logout() {
     await authService.signOut()
     profile.value = null
+    hasBootstrappedParticipants = false
+    appDataCache.clear()
   }
 
   return {

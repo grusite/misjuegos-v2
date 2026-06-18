@@ -1,5 +1,5 @@
 import type { Json } from "./database"
-import type { SessionOutcome, SessionStatus } from "./rows"
+import type { GameType, SessionOutcome, SessionStatus } from "./rows"
 
 export type PlaySession = {
   id: string
@@ -101,4 +101,19 @@ export type SessionScoreInput = {
 export type ListSessionsOptions = {
   gameCatalogId?: string
   limit?: number
+  offset?: number
+}
+
+export type SessionListSummary = {
+  id: string
+  gameCatalogId: string
+  gameType: GameType
+  playedAt: string
+  status: SessionStatus
+  outcome: SessionOutcome | null
+  notes: string | null
+  playerTeamId: string | null
+  gameTitle: string
+  escapeCity: string | null
+  escapeVenue: string | null
 }
