@@ -18,10 +18,21 @@ import type { GameType } from "@/domain/types/rows"
 import type { AppDatabase } from "@/domain/types/schema"
 import { unwrap, unwrapNullable, fromPostgrestError } from "@/services/errors"
 import {
+  mapBoardSessionDetails,
+  toBoardSessionDetailsUpsert,
+} from "@/services/sessions/boardSessionMapper"
+import type {
+  BoardSessionDetails,
+  UpsertBoardSessionDetailsInput,
+} from "@/domain/types/boardSession"
+import {
   mapEscapeSessionDetails,
   toEscapeSessionDetailsUpsert,
 } from "@/services/sessions/escapeSessionMapper"
-import type { EscapeSessionDetails, UpsertEscapeSessionDetailsInput } from "@/domain/types/escapeSession"
+import type {
+  EscapeSessionDetails,
+  UpsertEscapeSessionDetailsInput,
+} from "@/domain/types/escapeSession"
 import {
   mapPlaySession,
   mapSessionMemberPreview,
@@ -419,6 +430,34 @@ export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
         .single()
 
       return mapEscapeSessionDetails(unwrap(result))
+    },
+
+    async getBoardSessionDetails(
+      sessionId: string,
+    ): Promise<BoardSessionDetails | null> {
+      const result = await client
+        .from("board_session_details")
+        .select("*")
+        .eq("session_id", sessionId)
+        .maybeSingle()
+
+      const row = unwrapNullable(result)
+      return row ? mapBoardSessionDetails(row) : null
+    },
+
+    async upsertBoardSessionDetails(
+      sessionId: string,
+      input: UpsertBoardSessionDetailsInput,
+    ): Promise<BoardSessionDetails> {
+      const result = await client
+        .from("board_session_details")
+        .upsert(toBoardSessionDetailsUpsert(sessionId, input), {
+          onConflict: "session_id",
+        })
+        .select("*")
+        .single()
+
+      return mapBoardSessionDetails(unwrap(result))
     },
   }
 }

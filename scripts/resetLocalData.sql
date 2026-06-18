@@ -9,6 +9,7 @@ truncate table
   public.session_messages,
   public.board_game_scores,
   public.session_participants,
+  public.board_session_details,
   public.escape_session_details,
   public.play_sessions,
   public.escape_room_details,

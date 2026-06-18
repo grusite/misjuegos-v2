@@ -16,6 +16,7 @@
     "import:escapes": "tsx --tsconfig tsconfig.scripts.json scripts/importEscapes.ts",
     "import:list-participants": "tsx --tsconfig tsconfig.scripts.json scripts/listImportParticipants.ts",
     "import:list-profiles": "tsx --tsconfig tsconfig.scripts.json scripts/listProfiles.ts",
+    "import:board-games": "tsx --tsconfig tsconfig.scripts.json scripts/importBoardGames.ts",
     "db:reset-data": "supabase db query --local -f scripts/resetLocalData.sql"
   },
   "engines": {

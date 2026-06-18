@@ -16,6 +16,7 @@ export type BoardGameDetails = {
   gameCatalogId: string
   bggId: number | null
   expansionOfId: string | null
+  expansion: string | null
   minPlayers: number | null
   maxPlayers: number | null
   playingTimeMin: number | null
@@ -48,6 +49,7 @@ export type CreateBoardGameInput = {
   slug?: string | null
   source?: string | null
   sourceExternalId?: string | null
+  expansion?: string | null
   bggId?: number | null
   expansionOfId?: string | null
   minPlayers?: number | null

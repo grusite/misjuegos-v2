@@ -98,4 +98,33 @@ Planned for **Phase 11** (see `docs/ROADMAP.md`): on **first Google login only**
 
 Import is **CLI-only** (`pnpm import:escapes`); there is no in-app import screen.
 
-Column mapping: `docs/DATABASE.md` → Escape Babel spreadsheet mapping.
+# Board games historical import
+
+Additive import — does **not** wipe escape data. Run after `pnpm import:escapes` if you already imported escapes.
+
+```bash
+pnpm import:board-games data/import/board-games.csv
+```
+
+## CSV columns
+
+| Column | Maps to |
+|--------|---------|
+| Juego | `game_catalog.title` |
+| Expansión | `board_game_details.expansion` |
+| Fecha | `play_sessions.played_at` (default `20/04/2023` if empty) |
+| Veces jugadas | Number of `play_sessions` rows created |
+| Ratio (éxito/fracaso) | Split into `win` / `loss` / `unknown` outcomes |
+| Observaciones | `play_sessions.notes` (same on every session from the row) |
+| Personajes | `board_session_details.players` (co-op character picks) |
+| Jugadores | `session_participants` (empty → team **Babel 4**) |
+
+## Example ratios
+
+- `2 perdidas 2 ganadas` → 4 sessions (2 loss, 2 win)
+- `14 ganadas?` with `15?` plays → 14 wins, 1 loss
+- `4 ganadas?` with `7?` plays → 4 wins, 3 losses
+- `??` with `5?` plays → 5 sessions with `unknown` outcome
+
+Creates **Elena** if missing. Maps **Diegas** → Diego.
+

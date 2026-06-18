@@ -10,7 +10,7 @@ export type FriendCatalogEntry = {
 export const ESCAPE_BABEL_FRIEND_CATALOG: FriendCatalogEntry[] = [
   { key: "jorge", displayName: "Jorge Martin", aliases: ["jorge"] },
   { key: "eduardo", displayName: "Eduardo", aliases: ["edu", "eduardo", "edush"] },
-  { key: "diego", displayName: "Diego", aliases: ["diego"] },
+  { key: "diego", displayName: "Diego", aliases: ["diego", "diegas"] },
   { key: "bego", displayName: "Bego", aliases: ["bego"] },
   { key: "javi", displayName: "Javi", aliases: ["javi"] },
   { key: "pilar", displayName: "Pilar", aliases: ["pili", "pilar"] },
@@ -42,6 +42,7 @@ export const ESCAPE_BABEL_FRIEND_CATALOG: FriendCatalogEntry[] = [
   { key: "maria", displayName: "María", aliases: ["maria"] },
   { key: "mauro", displayName: "Mauro", aliases: ["mauro"] },
   { key: "clau", displayName: "Clau", aliases: ["clau"] },
+  { key: "elena", displayName: "Elena", aliases: ["elena"] },
 ]
 
 const catalogByKey = new Map(

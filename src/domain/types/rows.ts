@@ -71,6 +71,7 @@ export type BoardGameDetailsRow = {
   game_catalog_id: string
   bgg_id: number | null
   expansion_of_id: string | null
+  expansion: string | null
   min_players: number | null
   max_players: number | null
   playing_time_min: number | null
@@ -83,6 +84,7 @@ export type BoardGameDetailsInsert = {
   game_catalog_id: string
   bgg_id?: number | null
   expansion_of_id?: string | null
+  expansion?: string | null
   min_players?: number | null
   max_players?: number | null
   playing_time_min?: number | null

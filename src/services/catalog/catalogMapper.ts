@@ -32,6 +32,7 @@ export function mapBoardGameDetails(row: BoardGameDetailsRow): BoardGameDetails 
     gameCatalogId: row.game_catalog_id,
     bggId: row.bgg_id,
     expansionOfId: row.expansion_of_id,
+    expansion: row.expansion ?? null,
     minPlayers: row.min_players,
     maxPlayers: row.max_players,
     playingTimeMin: row.playing_time_min,
@@ -88,6 +89,7 @@ export function toBoardGameCatalogInsert(input: CreateBoardGameInput) {
     details: {
       bgg_id: input.bggId ?? null,
       expansion_of_id: input.expansionOfId ?? null,
+      expansion: input.expansion ?? null,
       min_players: input.minPlayers ?? null,
       max_players: input.maxPlayers ?? null,
       playing_time_min: input.playingTimeMin ?? null,
