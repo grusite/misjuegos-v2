@@ -153,7 +153,31 @@ On **first Google login only** (not every session):
 - [ ] Sand timer SVG animation
 - [ ] 3D dice roller (Three.js + Cannon — lazy route)
 
-## Phase 14 — Production
+## Phase 14 — Game ratings
+
+Personal ratings for played games — **escape rooms first** (typically one play per room; rating captures how much you enjoyed the experience).
+
+**Scale (decide before implementation):**
+
+- **Recommended for escapes:** **1–5 stars** (half-steps optional) — familiar from booking/review sites, quick to tap on mobile
+- **Alternative:** 1–10 integer — closer to BGG; better if you want one scale for board games later
+- Store as `smallint` either way; UI can show stars or numeric label
+
+**Placement:**
+
+- Escape: `rating` on `escape_session_details` (rate the play session / room experience)
+- Board games (optional, later): same pattern on session or catalog — lower priority since replays are common
+
+**Tasks:**
+
+- [ ] Migration: `rating` column on `escape_session_details` (+ optional `rating_note` text)
+- [ ] Zod + repository update for escape session create/edit
+- [ ] Star (or numeric) picker in escape create flow + detail panel
+- [ ] Escape session list: show rating at a glance; sort/filter by rating (optional)
+- [ ] Dashboard: average escape rating, top-rated rooms (optional)
+- [ ] Board game ratings (stretch — only if Jorge wants parity with BGG-style scoring)
+
+## Phase 15 — Production
 
 - [ ] Apply migrations to prod Supabase
 - [ ] Run Escape Babel CSV import + photo batch upload
