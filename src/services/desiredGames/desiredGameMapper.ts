@@ -62,6 +62,8 @@ export function toDesiredGameInsert(
     booking_url: input.bookingUrl?.trim() || null,
     bgg_id: input.bggId ?? null,
     game_catalog_id: input.gameCatalogId ?? null,
+    source: input.source ?? null,
+    source_hash: input.sourceHash ?? null,
     created_by: createdBy,
   }
 }

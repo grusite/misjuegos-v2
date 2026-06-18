@@ -31,6 +31,8 @@ export type CreateDesiredGameInput = {
   bookingUrl?: string | null
   bggId?: number | null
   gameCatalogId?: string | null
+  source?: string | null
+  sourceHash?: string | null
 }
 
 export type UpdateDesiredGameInput = Partial<CreateDesiredGameInput> & {

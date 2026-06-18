@@ -128,3 +128,19 @@ pnpm import:board-games data/import/board-games.csv
 
 Creates **Elena** if missing. Maps **Diegas** → Diego.
 
+## Wishlist import ("Quiero jugar")
+
+Additive import for escape room wishlist entries (`desired_games`).
+
+```bash
+pnpm import:wishlist data/import/escape-wishlist.csv
+```
+
+CSV columns: `title`, `company`, `city`, `venue`, `booking_url`, `notes`
+
+- URLs go in `booking_url` (title can be the room name)
+- Barcelona section entries use `city=Barcelona` and `venue` for neighbourhood
+- Idempotent via `source_hash` — safe to re-run
+
+Edit `data/import/escape-wishlist.csv` to add more rows later.
+

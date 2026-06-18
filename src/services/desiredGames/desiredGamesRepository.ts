@@ -37,6 +37,21 @@ export function createDesiredGamesRepository(client: SupabaseClient<AppDatabase>
       return row ? mapDesiredGame(row) : null
     },
 
+    async getBySourceHash(
+      createdBy: string,
+      sourceHash: string,
+    ): Promise<DesiredGame | null> {
+      const result = await client
+        .from("desired_games")
+        .select("*")
+        .eq("created_by", createdBy)
+        .eq("source_hash", sourceHash)
+        .maybeSingle()
+
+      const row = unwrapNullable(result)
+      return row ? mapDesiredGame(row) : null
+    },
+
     async create(
       createdBy: string,
       input: CreateDesiredGameInput,

@@ -181,6 +181,8 @@ export type Database = {
           id: string
           notes: string | null
           priority: number | null
+          source: string | null
+          source_hash: string | null
           status: Database["public"]["Enums"]["desired_game_status"]
           title: string
           type: Database["public"]["Enums"]["game_type"]
@@ -198,6 +200,8 @@ export type Database = {
           id?: string
           notes?: string | null
           priority?: number | null
+          source?: string | null
+          source_hash?: string | null
           status?: Database["public"]["Enums"]["desired_game_status"]
           title: string
           type: Database["public"]["Enums"]["game_type"]
@@ -215,6 +219,8 @@ export type Database = {
           id?: string
           notes?: string | null
           priority?: number | null
+          source?: string | null
+          source_hash?: string | null
           status?: Database["public"]["Enums"]["desired_game_status"]
           title?: string
           type?: Database["public"]["Enums"]["game_type"]
