@@ -1,15 +1,23 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import ParticipantBubble from "@/components/ui/ParticipantBubble.vue"
+import TeamBadge from "@/components/teams/TeamBadge.vue"
 import type { SessionMemberPreview } from "@/domain/types/session"
+
+export type SessionTeamPreview = {
+  name: string
+  memberCount: number
+}
 
 const props = withDefaults(
   defineProps<{
     members: SessionMemberPreview[]
+    team?: SessionTeamPreview | null
     maxVisible?: number
     accent?: "primary" | "board" | "tertiary"
   }>(),
   {
+    team: null,
     maxVisible: 4,
     accent: "tertiary",
   },
@@ -19,6 +27,7 @@ const root = ref<HTMLElement | null>(null)
 const isOpen = ref(false)
 const popoverStyle = ref({ top: "0px", left: "0px" })
 
+const hasMembers = computed(() => props.members.length > 0)
 const visibleMembers = computed(() => props.members.slice(0, props.maxVisible))
 const hiddenCount = computed(() =>
   Math.max(0, props.members.length - props.maxVisible),
@@ -28,6 +37,20 @@ const focusRingClass = computed(() => {
   if (props.accent === "tertiary") return "focus-visible:ring-tertiary/60"
   if (props.accent === "board") return "focus-visible:ring-board/60"
   return "focus-visible:ring-primary/60"
+})
+
+const accentTextClass = computed(() => {
+  if (props.accent === "tertiary") return "text-tertiary"
+  if (props.accent === "board") return "text-board"
+  return "text-primary"
+})
+
+const ariaLabel = computed(() => {
+  if (props.team) {
+    return `Ver jugadores de ${props.team.name}`
+  }
+
+  return `Ver ${props.members.length} jugador${props.members.length === 1 ? "" : "es"}`
 })
 
 function updatePopoverPosition() {
@@ -45,7 +68,7 @@ function updatePopoverPosition() {
 function toggleOpen(event: Event) {
   event.preventDefault()
   event.stopPropagation()
-  if (props.members.length === 0) return
+  if (!hasMembers.value) return
 
   isOpen.value = !isOpen.value
   if (isOpen.value) updatePopoverPosition()
@@ -83,7 +106,7 @@ onUnmounted(() => {
 
 <template>
   <div
-    v-if="members.length > 0"
+    v-if="hasMembers"
     ref="root"
     class="relative shrink-0"
     :class="isOpen ? 'z-[80]' : 'z-10'"
@@ -93,12 +116,23 @@ onUnmounted(() => {
       class="flex items-center rounded-full outline-none focus-visible:ring-2"
       :class="focusRingClass"
       :aria-expanded="isOpen"
-      :aria-label="`Ver ${members.length} jugador${members.length === 1 ? '' : 'es'}`"
+      :aria-label="ariaLabel"
       @click="toggleOpen"
       @mousedown.stop
       @touchstart.stop
     >
-      <div class="flex items-center pl-0.5">
+      <TeamBadge
+        v-if="team"
+        :name="team.name"
+        :member-count="team.memberCount"
+        :accent="accent"
+        size="compact"
+      />
+
+      <div
+        v-else
+        class="flex items-center pl-0.5"
+      >
         <ParticipantBubble
           v-for="(member, index) in visibleMembers"
           :key="member.id"
@@ -128,6 +162,19 @@ onUnmounted(() => {
         @mousedown.stop
         @touchstart.stop
       >
+        <p
+          v-if="team"
+          class="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500"
+        >
+          Equipo
+        </p>
+        <p
+          v-if="team"
+          class="px-2 pb-1 text-xs font-semibold"
+          :class="accentTextClass"
+        >
+          {{ team.name }}
+        </p>
         <p class="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
           Jugadores
         </p>

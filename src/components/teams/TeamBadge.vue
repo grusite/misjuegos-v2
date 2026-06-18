@@ -6,16 +6,23 @@ import type { PlayerTeamWithMembers } from "@/domain/types/playerTeam"
 
 const props = withDefaults(
   defineProps<{
-    team: PlayerTeamWithMembers
+    team?: PlayerTeamWithMembers
+    name?: string
+    memberCount?: number
     accent?: "board" | "tertiary" | "primary"
-    size?: "sm" | "md"
+    size?: "compact" | "sm" | "md"
     showName?: boolean
+    showMembers?: boolean
     interactive?: boolean
   }>(),
   {
+    team: undefined,
+    name: undefined,
+    memberCount: undefined,
     accent: "primary",
     size: "md",
     showName: true,
+    showMembers: false,
     interactive: false,
   },
 )
@@ -23,6 +30,11 @@ const props = withDefaults(
 const emit = defineEmits<{
   click: []
 }>()
+
+const displayName = computed(() => props.team?.name ?? props.name ?? "")
+const displayMemberCount = computed(
+  () => props.team?.members.length ?? props.memberCount ?? 0,
+)
 
 const accentBorderClass = computed(() => {
   if (props.accent === "tertiary") return "border-tertiary/50"
@@ -37,27 +49,64 @@ const accentTextClass = computed(() => {
 })
 
 const bubbleSize = computed(() => (props.size === "md" ? "md" : "sm"))
+
+const layoutClasses = computed(() => {
+  if (props.size === "compact") {
+    return {
+      pill: "max-w-[7.5rem] gap-1.5 px-1.5 py-0.5",
+      icon: "h-6 w-6",
+      iconGlyph: "h-3.5 w-3.5",
+      name: "text-xs",
+      count: "text-[9px]",
+    }
+  }
+
+  if (props.size === "sm") {
+    return {
+      pill: "gap-1.5 px-1.5 py-0.5",
+      icon: "h-7 w-7",
+      iconGlyph: "h-3.5 w-3.5",
+      name: "text-xs",
+      count: "text-[10px]",
+    }
+  }
+
+  return {
+    pill: "gap-2 px-2 py-1",
+    icon: "h-8 w-8",
+    iconGlyph: "h-4 w-4",
+    name: "text-sm",
+    count: "text-[10px]",
+  }
+})
+
+const memberCountLabel = computed(() => {
+  const count = displayMemberCount.value
+  return `${count} jugador${count === 1 ? "" : "es"}`
+})
 </script>
 
 <template>
   <component
     :is="interactive ? 'button' : 'div'"
     type="button"
-    class="inline-flex max-w-full items-center gap-2 rounded-full border-2 bg-dark/80 px-2 py-1 text-left transition-colors"
+    class="inline-flex max-w-full items-center rounded-full border-2 bg-dark/80 text-left transition-colors"
     :class="[
+      layoutClasses.pill,
       accentBorderClass,
-      interactive ? 'hover:bg-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60' : '',
+      interactive
+        ? 'hover:bg-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60'
+        : '',
     ]"
     @click="interactive ? emit('click') : undefined"
   >
     <div
-      class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2"
-      :class="accentBorderClass"
+      class="flex shrink-0 items-center justify-center rounded-full border-2"
+      :class="[layoutClasses.icon, accentBorderClass]"
     >
       <Icon
         icon="mdi:account-group"
-        class="h-4 w-4"
-        :class="accentTextClass"
+        :class="[layoutClasses.iconGlyph, accentTextClass]"
         aria-hidden="true"
       />
     </div>
@@ -67,18 +116,22 @@ const bubbleSize = computed(() => (props.size === "md" ? "md" : "sm"))
       class="min-w-0"
     >
       <p
-        class="truncate text-sm font-semibold"
-        :class="accentTextClass"
+        class="truncate font-semibold"
+        :class="[layoutClasses.name, accentTextClass]"
+        :title="displayName"
       >
-        {{ team.name }}
+        {{ displayName }}
       </p>
-      <p class="text-[10px] text-gray-500">
-        {{ team.members.length }} jugadores
+      <p
+        class="text-gray-500"
+        :class="layoutClasses.count"
+      >
+        {{ memberCountLabel }}
       </p>
     </div>
 
     <div
-      v-if="team.members.length > 0"
+      v-if="showMembers && team && team.members.length > 0"
       class="flex items-center pr-1"
     >
       <ParticipantBubble

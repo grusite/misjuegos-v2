@@ -4,7 +4,7 @@ import { useRouter } from "vue-router"
 import NewEscapeSessionPanel from "@/components/sessions/NewEscapeSessionPanel.vue"
 import NewSessionPanel from "@/components/sessions/newSessionPanel.vue"
 import ParticipantAvatarStack from "@/components/sessions/ParticipantAvatarStack.vue"
-import { useSessions, type SessionFilter } from "@/composables/useSessions"
+import { useSessions, type SessionFilter, type SessionListItem } from "@/composables/useSessions"
 import { useUiStore } from "@/stores/uiStore"
 
 const router = useRouter()
@@ -113,6 +113,23 @@ function avatarAccent(gameType: "board_game" | "escape_room") {
   return gameType === "escape_room" ? "tertiary" : "board"
 }
 
+function sessionTeamPreview(session: SessionListItem) {
+  if (!session.playerTeamId) return null
+
+  const team = playerTeams.value.find(item => item.id === session.playerTeamId)
+  if (team) {
+    return {
+      name: team.name,
+      memberCount: team.members.length,
+    }
+  }
+
+  return {
+    name: "Equipo",
+    memberCount: session.players.length,
+  }
+}
+
 async function handleCreateBoard(payload: {
   title: string
   notes?: string
@@ -200,6 +217,7 @@ async function handleCreateEscape(payload: {
               <ParticipantAvatarStack
                 v-if="session.players.length > 0"
                 :members="session.players"
+                :team="sessionTeamPreview(session)"
                 :accent="avatarAccent(session.gameType)"
               />
               <span

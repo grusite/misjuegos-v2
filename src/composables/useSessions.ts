@@ -38,6 +38,7 @@ export type SessionListItem = {
   gameTitle: string
   escapeCity: string | null
   escapeVenue: string | null
+  playerTeamId: string | null
   players: SessionMemberPreview[]
 }
 
@@ -158,6 +159,7 @@ export function useSessions() {
           gameTitle: catalog?.title ?? "Juego",
           escapeCity: escape?.escapeRoomDetails.city ?? null,
           escapeVenue: escape?.escapeRoomDetails.venue ?? null,
+          playerTeamId: session.playerTeamId,
           players: membersBySession.get(session.id) ?? [],
         }
       })
