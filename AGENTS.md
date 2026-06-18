@@ -24,10 +24,11 @@ This repo is a ground-up rebuild of MisJuegos (private app at [misjuegos.net](ht
 | **9** | ✅ Done | Player teams — reusable participant groups |
 | **10** | ✅ Done | Import pipeline — Escape Babel CSV + CLI |
 | 11 | 🔜 Next | Account linking — first-login friend match modal |
-| 12 | Pending | Photos / Storage |
-| 13 | Pending | Utilities (dice, roulette, timer) |
-| 14 | Pending | Game ratings — escapes first (1–5 stars TBD) |
-| 15 | Pending | Production cutover |
+| 12 | Pending | Session list filters — home search, player, me, team, dates |
+| 13 | Pending | Photos / Storage |
+| 14 | Pending | Utilities (dice, roulette, timer) |
+| 15 | Pending | Game ratings — escapes first (1–5 stars TBD) |
+| 16 | Pending | Production cutover |
 
 Full task breakdown: [`docs/ROADMAP.md`](docs/ROADMAP.md)
 

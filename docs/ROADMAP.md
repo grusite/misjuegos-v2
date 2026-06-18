@@ -140,20 +140,49 @@ On **first Google login only** (not every session):
 - [ ] Decline → create a new participant for this account
 - [ ] Persist “already asked” flag on profile so the prompt never repeats
 
-## Phase 12 — Photos / Storage
+## Phase 12 — Session list filters (home)
+
+Richer filtering on the home sessions list (`SessionsView`) — today only type chips exist (Todas / Juegos de mesa / Escape rooms).
+
+**Filters to add:**
+
+- **Search** — text box; match game title (and escape city/venue if useful)
+- **Yo** — sessions where the logged-in user’s linked `participant` appears in `session_participants` (pairs with Phase 11 account linking)
+- **Jugador** — pick one or more participants; show sessions they joined
+- **Equipo** — pick a `player_team`; match sessions with that `player_team_id`
+- **Fechas** — date range and/or presets (este mes, este año, etc.) on `played_at`
+
+**Implementation notes:**
+
+- Sessions are paginated (`SESSIONS_PAGE_SIZE`); filters that need full history should push criteria into `sessionsRepository.listSessions` (server-side), not only client-side on the loaded page
+- Combine filters with existing type chips; clear-all / active-filter chips for mobile
+- Persist last-used filters in UI store or URL query params (optional — decide during implementation)
+
+**Tasks:**
+
+- [ ] Extend `listSessions` query: participant ids, `player_team_id`, date range, title search (ilike)
+- [ ] Composable: filter state + debounced search; reset pagination when filters change
+- [ ] Mobile-first filter bar / expandable panel on home
+- [ ] “Yo” shortcut chip (hidden or disabled until participant is linked to profile)
+- [ ] Participant + team pickers (reuse existing participant/team data from `useSessions`)
+- [ ] Date range UI (native date inputs or preset chips)
+- [ ] Empty state copy when no sessions match filters
+- [ ] Unit tests for filter → query mapping
+
+## Phase 13 — Photos / Storage
 
 - [ ] Storage bucket + RLS
 - [ ] Upload composable + gallery (sessions, teams, etc.)
 - [ ] **Local batch script:** upload folder of images from disk → Storage paths + `photos` rows (pairs with Phase 10 CSV import)
 - [ ] Google Drive one-time migration script (optional — only if local download is impractical)
 
-## Phase 13 — Utilities
+## Phase 14 — Utilities
 
 - [ ] Roulette (CSS/spring — port from v1)
 - [ ] Sand timer SVG animation
 - [ ] 3D dice roller (Three.js + Cannon — lazy route)
 
-## Phase 14 — Game ratings
+## Phase 15 — Game ratings
 
 Personal ratings for played games — **escape rooms first** (typically one play per room; rating captures how much you enjoyed the experience).
 
@@ -177,7 +206,7 @@ Personal ratings for played games — **escape rooms first** (typically one play
 - [ ] Dashboard: average escape rating, top-rated rooms (optional)
 - [ ] Board game ratings (stretch — only if Jorge wants parity with BGG-style scoring)
 
-## Phase 15 — Production
+## Phase 16 — Production
 
 - [ ] Apply migrations to prod Supabase
 - [ ] Run Escape Babel CSV import + photo batch upload
