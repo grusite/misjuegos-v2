@@ -1,5 +1,6 @@
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import { useAuthStore } from "@/stores/authStore"
+import { ensureProfile } from "@/services/auth/authService"
 import {
   claimParticipantLink,
   fetchParticipantLinkPromptCompleted,
@@ -25,6 +26,19 @@ export function useParticipantLinkPrompt() {
   const state = ref<ParticipantLinkPromptState>("idle")
   const candidates = ref<ParticipantLinkCandidate[]>([])
   const errorMessage = ref<string | null>(null)
+  const resolvedProfileId = ref<string | null>(null)
+
+  watch(
+    () => profile.value?.id ?? null,
+    (profileId, previousProfileId) => {
+      if (profileId === previousProfileId) return
+
+      resolvedProfileId.value = null
+      state.value = "idle"
+      candidates.value = []
+      errorMessage.value = null
+    },
+  )
 
   const isOpen = computed(
     () => state.value === "pending" || state.value === "completing",
@@ -57,12 +71,18 @@ export function useParticipantLinkPrompt() {
   }
 
   async function evaluatePrompt(): Promise<boolean> {
-    if (!profile.value || state.value === "completed") return false
+    if (!profile.value) return false
+    if (resolvedProfileId.value === profile.value.id) return false
 
     state.value = "loading"
     errorMessage.value = null
 
     try {
+      await ensureProfile(profile.value.id, {
+        full_name: profile.value.displayName,
+        avatar_url: profile.value.avatarUrl,
+      })
+
       const promptCompleted = await fetchParticipantLinkPromptCompleted(profile.value.id)
       const existingSelf = await participantsRepository.findByProfileId(
         profile.value.id,
@@ -72,17 +92,11 @@ export function useParticipantLinkPrompt() {
       if (existingSelf || promptCompleted) {
         await finishBootstrap(profile.value.id)
         state.value = "completed"
+        resolvedProfileId.value = profile.value.id
         return false
       }
 
       const matches = await findParticipantLinkCandidates(profile.value.displayName)
-
-      if (matches.length === 0) {
-        await skipParticipantLinkPrompt()
-        await finishBootstrap(profile.value.id)
-        state.value = "completed"
-        return false
-      }
 
       candidates.value = matches
       state.value = "pending"
@@ -91,6 +105,7 @@ export function useParticipantLinkPrompt() {
       errorMessage.value =
         error instanceof Error ? error.message : "No se pudo comprobar amigos existentes"
       state.value = "completed"
+      resolvedProfileId.value = profile.value.id
       return false
     }
   }
@@ -105,6 +120,7 @@ export function useParticipantLinkPrompt() {
       await claimParticipantLink(participantId)
       await finishBootstrap(profile.value.id, participantId)
       state.value = "completed"
+      resolvedProfileId.value = profile.value.id
     } catch (error) {
       errorMessage.value =
         error instanceof Error ? error.message : "No se pudo enlazar tu cuenta"
@@ -122,6 +138,7 @@ export function useParticipantLinkPrompt() {
       await skipParticipantLinkPrompt()
       await finishBootstrap(profile.value.id)
       state.value = "completed"
+      resolvedProfileId.value = profile.value.id
     } catch (error) {
       errorMessage.value =
         error instanceof Error ? error.message : "No se pudo completar el registro"

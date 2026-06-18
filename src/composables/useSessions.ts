@@ -9,6 +9,7 @@ import { participantFormSchema } from "@/domain/schemas/participant"
 import { getAvatarColor } from "@/lib/utils/avatarColor"
 import { getDbErrorMessage } from "@/services/errors"
 import { appDataCache } from "@/services/cache/memoryCache"
+import { fetchParticipantLinkPromptCompleted } from "@/services/accountLinking/participantLinkService"
 import { catalogRepository } from "@/services/catalog/catalogRepository"
 import {
   ensureSelfParticipant,
@@ -278,7 +279,15 @@ export function useSessions() {
     }
 
     try {
-      await ensureSelfParticipant(authStore.profile)
+      const promptCompleted = await fetchParticipantLinkPromptCompleted(ownerId.value)
+      const existingSelf = await participantsRepository.findByProfileId(
+        ownerId.value,
+        ownerId.value,
+      )
+
+      if (promptCompleted || existingSelf) {
+        await ensureSelfParticipant(authStore.profile)
+      }
 
       const list = await participantsRepository.listForOwner(ownerId.value)
       const sorted = sortParticipantsWithSelfFirst(list, ownerId.value)

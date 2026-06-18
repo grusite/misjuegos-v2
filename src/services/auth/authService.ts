@@ -20,9 +20,15 @@ export function profileFromMetadata(
   userId: string,
   metadata: UserMetadata,
 ): AuthProfile {
+  const emailLocalPart =
+    typeof metadata.email === "string"
+      ? metadata.email.split("@")[0]?.replace(/\./g, " ").trim()
+      : ""
+
   const displayName =
     (typeof metadata.full_name === "string" && metadata.full_name) ||
     (typeof metadata.name === "string" && metadata.name) ||
+    emailLocalPart ||
     "Usuario"
 
   const avatarUrl =

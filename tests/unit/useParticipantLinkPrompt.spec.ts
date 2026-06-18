@@ -3,6 +3,10 @@ import { createPinia, setActivePinia } from "pinia"
 import { useParticipantLinkPrompt } from "@/composables/useParticipantLinkPrompt"
 import { useAuthStore } from "@/stores/authStore"
 
+vi.mock("@/services/auth/authService", () => ({
+  ensureProfile: vi.fn().mockResolvedValue(undefined),
+}))
+
 vi.mock("@/services/accountLinking/participantLinkService", () => ({
   findParticipantLinkCandidates: vi.fn(),
   claimParticipantLink: vi.fn(),
@@ -121,16 +125,46 @@ describe("useParticipantLinkPrompt", () => {
     expect(prompt.state.value).toBe("completed")
   })
 
-  it("auto-skips when no candidates match", async () => {
+  it("opens the modal when no candidates match", async () => {
     setProfile("Nuevo", "user-2")
 
     vi.mocked(findParticipantLinkCandidates).mockResolvedValue([])
 
     const prompt = useParticipantLinkPrompt()
-    await prompt.evaluatePrompt()
+    const pending = await prompt.evaluatePrompt()
 
-    expect(skipParticipantLinkPrompt).toHaveBeenCalled()
-    expect(prompt.state.value).toBe("completed")
+    expect(skipParticipantLinkPrompt).not.toHaveBeenCalled()
+    expect(pending).toBe(true)
+    expect(prompt.isOpen.value).toBe(true)
+    expect(prompt.candidates.value).toHaveLength(0)
+  })
+
+  it("re-evaluates after switching profile", async () => {
+    setProfile("Eduardo", "user-1")
+
+    vi.mocked(findParticipantLinkCandidates).mockResolvedValue([
+      {
+        id: "p-edu",
+        displayName: "Eduardo",
+        color: null,
+        sessionCount: 1,
+        matchKind: "exact",
+      },
+    ])
+
+    const prompt = useParticipantLinkPrompt()
+    await prompt.evaluatePrompt()
+    await prompt.declineLink()
+
+    setProfile("Nuevo", "user-2")
+    vi.mocked(fetchParticipantLinkPromptCompleted).mockResolvedValue(false)
+    vi.mocked(participantsRepository.findByProfileId).mockResolvedValue(null)
+    vi.mocked(findParticipantLinkCandidates).mockResolvedValue([])
+
+    const pending = await prompt.evaluatePrompt()
+
+    expect(pending).toBe(true)
+    expect(prompt.isOpen.value).toBe(true)
   })
 
   it("skips linking on decline", async () => {
