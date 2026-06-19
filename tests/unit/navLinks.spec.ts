@@ -15,6 +15,7 @@ describe("navLinks", () => {
       "Quiero jugar",
       "Amigos",
       "Equipos",
+      "Fotos",
       "Dashboard",
     ])
 

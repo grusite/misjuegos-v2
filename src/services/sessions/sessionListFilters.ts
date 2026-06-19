@@ -33,21 +33,6 @@ export function escapeIlikePattern(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_")
 }
 
-function quotePostgrestValue(value: string): string {
-  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`
-}
-
-export function buildSessionSearchOrFilter(search: string): string {
-  const pattern = quotePostgrestValue(`%${escapeIlikePattern(search)}%`)
-  const columns = [
-    "game_catalog.title",
-    "game_catalog.escape_room_details.city",
-    "game_catalog.escape_room_details.venue",
-  ]
-
-  return columns.map(column => `${column}.ilike.${pattern}`).join(",")
-}
-
 function dateInputToIsoStart(date: string): string {
   const [year, month, day] = date.split("-").map(Number)
   return new Date(year, month - 1, day, 0, 0, 0, 0).toISOString()

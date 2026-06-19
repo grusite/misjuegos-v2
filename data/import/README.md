@@ -144,3 +144,71 @@ CSV columns: `title`, `company`, `city`, `venue`, `booking_url`, `notes`
 
 Edit `data/import/escape-wishlist.csv` to add more rows later.
 
+---
+
+# Photos import
+
+## Where do the files go?
+
+| Location | What it is |
+|----------|------------|
+| `data/import/photos/` on your Mac | **Staging folder only** — where you drop files downloaded from Google Drive (or elsewhere). Not served by the app. |
+| **Supabase Storage** (`session-photos` bucket) | **Permanent home** after you run the upload script. The app loads images from here. |
+| Git repo | **Do not commit** the image files (they are gitignored). Only CSVs and small fixtures belong in the repo. |
+
+Flow: download from Drive → copy into `data/import/photos/` → run `pnpm upload:photos data/import/photos/` → files live in **Supabase** (biblioteca compartida). Browse them in the app under **Fotos** in the nav.
+
+## Upload commands
+
+**Biblioteca (recommended when you don't know the session):**
+
+```bash
+pnpm upload:photos data/import/photos/
+```
+
+Photos get `session_id = null` until you link them to a session from the app (future) or via manifest.
+
+**One session — all images in a folder:**
+
+```bash
+pnpm upload:photos --session=<play_sessions.id> data/import/photos/
+```
+
+**Many sessions — CSV manifest** (`session_id,file_path,caption` optional):
+
+```bash
+# Library-only manifest (no session column):
+# file_path,caption
+# data/import/photos/img1.jpg,
+# data/import/photos/img2.jpg,Sala X
+
+# Or with sessions when you know them:
+# session_id,file_path,caption
+pnpm upload:photos data/import/photos-manifest.csv
+```
+
+Requires `IMPORT_USER_ID`, `SUPABASE_SERVICE_ROLE_KEY`, and `VITE_SUPABASE_URL` in `.env` (same as CSV imports).
+
+Tip: after escape import, get session UUIDs from Supabase Studio (`play_sessions`) or export a mapping from your spreadsheet before bulk photo upload.
+
+---
+
+# Production cutover checklist (Phase 16)
+
+Run **once** against the **cloud** Supabase project (`yyscffeexxtagilftrwo`), not local Docker. Use a prod `.env` (or export vars) with cloud URL + **service role** key.
+
+Check off in order — do not skip steps:
+
+- [ ] **1. Migrations** — apply all SQL to prod (`supabase link` + `supabase db push`, or run migrations via dashboard)
+- [ ] **2. Storage** — confirm `session-photos` bucket exists (migration `20250623000002_photos_and_storage.sql`)
+- [ ] **3. Auth** — Google OAuth redirect includes prod callback; log in once on prod → note your `profiles.id` → set `IMPORT_USER_ID`
+- [ ] **4. Escapes** — `pnpm import:escapes --fresh data/import/escape-babel.csv`
+- [ ] **5. Board games** — `pnpm import:board-games data/import/board-games.csv`
+- [ ] **6. Wishlist** — `pnpm import:wishlist data/import/escape-wishlist.csv`
+- [ ] **7. Photos** — download from Drive → `data/import/photos/` → `pnpm upload:photos data/import/photos/` (library; no session needed)
+- [ ] **8. Smoke test** — sessions, filters, photos, dashboard on prod URL
+- [ ] **9. Deploy** — build with prod `VITE_SUPABASE_*` → host at `misjuegos.net`
+- [ ] **10. DNS** — Cloudflare points to new deployment; retire v1 when satisfied
+
+Same scripts as local; only `.env` targets change. See also `docs/ROADMAP.md` Phase 16.
+

@@ -8,7 +8,9 @@ import SessionMembersEditor from "@/components/sessions/SessionMembersEditor.vue
 import SessionMessageItem from "@/components/sessions/SessionMessageItem.vue"
 import SessionTimerControls from "@/components/sessions/SessionTimerControls.vue"
 import EscapeSessionDetailsPanel from "@/components/sessions/EscapeSessionDetailsPanel.vue"
+import SessionPhotoGallery from "@/components/sessions/SessionPhotoGallery.vue"
 import { useSessionDetail } from "@/composables/useSessionDetail"
+import { useSessionPhotos } from "@/composables/useSessionPhotos"
 import { boardOutcomeLabelClass } from "@/lib/utils/outcomeStyles"
 import type { SessionOutcome } from "@/domain/types/rows"
 import type { SessionScoreInput } from "@/domain/types/session"
@@ -44,6 +46,15 @@ const {
   saveMembers,
   createFriendParticipant,
 } = useSessionDetail(sessionId)
+
+const {
+  photos,
+  isLoading: isPhotosLoading,
+  isUploading: isPhotosUploading,
+  errorMessage: photosErrorMessage,
+  uploadPhotos,
+  removePhoto,
+} = useSessionPhotos(sessionId)
 
 const messageDraft = ref("")
 const showResetConfirm = ref(false)
@@ -174,6 +185,23 @@ async function handleResetConfirm() {
         :create-participant="createFriendParticipant"
         :apply-selection="saveMembers"
       />
+
+      <SessionPhotoGallery
+        :photos="photos"
+        :is-loading="isPhotosLoading"
+        :is-uploading="isPhotosUploading"
+        :can-write="Boolean(canWrite)"
+        :accent="sessionAccent"
+        @upload="uploadPhotos"
+        @remove="removePhoto"
+      />
+
+      <p
+        v-if="photosErrorMessage"
+        class="rounded-lg bg-secondary/20 p-3 text-sm text-secondary"
+      >
+        {{ photosErrorMessage }}
+      </p>
 
       <EscapeSessionDetailsPanel
         v-if="isEscapeSession"

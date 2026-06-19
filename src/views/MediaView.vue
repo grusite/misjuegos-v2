@@ -1,0 +1,203 @@
+<script setup lang="ts">
+import { ref } from "vue"
+import { Icon } from "@iconify/vue"
+import UiButton from "@/components/ui/UiButton.vue"
+import {
+  useMediaLibrary,
+  type MediaFilter,
+} from "@/composables/useMediaLibrary"
+
+const {
+  photos,
+  filter,
+  isLoading,
+  isLoadingMore,
+  isUploading,
+  hasMore,
+  canUpload,
+  errorMessage,
+  loadMore,
+  setFilter,
+  uploadPhotos,
+  removePhoto,
+} = useMediaLibrary()
+
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const selectedPhotoUrl = ref<string | null>(null)
+
+const filterOptions: Array<{ value: MediaFilter; label: string }> = [
+  { value: "all", label: "Todas" },
+  { value: "unassigned", label: "Sin enlace" },
+  { value: "linked", label: "Enlazadas" },
+]
+
+function openFilePicker() {
+  fileInputRef.value?.click()
+}
+
+function handleFileChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+
+  void uploadPhotos(input.files)
+  input.value = ""
+}
+
+function filterChipClasses(value: MediaFilter): string {
+  return filter.value === value
+    ? "border-primary bg-primary/20 text-primary"
+    : "border-gray-700 text-gray-400 hover:border-gray-500"
+}
+
+function formatDate(isoDate: string): string {
+  return new Intl.DateTimeFormat("es-ES", { dateStyle: "medium" }).format(new Date(isoDate))
+}
+</script>
+
+<template>
+  <section class="space-y-6 pb-10">
+    <div class="space-y-2">
+      <p class="text-sm uppercase tracking-widest text-gray-500">Biblioteca</p>
+      <h1 class="text-3xl font-bold text-primary">Fotos</h1>
+      <p class="text-gray-400">
+        Sube imágenes aunque no sepas a qué partida pertenecen. Las verás aquí en la
+        biblioteca compartida del grupo.
+      </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <button
+        v-for="option in filterOptions"
+        :key="option.value"
+        type="button"
+        class="rounded-full border-2 px-3 py-1 text-sm font-semibold transition-colors"
+        :class="filterChipClasses(option.value)"
+        @click="setFilter(option.value)"
+      >
+        {{ option.label }}
+      </button>
+
+      <UiButton
+        v-if="canUpload"
+        type="button"
+        variant="primary"
+        class="ml-auto px-3 py-1.5 text-sm"
+        :disabled="isUploading"
+        @click="openFilePicker"
+      >
+        {{ isUploading ? "Subiendo..." : "Subir fotos" }}
+      </UiButton>
+    </div>
+
+    <input
+      ref="fileInputRef"
+      type="file"
+      accept="image/jpeg,image/png,image/webp,image/gif"
+      multiple
+      class="hidden"
+      @change="handleFileChange"
+    />
+
+    <p v-if="errorMessage" class="rounded-lg bg-secondary/20 p-4 text-secondary">
+      {{ errorMessage }}
+    </p>
+
+    <p v-if="isLoading" class="text-gray-400">Cargando fotos...</p>
+
+    <div
+      v-else-if="photos.length > 0"
+      class="grid grid-cols-2 gap-3 sm:grid-cols-3"
+    >
+      <figure
+        v-for="photo in photos"
+        :key="photo.id"
+        class="group relative overflow-hidden rounded-xl border-2 border-gray-700 bg-gray-900/40"
+      >
+        <button
+          type="button"
+          class="block w-full"
+          @click="selectedPhotoUrl = photo.publicUrl"
+        >
+          <img
+            :src="photo.publicUrl"
+            :alt="photo.caption ?? photo.sourceFileId ?? 'Foto'"
+            class="aspect-square w-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
+        </button>
+
+        <div class="space-y-1 p-2 text-xs text-gray-400">
+          <p>{{ formatDate(photo.createdAt) }}</p>
+          <RouterLink
+            v-if="photo.sessionId"
+            :to="{ name: 'session-detail', params: { id: photo.sessionId } }"
+            class="inline-flex items-center gap-1 font-semibold text-board hover:underline"
+          >
+            Ver partida
+          </RouterLink>
+          <RouterLink
+            v-else-if="photo.desiredGameId"
+            :to="{ name: 'wishlist' }"
+            class="inline-flex items-center gap-1 font-semibold text-tertiary hover:underline"
+          >
+            En lista de deseos
+          </RouterLink>
+          <p v-else class="text-primary">Sin enlace</p>
+        </div>
+
+        <button
+          v-if="canUpload"
+          type="button"
+          class="absolute right-2 top-2 rounded-full bg-dark/80 p-1.5 text-secondary opacity-0 transition-opacity group-hover:opacity-100"
+          aria-label="Eliminar foto"
+          @click="removePhoto(photo.id)"
+        >
+          <Icon icon="mdi:trash-can-outline" class="h-4 w-4" aria-hidden="true" />
+        </button>
+      </figure>
+    </div>
+
+    <p
+      v-else
+      class="rounded-xl border-4 border-dashed border-gray-700 p-6 text-center text-gray-500"
+    >
+      No hay fotos con este filtro.
+    </p>
+
+    <button
+      v-if="!isLoading && hasMore"
+      type="button"
+      class="w-full rounded-xl border-2 border-dashed border-gray-600 px-4 py-3 text-sm font-semibold text-gray-300 transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+      :disabled="isLoadingMore"
+      @click="loadMore"
+    >
+      {{ isLoadingMore ? "Cargando más..." : "Cargar más fotos" }}
+    </button>
+
+    <Teleport to="body">
+      <div
+        v-if="selectedPhotoUrl"
+        class="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 p-4"
+        role="dialog"
+        aria-modal="true"
+        @click="selectedPhotoUrl = null"
+      >
+        <img
+          :src="selectedPhotoUrl"
+          alt="Vista ampliada"
+          class="max-h-[90vh] max-w-full rounded-lg object-contain"
+          @click.stop
+        />
+        <button
+          type="button"
+          class="absolute right-4 top-4 rounded-full bg-dark/80 p-2 text-white"
+          aria-label="Cerrar"
+          @click="selectedPhotoUrl = null"
+        >
+          <Icon icon="mdi:close" class="h-6 w-6" aria-hidden="true" />
+        </button>
+      </div>
+    </Teleport>
+  </section>
+</template>

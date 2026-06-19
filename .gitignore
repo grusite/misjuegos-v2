@@ -15,6 +15,10 @@ dist-ssr
 .env.*
 !.env.dist
 
+# One-time import assets (CSV stays in repo; photos are uploaded to Supabase Storage)
+data/import/photos/*
+!data/import/photos/.gitkeep
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

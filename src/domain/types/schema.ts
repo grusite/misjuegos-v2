@@ -23,6 +23,32 @@ export type AppDatabase = Omit<Database, "public"> & {
         Args: Record<string, never>
         Returns: undefined
       }
+      list_play_session_summaries: {
+        Args: {
+          p_game_catalog_id?: string | null
+          p_game_type?: Database["public"]["Enums"]["game_type"] | null
+          p_search?: string | null
+          p_participant_ids?: string[] | null
+          p_player_team_id?: string | null
+          p_played_at_from?: string | null
+          p_played_at_to?: string | null
+          p_limit?: number | null
+          p_offset?: number | null
+        }
+        Returns: {
+          id: string
+          game_catalog_id: string
+          played_at: string
+          status: Database["public"]["Enums"]["session_status"]
+          outcome: Database["public"]["Enums"]["session_outcome"] | null
+          notes: string | null
+          player_team_id: string | null
+          game_title: string
+          game_type: Database["public"]["Enums"]["game_type"]
+          escape_city: string | null
+          escape_venue: string | null
+        }[]
+      }
     }
   }
 }

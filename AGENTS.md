@@ -25,8 +25,8 @@ This repo is a ground-up rebuild of MisJuegos (private app at [misjuegos.net](ht
 | **10** | ✅ Done | Import pipeline — Escape Babel CSV + CLI |
 | **11** | ✅ Done | Account linking — first-login friend match modal |
 | **12** | ✅ Done | Session list filters — search, Yo, jugador, equipo, fechas |
-| 13 | 🔜 Next | Photos / Storage |
-| 14 | Pending | Utilities (dice, roulette, timer) |
+| **13** | ✅ Done | Photos / Storage — gallery, upload, batch script |
+| 14 | 🔜 Next | Utilities (dice, roulette, timer) |
 | 15 | Pending | Game ratings — escapes first (1–5 stars TBD) |
 | 16 | Pending | Production cutover |
 
@@ -47,6 +47,7 @@ These were agreed with Jorge — do not revisit without explicit approval:
 7. **Repo location:** `/Users/jorgemartin/repo/misjuegos-v2`
 8. **Local Supabase until prod.** Develop against `supabase start`; cloud project is for Phase 11 cutover only.
 9. **Prod DNS:** `misjuegos.net` is on **Cloudflare** (Jorge manages DNS there).
+10. **Prod data cutover:** one-time CLI imports + photo upload — ordered checklist in [`data/import/README.md`](data/import/README.md#production-cutover-checklist-phase-16) (Phase 16). Local folder `data/import/photos/` is staging only; files end up in **Supabase Storage**, not in git.
 
 ---
 

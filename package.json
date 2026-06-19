@@ -18,6 +18,7 @@
     "import:list-profiles": "tsx --tsconfig tsconfig.scripts.json scripts/listProfiles.ts",
     "import:board-games": "tsx --tsconfig tsconfig.scripts.json scripts/importBoardGames.ts",
     "import:wishlist": "tsx --tsconfig tsconfig.scripts.json scripts/importWishlist.ts",
+    "upload:photos": "tsx --tsconfig tsconfig.scripts.json scripts/uploadSessionPhotos.ts",
     "db:reset-data": "supabase db query --local -f scripts/resetLocalData.sql"
   },
   "engines": {

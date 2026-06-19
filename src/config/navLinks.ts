@@ -11,6 +11,7 @@ export const navLinks: NavLink[] = [
   { name: "Quiero jugar", to: "/wishlist", icon: "ph:heart", section: "main" },
   { name: "Amigos", to: "/participants", icon: "ph:users-three", section: "main" },
   { name: "Equipos", to: "/teams", icon: "mdi:account-group-outline", section: "main" },
+  { name: "Fotos", to: "/media", icon: "ph:images", section: "main" },
   { name: "Dashboard", to: "/dashboard", icon: "mdi:chart-box", section: "main" },
   { name: "Dados", to: "/tools/dice", icon: "ph:cube", section: "tools" },
   { name: "Ruleta", to: "/tools/roulette", icon: "ph:poker-chip", section: "tools" },

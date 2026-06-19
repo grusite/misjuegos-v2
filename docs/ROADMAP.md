@@ -169,14 +169,18 @@ Richer filtering on the home sessions list (`SessionsView`) — today only type 
 - [x] Empty state copy when no sessions match filters
 - [x] Unit tests for filter → query mapping
 
-## Phase 13 — Photos / Storage (next)
+## Phase 13 — Photos / Storage ✅
 
-- [ ] Storage bucket + RLS
-- [ ] Upload composable + gallery (sessions, teams, etc.)
-- [ ] **Local batch script:** upload folder of images from disk → Storage paths + `photos` rows (pairs with Phase 10 CSV import)
+- [x] Storage bucket + RLS
+- [x] Upload composable + gallery (sessions)
+- [x] **Local batch script:** upload folder of images from disk → Storage paths + `photos` rows
+- [x] Media library (`/media`) — upload without session; filter unassigned vs linked
+- [x] Wishlist photos — `desired_game_id` on `photos`, upload from **Quiero jugar** cards
+- [ ] Link library photo → session or wishlist from UI (future — repo `link()` ready)
+- [ ] When marking wishlist item **Jugado** and creating a session, carry/link existing photos (future)
 - [ ] Google Drive one-time migration script (optional — only if local download is impractical)
 
-## Phase 14 — Utilities
+## Phase 14 — Utilities (next)
 
 - [ ] Roulette (CSS/spring — port from v1)
 - [ ] Sand timer SVG animation
@@ -206,12 +210,26 @@ Personal ratings for played games — **escape rooms first** (typically one play
 - [ ] Dashboard: average escape rating, top-rated rooms (optional)
 - [ ] Board game ratings (stretch — only if Jorge wants parity with BGG-style scoring)
 
-## Phase 16 — Production
+## Phase 16 — Production cutover
 
-- [ ] Apply migrations to prod Supabase
-- [ ] Run Escape Babel CSV import + photo batch upload
+One-time migration to cloud Supabase + `misjuegos.net`. **Full ordered checklist:** [`data/import/README.md`](../data/import/README.md#production-cutover-checklist-phase-16).
+
+Summary (do not skip):
+
+1. Apply all migrations to prod (`supabase db push`)
+2. Confirm Storage bucket `session-photos`
+3. Prod Google OAuth + first login → `IMPORT_USER_ID`
+4. `pnpm import:escapes --fresh data/import/escape-babel.csv`
+5. `pnpm import:board-games data/import/board-games.csv`
+6. `pnpm import:wishlist data/import/escape-wishlist.csv`
+7. `pnpm upload:photos …` (local `data/import/photos/` → Supabase Storage)
+8. Smoke test prod
+9. Deploy frontend with prod env
+10. Cloudflare DNS cutover
+
+- [ ] Checklist completed (see import README)
 - [ ] Deploy misjuegos.net
-- [ ] README setup verified on fresh clone
+- [ ] Retire v1 Supabase project when satisfied
 
 ---
 

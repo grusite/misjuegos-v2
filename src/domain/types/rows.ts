@@ -1,5 +1,4 @@
-import type { Database } from "./database"
-import type { Json } from "./database"
+import type { Database, Json } from "./database"
 
 export type GameType = Database["public"]["Enums"]["game_type"]
 export type SessionStatus = Database["public"]["Enums"]["session_status"]
@@ -183,4 +182,37 @@ export type SessionParticipantInsert = {
 }
 
 /** Tables not yet in generated `database.ts`. */
-export type PendingTables = Record<string, never>
+export type PhotoRow = {
+  id: string
+  session_id: string | null
+  desired_game_id: string | null
+  storage_path: string
+  source: Database["public"]["Enums"]["photo_source"]
+  source_file_id: string | null
+  caption: string | null
+  sort_order: number
+  created_by: string
+  created_at: string
+}
+
+export type PhotoInsert = {
+  id?: string
+  session_id?: string | null
+  desired_game_id?: string | null
+  storage_path: string
+  source?: Database["public"]["Enums"]["photo_source"]
+  source_file_id?: string | null
+  caption?: string | null
+  sort_order?: number
+  created_by: string
+  created_at?: string
+}
+
+export type PendingTables = {
+  photos: {
+    Row: PhotoRow
+    Insert: PhotoInsert
+    Update: Partial<PhotoInsert>
+    Relationships: []
+  }
+}

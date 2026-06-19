@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, ref } from "vue"
 import { Icon } from "@iconify/vue"
+import DesiredGamePhotoSection from "@/components/wishlist/DesiredGamePhotoSection.vue"
 import type { DesiredGame } from "@/domain/types/desiredGame"
 import { outcomeToneStyles } from "@/lib/utils/outcomeStyles"
 
@@ -16,6 +17,8 @@ const emit = defineEmits<{
   reactivate: []
   remove: []
 }>()
+
+const showPhotos = ref(false)
 
 const isEscape = computed(() => props.item.type === "escape_room")
 
@@ -196,6 +199,31 @@ function actionClasses(tone: keyof typeof outcomeToneStyles) {
     >
       Reservar / ver web
     </a>
+
+    <div class="space-y-2">
+      <button
+        type="button"
+        class="flex w-full items-center justify-between gap-2 rounded-xl border-2 border-gray-700 px-3 py-2 text-sm font-semibold text-gray-300 transition-colors hover:border-gray-500"
+        :aria-expanded="showPhotos"
+        @click="showPhotos = !showPhotos"
+      >
+        <span class="inline-flex items-center gap-2">
+          <Icon icon="mdi:image-outline" class="h-5 w-5" aria-hidden="true" />
+          Fotos
+        </span>
+        <Icon
+          :icon="showPhotos ? 'mdi:chevron-up' : 'mdi:chevron-down'"
+          class="h-5 w-5 shrink-0"
+          aria-hidden="true"
+        />
+      </button>
+
+      <DesiredGamePhotoSection
+        v-if="showPhotos"
+        :desired-game-id="item.id"
+        :accent="isEscape ? 'tertiary' : 'board'"
+      />
+    </div>
 
     <div
       class="grid gap-2"
