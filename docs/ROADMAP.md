@@ -224,8 +224,8 @@ Summary (do not skip):
 6. `pnpm import:wishlist data/import/escape-wishlist.csv`
 7. `pnpm upload:photos …` (local `data/import/photos/` → Supabase Storage)
 8. Smoke test prod
-9. Deploy frontend with prod env
-10. Cloudflare DNS cutover
+9. Deploy frontend — [`docs/DEPLOY_CLOUDFLARE_PAGES.md`](DEPLOY_CLOUDFLARE_PAGES.md)
+10. Cloudflare DNS cutover (`misjuegos.net` → Pages)
 
 - [ ] Checklist completed (see import README)
 - [ ] Deploy misjuegos.net
