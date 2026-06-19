@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue"
-import { useRoute } from "vue-router"
+import { useRoute, useRouter } from "vue-router"
 import UiButton from "@/components/ui/UiButton.vue"
 import UiConfirmDialog from "@/components/ui/UiConfirmDialog.vue"
 import BoardOutcomePicker from "@/components/sessions/BoardOutcomePicker.vue"
@@ -14,8 +14,12 @@ import { useSessionPhotos } from "@/composables/useSessionPhotos"
 import { boardOutcomeLabelClass } from "@/lib/utils/outcomeStyles"
 import type { SessionOutcome } from "@/domain/types/rows"
 import type { SessionScoreInput } from "@/domain/types/session"
+import { appDataCache } from "@/services/cache/memoryCache"
+import { useAuthStore } from "@/stores/authStore"
 
 const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
 const sessionId = String(route.params.id ?? "")
 
 const {
@@ -36,11 +40,15 @@ const {
   elapsedLabel,
   elapsedMs,
   canWrite,
+  canManageMessage,
   startTimer,
   pauseTimer,
   resetTimer,
   saveBoardOutcome,
   addMessage,
+  updateMessage,
+  deleteMessage,
+  deleteSession,
   saveScores,
   saveEscapeDetails,
   saveMembers,
@@ -58,6 +66,9 @@ const {
 
 const messageDraft = ref("")
 const showResetConfirm = ref(false)
+const showDeleteSessionConfirm = ref(false)
+const showDeleteMessageConfirm = ref(false)
+const pendingMessageId = ref<string | null>(null)
 const showMessagesSheet = ref(false)
 const scoreDraft = reactive<Record<string, string>>({})
 const draftOutcome = ref<SessionOutcome>("unknown")
@@ -135,6 +146,32 @@ async function handleSendMessage() {
 async function handleResetConfirm() {
   await resetTimer()
   showResetConfirm.value = false
+}
+
+function requestDeleteMessage(messageId: string) {
+  pendingMessageId.value = messageId
+  showDeleteMessageConfirm.value = true
+}
+
+async function handleDeleteMessageConfirm() {
+  if (!pendingMessageId.value) return
+
+  await deleteMessage(pendingMessageId.value)
+  pendingMessageId.value = null
+  showDeleteMessageConfirm.value = false
+}
+
+async function handleDeleteSessionConfirm() {
+  const deleted = await deleteSession()
+  if (!deleted) return
+
+  const profileId = authStore.profile?.id
+  if (profileId) {
+    appDataCache.invalidate(`sessions:${profileId}`)
+  }
+
+  showDeleteSessionConfirm.value = false
+  await router.push({ name: "sessions" })
 }
 </script>
 
@@ -256,7 +293,11 @@ async function handleResetConfirm() {
             :author-display-name="message.authorDisplayName"
             :content="message.content"
             :created-at="message.createdAt"
+            :can-manage="canManageMessage(message)"
+            :is-saving="isSaving"
             compact
+            @save="updateMessage(message.id, $event)"
+            @delete="requestDeleteMessage(message.id)"
           />
           <p v-if="messages.length === 0" class="text-sm text-gray-500">
             Apunta ideas o momentos graciosos mientras jugáis.
@@ -352,6 +393,10 @@ async function handleResetConfirm() {
             :author-display-name="message.authorDisplayName"
             :content="message.content"
             :created-at="message.createdAt"
+            :can-manage="canManageMessage(message)"
+            :is-saving="isSaving"
+            @save="updateMessage(message.id, $event)"
+            @delete="requestDeleteMessage(message.id)"
           />
           <p v-if="messages.length === 0" class="text-sm text-gray-500">Sin mensajes todavía.</p>
         </div>
@@ -366,6 +411,25 @@ async function handleResetConfirm() {
             Enviar
           </UiButton>
         </div>
+      </section>
+
+      <section
+        v-if="canWrite"
+        class="rounded-xl border-2 border-dashed border-secondary/50 p-4"
+      >
+        <p class="text-sm font-semibold text-secondary">Zona de peligro</p>
+        <p class="mt-1 text-xs text-gray-500">
+          Elimina esta partida y todos sus mensajes, puntuaciones y datos asociados.
+        </p>
+        <UiButton
+          type="button"
+          variant="secondary"
+          class="mt-3"
+          :disabled="isSaving"
+          @click="showDeleteSessionConfirm = true"
+        >
+          Eliminar partida
+        </UiButton>
       </section>
     </article>
 
@@ -426,6 +490,10 @@ async function handleResetConfirm() {
               :author-display-name="message.authorDisplayName"
               :content="message.content"
               :created-at="message.createdAt"
+              :can-manage="canManageMessage(message)"
+              :is-saving="isSaving"
+              @save="updateMessage(message.id, $event)"
+              @delete="requestDeleteMessage(message.id)"
             />
             <p v-if="messages.length === 0" class="text-sm text-gray-500">Sin mensajes todavía.</p>
           </div>
@@ -453,6 +521,29 @@ async function handleResetConfirm() {
       confirm-label="Reiniciar"
       @confirm="handleResetConfirm"
       @cancel="showResetConfirm = false"
+    />
+
+    <UiConfirmDialog
+      :open="showDeleteMessageConfirm"
+      title="¿Eliminar mensaje?"
+      message="Este mensaje se borrará de la partida. No se puede deshacer."
+      confirm-label="Eliminar"
+      @confirm="handleDeleteMessageConfirm"
+      @cancel="
+        () => {
+          showDeleteMessageConfirm = false
+          pendingMessageId = null
+        }
+      "
+    />
+
+    <UiConfirmDialog
+      :open="showDeleteSessionConfirm"
+      title="¿Eliminar partida?"
+      message="Se borrarán mensajes, puntuaciones y detalles de esta sesión. Esta acción no se puede deshacer."
+      confirm-label="Eliminar partida"
+      @confirm="handleDeleteSessionConfirm"
+      @cancel="showDeleteSessionConfirm = false"
     />
   </section>
 </template>

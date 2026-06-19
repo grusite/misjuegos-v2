@@ -90,6 +90,10 @@ export type SessionMessageInput = {
   authorDisplayName?: string
 }
 
+export type UpdateSessionMessageInput = {
+  content: string
+}
+
 export type SessionScoreInput = {
   profileId?: string | null
   participantId?: string | null

@@ -363,6 +363,64 @@ export function useSessionDetail(sessionId: string) {
     }
   }
 
+  async function updateMessage(messageId: string, content: string) {
+    const normalized = content.trim()
+    if (!normalized) return
+
+    isSaving.value = true
+    errorMessage.value = null
+
+    try {
+      const updated = await sessionsRepository.updateMessage(messageId, {
+        content: normalized,
+      })
+      messages.value = messages.value.map(message =>
+        message.id === messageId ? updated : message,
+      )
+    } catch (error) {
+      errorMessage.value = getDbErrorMessage(error)
+    } finally {
+      isSaving.value = false
+    }
+  }
+
+  async function deleteMessage(messageId: string) {
+    isSaving.value = true
+    errorMessage.value = null
+
+    try {
+      await sessionsRepository.deleteMessage(messageId)
+      messages.value = messages.value.filter(message => message.id !== messageId)
+    } catch (error) {
+      errorMessage.value = getDbErrorMessage(error)
+    } finally {
+      isSaving.value = false
+    }
+  }
+
+  async function deleteSession() {
+    if (!session.value || !canWrite.value) return false
+
+    isSaving.value = true
+    errorMessage.value = null
+
+    try {
+      await sessionsRepository.delete(session.value.id)
+      return true
+    } catch (error) {
+      errorMessage.value = getDbErrorMessage(error)
+      return false
+    } finally {
+      isSaving.value = false
+    }
+  }
+
+  const currentProfileId = computed(() => authStore.profile?.id ?? null)
+
+  function canManageMessage(message: SessionMessage): boolean {
+    return currentProfileId.value === message.authorProfileId
+  }
+
   async function saveEscapeDetails(payload: {
     cluesUsed: number | null
     timeResult: string | null
@@ -445,12 +503,17 @@ export function useSessionDetail(sessionId: string) {
     elapsedLabel,
     elapsedMs,
     canWrite,
+    currentProfileId,
+    canManageMessage,
     load,
     startTimer,
     pauseTimer,
     resetTimer,
     saveBoardOutcome,
     addMessage,
+    updateMessage,
+    deleteMessage,
+    deleteSession,
     saveScores,
     saveEscapeDetails,
     saveMembers,

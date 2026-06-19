@@ -9,6 +9,7 @@ import type {
   SessionMemberPreview,
   SessionMessage,
   SessionMessageInput,
+  UpdateSessionMessageInput,
   SessionParticipant,
   SessionScore,
   SessionScoreInput,
@@ -363,6 +364,30 @@ export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
         .single()
 
       return mapSessionMessage(unwrap(result), input.authorDisplayName)
+    },
+
+    async updateMessage(
+      messageId: string,
+      input: UpdateSessionMessageInput,
+    ): Promise<SessionMessage> {
+      const result = await client
+        .from("session_messages")
+        .update({ content: input.content })
+        .eq("id", messageId)
+        .select(MESSAGE_SELECT)
+        .single()
+
+      return mapSessionMessage(unwrap(result))
+    },
+
+    async deleteMessage(messageId: string): Promise<void> {
+      const { error } = await client.from("session_messages").delete().eq("id", messageId)
+      if (error) throw fromPostgrestError(error)
+    },
+
+    async delete(id: string): Promise<void> {
+      const { error } = await client.from("play_sessions").delete().eq("id", id)
+      if (error) throw fromPostgrestError(error)
     },
 
     async listScores(sessionId: string): Promise<SessionScore[]> {
