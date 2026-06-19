@@ -12,6 +12,20 @@ export default defineConfig({
       "@": resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/three") || id.includes("node_modules/cannon")) {
+            return "dice-3d"
+          }
+        },
+      },
+    },
+  },
+  optimizeDeps: {
+    include: ["three", "cannon"],
+  },
   test: {
     environment: "jsdom",
     setupFiles: ["./tests/setupTests.ts"],

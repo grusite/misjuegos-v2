@@ -180,13 +180,13 @@ Richer filtering on the home sessions list (`SessionsView`) — today only type 
 - [ ] When marking wishlist item **Jugado** and creating a session, carry/link existing photos (future)
 - [ ] Google Drive one-time migration script (optional — only if local download is impractical)
 
-## Phase 14 — Utilities (next)
+## Phase 14 — Utilities ✅
 
-- [ ] Roulette (CSS/spring — port from v1)
-- [ ] Sand timer SVG animation
-- [ ] 3D dice roller (Three.js + Cannon — lazy route)
+- [x] Roulette (CSS/spring — port from v1)
+- [x] Sand timer SVG animation
+- [x] 3D dice roller (Three.js + Cannon — lazy route)
 
-## Phase 15 — Game ratings
+## Phase 15 — Game ratings (next)
 
 Personal ratings for played games — **escape rooms first** (typically one play per room; rating captures how much you enjoyed the experience).
 

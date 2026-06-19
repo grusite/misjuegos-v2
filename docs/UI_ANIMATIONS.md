@@ -93,7 +93,7 @@ Phase 0 v2 uses a **simplified nav** — full animation port is **Phase 3** ✅ 
 - Long-press (`longtap` action) or Space to spin
 - Segments with alternating primary/dark fills; active segment highlight after spin settles
 
-**v2 target:** Phase 10 — consider `@vueuse/motion` or manual spring in composable
+**v2 target:** `views/RouletteView.vue` — `useSpring` + `vLongTap` ✅ (Phase 14)
 
 ---
 
@@ -107,7 +107,7 @@ Phase 0 v2 uses a **simplified nav** — full animation port is **Phase 3** ✅ 
 - Active: dashed line `stroke-dashoffset` animation
 - 60s default duration; countdown display
 
-**v2 target:** Phase 10 — port SVG/CSS verbatim; wrap in Vue reactivity
+**v2 target:** `views/TimerView.vue` ✅ (Phase 14)
 
 ---
 
@@ -119,7 +119,7 @@ Phase 0 v2 uses a **simplified nav** — full animation port is **Phase 3** ✅ 
 - Primary `#facc15` floor, top-down camera
 - Multiple dice types (D4–D20)
 
-**v2 target:** Phase 10 — lazy-load route; keep as separate chunk due to bundle size
+**v2 target:** `views/DicesView.vue` + `lib/dice/*` — lazy chunk ✅ (Phase 14)
 
 ---
 
@@ -139,6 +139,9 @@ When porting each animation:
 - [x] Hamburger morph (Phase 3)
 - [x] Circular clip-path menu (Phase 3)
 - [x] TopBar backdrop blur (Phase 3)
+- [x] Roulette spring spin (Phase 14)
+- [x] Sand timer SVG (Phase 14)
+- [x] 3D dice roller lazy chunk (Phase 14)
 - [ ] Home FAB slide (Phase 5)
 - [ ] Works on mobile (touch targets, no tap highlight — already in `main.css`)
 - [ ] Respects `prefers-reduced-motion` where reasonable (optional enhancement)
