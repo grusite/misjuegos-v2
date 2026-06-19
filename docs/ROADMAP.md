@@ -139,6 +139,15 @@ On **first Google login only** (not every session):
 - [x] Confirm → link `participants.profile_id` to reuse imported sessions and stats
 - [x] Decline → create a new participant for this account
 - [x] Persist “already asked” flag on profile so the prompt never repeats
+- [x] Search other unlinked participants by name in link modal
+- [x] Claim on login migrates `friendships` from participant → profile
+
+## Phase 11b — Friends directory ✅
+
+- [x] `friendships` table + RPCs (`search_people_to_friend`, `list_my_friends`)
+- [x] Amigos screen: search profiles + unlinked participants, add/disable friendship
+- [x] Create ghost player without account (local participant + friendship)
+- [x] Session pickers use friend list (`listPickerParticipants`)
 
 ## Phase 12 — Session list filters ✅
 

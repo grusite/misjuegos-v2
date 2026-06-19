@@ -1,78 +1,55 @@
 <script setup lang="ts">
 import { computed, ref } from "vue"
-import ParticipantCard from "@/components/participants/ParticipantCard.vue"
+import FriendCard from "@/components/friends/FriendCard.vue"
+import PeopleSearchResultRow from "@/components/friends/PeopleSearchResultRow.vue"
 import ParticipantForm from "@/components/participants/ParticipantForm.vue"
 import SearchInput from "@/components/ui/SearchInput.vue"
-import { useParticipants } from "@/composables/useParticipants"
+import { useFriends } from "@/composables/useFriends"
 import type { ParticipantFormValues } from "@/domain/schemas/participant"
 
 const {
-  filteredParticipants,
+  filteredFriends,
+  searchResults,
+  searchQuery,
+  aliasMap,
   isLoading,
+  isSearching,
   isSaving,
   errorMessage,
-  searchQuery,
-  createParticipant,
-  updateParticipant,
-  removeParticipant,
+  loadAliasesForParticipant,
+  managedParticipantId,
+  addSearchResult,
+  createGhostFriend,
+  disableFriend,
   addAlias,
   removeAlias,
-} = useParticipants()
+} = useFriends()
 
-type FormMode =
-  | { type: "closed" }
-  | { type: "create" }
-  | { type: "edit"; id: string }
-
-const formMode = ref<FormMode>({ type: "closed" })
+const showCreateForm = ref(false)
 const expandedId = ref<string | null>(null)
 
-const editingParticipant = computed(() => {
-  const mode = formMode.value
-  if (mode.type !== "edit") return null
+const showSearchPanel = computed(() => searchQuery.value.trim().length >= 2)
 
-  return (
-    filteredParticipants.value.find(
-      participant => participant.id === mode.id,
-    ) ?? null
-  )
-})
+async function handleToggleFriend(friendshipId: string) {
+  const friend = filteredFriends.value.find(item => item.friendshipId === friendshipId)
+  if (!friend) return
 
-function openCreateForm() {
-  formMode.value = { type: "create" }
-}
+  const nextExpanded = expandedId.value === friendshipId ? null : friendshipId
+  expandedId.value = nextExpanded
 
-function openEditForm(id: string) {
-  formMode.value = { type: "edit", id }
-  expandedId.value = id
-}
-
-function closeForm() {
-  formMode.value = { type: "closed" }
-}
-
-function toggleExpanded(id: string) {
-  expandedId.value = expandedId.value === id ? null : id
+  const participantId = managedParticipantId(friend)
+  if (nextExpanded && participantId) {
+    await loadAliasesForParticipant(participantId)
+  }
 }
 
 async function handleCreate(values: ParticipantFormValues) {
-  await createParticipant(values)
-  closeForm()
+  await createGhostFriend(values)
+  showCreateForm.value = false
 }
 
-async function handleUpdate(values: ParticipantFormValues) {
-  if (formMode.value.type !== "edit") return
-
-  await updateParticipant(formMode.value.id, values)
-  closeForm()
-}
-
-async function handleRemove(id: string) {
-  await removeParticipant(id)
-  if (expandedId.value === id) expandedId.value = null
-  if (formMode.value.type === "edit" && formMode.value.id === id) {
-    closeForm()
-  }
+function canManageAliases(friend: (typeof filteredFriends.value)[number]) {
+  return Boolean(managedParticipantId(friend))
 }
 </script>
 
@@ -82,40 +59,53 @@ async function handleRemove(id: string) {
       <p class="text-sm uppercase tracking-widest text-gray-500">Amigos</p>
       <h1 class="text-3xl font-bold text-primary">Participantes</h1>
       <p class="text-gray-400">
-        Jugadores sin cuenta y alias para importar partidas.
+        Busca usuarios con cuenta o jugadores sin login. También puedes crear uno nuevo.
       </p>
     </div>
 
     <SearchInput
       v-model="searchQuery"
-      placeholder="Buscar gente"
+      placeholder="Buscar usuarios o amigos sin cuenta..."
     />
 
+    <section v-if="showSearchPanel" class="space-y-2">
+      <p class="text-xs font-semibold uppercase tracking-widest text-gray-500">
+        Resultados
+      </p>
+      <p v-if="isSearching" class="text-sm text-gray-400">Buscando...</p>
+      <div v-else-if="searchResults.length > 0" class="space-y-2">
+        <PeopleSearchResultRow
+          v-for="result in searchResults"
+          :key="`${result.kind}-${result.profileId ?? result.participantId}`"
+          :result="result"
+          :is-saving="isSaving"
+          @add="addSearchResult(result)"
+        />
+      </div>
+      <p
+        v-else
+        class="rounded-xl border-2 border-dashed border-gray-700 p-4 text-center text-sm text-gray-500"
+      >
+        No hay coincidencias. Puedes crear un jugador sin cuenta abajo.
+      </p>
+    </section>
+
     <button
-      v-if="formMode.type === 'closed'"
+      v-if="!showCreateForm"
       type="button"
-      class="mt-2 w-full rounded-lg border-2 border-dashed border-gray-600 p-4 text-gray-300 transition-colors hover:border-primary hover:text-primary"
-      @click="openCreateForm"
+      class="w-full rounded-lg border-2 border-dashed border-gray-600 p-4 text-gray-300 transition-colors hover:border-primary hover:text-primary"
+      @click="showCreateForm = true"
     >
-      + Añadir jugador
+      + Crear jugador sin cuenta
     </button>
 
     <ParticipantForm
-      v-if="formMode.type === 'create'"
-      submit-label="Añadir"
+      v-else
+      submit-label="Crear y añadir"
       :is-saving="isSaving"
       :initial-values="{ displayName: searchQuery }"
       @submit="handleCreate"
-      @cancel="closeForm"
-    />
-
-    <ParticipantForm
-      v-else-if="formMode.type === 'edit' && editingParticipant"
-      submit-label="Guardar"
-      :is-saving="isSaving"
-      :initial-values="{ displayName: editingParticipant.displayName }"
-      @submit="handleUpdate"
-      @cancel="closeForm"
+      @cancel="showCreateForm = false"
     />
 
     <p
@@ -126,43 +116,51 @@ async function handleRemove(id: string) {
       {{ errorMessage }}
     </p>
 
-    <p
-      v-if="isLoading"
-      class="text-gray-400"
-    >
-      Cargando participantes…
-    </p>
+    <section class="space-y-3">
+      <p class="text-xs font-semibold uppercase tracking-widest text-gray-500">
+        Mis amigos
+      </p>
 
-    <TransitionGroup
-      v-else
-      name="slide"
-      tag="div"
-      class="space-y-3"
-    >
-      <ParticipantCard
-        v-for="participant in filteredParticipants"
-        :key="participant.id"
-        :participant="participant"
-        :is-expanded="expandedId === participant.id"
-        :is-saving="isSaving"
-        @toggle="toggleExpanded(participant.id)"
-        @edit="openEditForm(participant.id)"
-        @remove="handleRemove(participant.id)"
-        @add-alias="addAlias(participant.id, $event)"
-        @remove-alias="removeAlias(participant.id, $event)"
-      />
-    </TransitionGroup>
+      <p v-if="isLoading" class="text-gray-400">Cargando amigos...</p>
 
-    <p
-      v-if="!isLoading && filteredParticipants.length === 0"
-      class="rounded-lg border-4 border-dashed border-gray-700 p-6 text-center text-gray-500"
-    >
-      {{
-        searchQuery.trim()
-          ? "No hay participantes con ese nombre."
-          : "Aún no has añadido participantes."
-      }}
-    </p>
+      <TransitionGroup
+        v-else
+        name="slide"
+        tag="div"
+        class="space-y-3"
+      >
+        <FriendCard
+          v-for="friend in filteredFriends"
+          :key="friend.friendshipId"
+          :friend="friend"
+          :aliases="aliasMap[managedParticipantId(friend) ?? ''] ?? []"
+          :can-manage-aliases="canManageAliases(friend)"
+          :is-expanded="expandedId === friend.friendshipId"
+          :is-saving="isSaving"
+          @toggle="handleToggleFriend(friend.friendshipId)"
+          @disable="disableFriend(friend.friendshipId)"
+          @add-alias="
+            managedParticipantId(friend) &&
+              addAlias(managedParticipantId(friend)!, $event)
+          "
+          @remove-alias="
+            managedParticipantId(friend) &&
+              removeAlias(managedParticipantId(friend)!, $event)
+          "
+        />
+      </TransitionGroup>
+
+      <p
+        v-if="!isLoading && filteredFriends.length === 0"
+        class="rounded-lg border-4 border-dashed border-gray-700 p-6 text-center text-gray-500"
+      >
+        {{
+          searchQuery.trim()
+            ? "No tienes amigos con ese nombre."
+            : "Aún no tienes amigos. Busca arriba o crea un jugador sin cuenta."
+        }}
+      </p>
+    </section>
   </section>
 </template>
 

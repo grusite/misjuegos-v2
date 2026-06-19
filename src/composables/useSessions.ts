@@ -16,6 +16,7 @@ import {
   sortParticipantsWithSelfFirst,
   syncFriendsFromSession,
 } from "@/services/participants/participantBootstrap"
+import { friendshipsRepository } from "@/services/friendships/friendshipsRepository"
 import { participantsRepository } from "@/services/participants/participantsRepository"
 import { playerTeamsRepository } from "@/services/playerTeams/playerTeamsRepository"
 import { sessionsRepository } from "@/services/sessions/sessionsRepository"
@@ -293,7 +294,7 @@ export function useSessions() {
         await ensureSelfParticipant(authStore.profile)
       }
 
-      const list = await participantsRepository.listForOwner(ownerId.value)
+      const list = await friendshipsRepository.listPickerParticipants(ownerId.value)
       const sorted = sortParticipantsWithSelfFirst(list, ownerId.value)
       participants.value = sorted
       appDataCache.set(cacheKey, sorted)

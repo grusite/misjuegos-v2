@@ -60,6 +60,35 @@ export type AppDatabase = Omit<Database, "public"> & {
           escape_rating: number | null
         }[]
       }
+      search_people_to_friend: {
+        Args: { p_search: string }
+        Returns: {
+          kind: string
+          profile_id: string | null
+          participant_id: string | null
+          display_name: string
+          avatar_url: string | null
+          color: string | null
+          session_count: number
+          already_friend: boolean
+        }[]
+      }
+      list_my_friends: {
+        Args: Record<string, never>
+        Returns: {
+          friendship_id: string
+          status: "active" | "disabled"
+          kind: string
+          profile_id: string | null
+          participant_id: string | null
+          display_name: string
+          avatar_url: string | null
+          color: string | null
+          session_count: number
+          local_participant_id: string | null
+          participant_owner_id: string | null
+        }[]
+      }
     }
   }
 }

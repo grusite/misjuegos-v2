@@ -320,6 +320,58 @@ export type Database = {
           },
         ]
       }
+      friendships: {
+        Row: {
+          created_at: string
+          friend_participant_id: string | null
+          friend_profile_id: string | null
+          id: string
+          owner_id: string
+          status: Database["public"]["Enums"]["friendship_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          friend_participant_id?: string | null
+          friend_profile_id?: string | null
+          id?: string
+          owner_id: string
+          status?: Database["public"]["Enums"]["friendship_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          friend_participant_id?: string | null
+          friend_profile_id?: string | null
+          id?: string
+          owner_id?: string
+          status?: Database["public"]["Enums"]["friendship_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friendships_friend_participant_id_fkey"
+            columns: ["friend_participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_friend_profile_id_fkey"
+            columns: ["friend_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_catalog: {
         Row: {
           created_at: string
@@ -536,6 +588,7 @@ export type Database = {
           created_by: string
           desired_game_id: string | null
           id: string
+          message_id: string | null
           session_id: string | null
           sort_order: number
           source: Database["public"]["Enums"]["photo_source"]
@@ -548,6 +601,7 @@ export type Database = {
           created_by: string
           desired_game_id?: string | null
           id?: string
+          message_id?: string | null
           session_id?: string | null
           sort_order?: number
           source?: Database["public"]["Enums"]["photo_source"]
@@ -560,6 +614,7 @@ export type Database = {
           created_by?: string
           desired_game_id?: string | null
           id?: string
+          message_id?: string | null
           session_id?: string | null
           sort_order?: number
           source?: Database["public"]["Enums"]["photo_source"]
@@ -579,6 +634,13 @@ export type Database = {
             columns: ["desired_game_id"]
             isOneToOne: false
             referencedRelation: "desired_games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photos_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "session_messages"
             referencedColumns: ["id"]
           },
           {
@@ -857,6 +919,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_write_play_session: {
+        Args: { p_session_id: string }
+        Returns: boolean
+      }
+      can_write_player_team: { Args: { p_team_id: string }; Returns: boolean }
       claim_participant_link: {
         Args: { participant_id: string }
         Returns: undefined
@@ -869,6 +936,30 @@ export type Database = {
           id: string
           match_kind: string
           session_count: number
+        }[]
+      }
+      is_session_participant: {
+        Args: { p_session_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_team_member: {
+        Args: { p_team_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      list_my_friends: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          color: string
+          display_name: string
+          friendship_id: string
+          kind: string
+          local_participant_id: string
+          participant_id: string
+          participant_owner_id: string
+          profile_id: string
+          session_count: number
+          status: Database["public"]["Enums"]["friendship_status"]
         }[]
       }
       list_play_session_summaries: {
@@ -898,10 +989,34 @@ export type Database = {
           status: Database["public"]["Enums"]["session_status"]
         }[]
       }
+      search_participant_link_candidates: {
+        Args: { p_search: string }
+        Returns: {
+          color: string
+          display_name: string
+          id: string
+          match_kind: string
+          session_count: number
+        }[]
+      }
+      search_people_to_friend: {
+        Args: { p_search: string }
+        Returns: {
+          already_friend: boolean
+          avatar_url: string
+          color: string
+          display_name: string
+          kind: string
+          participant_id: string
+          profile_id: string
+          session_count: number
+        }[]
+      }
       skip_participant_link_prompt: { Args: never; Returns: undefined }
     }
     Enums: {
       desired_game_status: "active" | "played" | "dropped"
+      friendship_status: "active" | "disabled"
       game_type: "board_game" | "escape_room"
       import_source: "google_sheets" | "google_drive" | "manual"
       import_status: "pending" | "running" | "completed" | "failed"
@@ -1045,6 +1160,7 @@ export const Constants = {
   public: {
     Enums: {
       desired_game_status: ["active", "played", "dropped"],
+      friendship_status: ["active", "disabled"],
       game_type: ["board_game", "escape_room"],
       import_source: ["google_sheets", "google_drive", "manual"],
       import_status: ["pending", "running", "completed", "failed"],

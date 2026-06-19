@@ -23,6 +23,7 @@ import {
   sortParticipantsWithSelfFirst,
   syncFriendsFromSession,
 } from "@/services/participants/participantBootstrap"
+import { friendshipsRepository } from "@/services/friendships/friendshipsRepository"
 import { participantsRepository } from "@/services/participants/participantsRepository"
 import { playerTeamsRepository } from "@/services/playerTeams/playerTeamsRepository"
 import { photosRepository } from "@/services/photos/photosRepository"
@@ -186,7 +187,7 @@ export function useSessionDetail(sessionId: string) {
     if (!authStore.profile?.id) return
 
     const selfParticipant = await ensureSelfParticipant(authStore.profile)
-    const list = await participantsRepository.listForOwner(authStore.profile.id)
+    const list = await friendshipsRepository.listPickerParticipants(authStore.profile.id)
     participants.value = sortParticipantsWithSelfFirst(list, authStore.profile.id)
 
     return selfParticipant

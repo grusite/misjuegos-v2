@@ -210,11 +210,37 @@ export type PhotoInsert = {
   created_at?: string
 }
 
+export type FriendshipRow = {
+  id: string
+  owner_id: string
+  friend_profile_id: string | null
+  friend_participant_id: string | null
+  status: "active" | "disabled"
+  created_at: string
+  updated_at: string
+}
+
+export type FriendshipInsert = {
+  id?: string
+  owner_id: string
+  friend_profile_id?: string | null
+  friend_participant_id?: string | null
+  status?: "active" | "disabled"
+  created_at?: string
+  updated_at?: string
+}
+
 export type PendingTables = {
   photos: {
     Row: PhotoRow
     Insert: PhotoInsert
     Update: Partial<PhotoInsert>
+    Relationships: []
+  }
+  friendships: {
+    Row: FriendshipRow
+    Insert: FriendshipInsert
+    Update: Partial<FriendshipInsert>
     Relationships: []
   }
 }
