@@ -117,6 +117,7 @@ export function createSessionsRepository(client: SupabaseClient<AppDatabase>) {
       authorDisplayName: row.author?.display_name ?? fallbackAuthorName ?? "Usuario",
       content: row.content,
       createdAt: row.created_at,
+      photos: [],
     }
   }
 

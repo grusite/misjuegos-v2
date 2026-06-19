@@ -21,6 +21,7 @@ describe("photoMapper", () => {
     id: "p1",
     session_id: "s1",
     desired_game_id: null,
+    message_id: null,
     storage_path: "u1/s1/a.jpg",
     source: "upload",
     source_file_id: null,
@@ -36,6 +37,7 @@ describe("photoMapper", () => {
     expect(photo.id).toBe("p1")
     expect(photo.sessionId).toBe("s1")
     expect(photo.desiredGameId).toBeNull()
+    expect(photo.messageId).toBeNull()
     expect(photo.storagePath).toBe("u1/s1/a.jpg")
     expect(photo.publicUrl).toContain("u1/s1/a.jpg")
   })
@@ -50,6 +52,7 @@ describe("photoMapper", () => {
     ).toEqual({
       session_id: "s1",
       desired_game_id: null,
+      message_id: null,
       storage_path: "u1/s1/a.jpg",
       created_by: "u1",
       source: "upload",

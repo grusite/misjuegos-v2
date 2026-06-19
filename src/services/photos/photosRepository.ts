@@ -47,7 +47,30 @@ export function createPhotosRepository(client: SupabaseClient<AppDatabase>) {
         .from("photos")
         .select("*")
         .eq("session_id", sessionId)
+        .is("message_id", null)
         .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true })
+
+      return unwrap(result).map(mapAppPhoto)
+    },
+
+    async listForMessage(messageId: string): Promise<AppPhoto[]> {
+      const result = await client
+        .from("photos")
+        .select("*")
+        .eq("message_id", messageId)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true })
+
+      return unwrap(result).map(mapAppPhoto)
+    },
+
+    async listMessageAttachmentsForSession(sessionId: string): Promise<AppPhoto[]> {
+      const result = await client
+        .from("photos")
+        .select("*")
+        .eq("session_id", sessionId)
+        .not("message_id", "is", null)
         .order("created_at", { ascending: true })
 
       return unwrap(result).map(mapAppPhoto)
@@ -82,19 +105,24 @@ export function createPhotosRepository(client: SupabaseClient<AppDatabase>) {
         throw new Error("Una foto solo puede enlazarse a una partida o a un deseo, no a ambos")
       }
 
-      if (!hasSession && !hasDesired) {
-        throw new Error("Indica una partida o un deseo para enlazar la foto")
-      }
-
-      const patch = hasSession
-        ? {
-            session_id: input.sessionId ?? null,
-            desired_game_id: null,
-          }
-        : {
-            session_id: null,
-            desired_game_id: input.desiredGameId ?? null,
-          }
+      const patch =
+        hasSession
+          ? {
+              session_id: input.sessionId ?? null,
+              desired_game_id: null,
+              message_id: null,
+            }
+          : hasDesired
+            ? {
+                session_id: null,
+                desired_game_id: input.desiredGameId ?? null,
+                message_id: null,
+              }
+            : {
+                session_id: null,
+                desired_game_id: null,
+                message_id: null,
+              }
 
       const result = await client
         .from("photos")
@@ -104,6 +132,10 @@ export function createPhotosRepository(client: SupabaseClient<AppDatabase>) {
         .single()
 
       return mapAppPhoto(unwrap(result))
+    },
+
+    async unlink(id: string): Promise<AppPhoto> {
+      return this.link(id, {})
     },
 
     async getById(id: string): Promise<AppPhoto | null> {

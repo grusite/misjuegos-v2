@@ -1,18 +1,21 @@
 <script setup lang="ts">
-import { ref } from "vue"
+import { computed, ref } from "vue"
 import { Icon } from "@iconify/vue"
 import UiButton from "@/components/ui/UiButton.vue"
+import type { AppPhoto } from "@/domain/types/photo"
 
 const props = withDefaults(
   defineProps<{
     authorDisplayName: string
     content: string
     createdAt: string
+    photos?: AppPhoto[]
     compact?: boolean
     canManage?: boolean
     isSaving?: boolean
   }>(),
   {
+    photos: () => [],
     compact: false,
     canManage: false,
     isSaving: false,
@@ -26,6 +29,9 @@ const emit = defineEmits<{
 
 const isEditing = ref(false)
 const draft = ref("")
+const expandedPhotoUrl = ref<string | null>(null)
+
+const hasVisibleText = computed(() => props.content.trim().length > 0)
 
 function formatMessageDate(isoDate: string): string {
   return new Intl.DateTimeFormat("es-ES", props.compact
@@ -46,7 +52,7 @@ function cancelEdit() {
 
 function saveEdit() {
   const normalized = draft.value.trim()
-  if (!normalized) return
+  if (!normalized && props.photos.length === 0) return
 
   emit("save", normalized)
   isEditing.value = false
@@ -110,7 +116,7 @@ function saveEdit() {
           type="button"
           variant="primary"
           size="compact"
-          :disabled="isSaving || !draft.trim()"
+          :disabled="isSaving || (!draft.trim() && photos.length === 0)"
           @click="saveEdit"
         >
           Guardar
@@ -118,6 +124,46 @@ function saveEdit() {
       </div>
     </div>
 
-    <p v-else class="text-sm text-gray-100">{{ content }}</p>
+    <template v-else>
+      <p v-if="hasVisibleText" class="text-sm text-gray-100">{{ content }}</p>
+
+      <div
+        v-if="photos.length > 0"
+        class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3"
+      >
+        <button
+          v-for="photo in photos"
+          :key="photo.id"
+          type="button"
+          class="overflow-hidden rounded-lg border border-gray-700"
+          @click="expandedPhotoUrl = photo.publicUrl"
+        >
+          <img
+            :src="photo.publicUrl"
+            :alt="photo.caption ?? 'Imagen del mensaje'"
+            class="aspect-square w-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
+        </button>
+      </div>
+    </template>
+
+    <Teleport to="body">
+      <div
+        v-if="expandedPhotoUrl"
+        class="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-4"
+        role="dialog"
+        aria-modal="true"
+        @click="expandedPhotoUrl = null"
+      >
+        <img
+          :src="expandedPhotoUrl"
+          alt="Vista ampliada"
+          class="max-h-[90vh] max-w-full rounded-lg object-contain"
+          @click.stop
+        />
+      </div>
+    </Teleport>
   </article>
 </template>

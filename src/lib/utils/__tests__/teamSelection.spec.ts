@@ -17,6 +17,7 @@ function buildTeam(
     name,
     description: null,
     photoPath: null,
+    photoUrl: null,
     createdBy: "owner-1",
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",

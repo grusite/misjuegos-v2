@@ -5,6 +5,7 @@ import type {
 } from "@/domain/types/playerTeam"
 import type { Database } from "@/domain/types/database"
 import { mapParticipant } from "@/services/participants/participantMapper"
+import { getSessionPhotoPublicUrl } from "@/services/storage/sessionPhotosStorage"
 import type { ParticipantRow } from "@/domain/types/rows"
 
 type PlayerTeamUpdateRow = Database["public"]["Tables"]["player_teams"]["Update"]
@@ -36,6 +37,7 @@ export function mapPlayerTeam(row: PlayerTeamRow): PlayerTeam {
     name: row.name,
     description: row.description,
     photoPath: row.photo_path,
+    photoUrl: row.photo_path ? getSessionPhotoPublicUrl(row.photo_path) : null,
     createdBy: row.created_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

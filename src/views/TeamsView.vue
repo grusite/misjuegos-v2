@@ -4,7 +4,7 @@ import TeamCard from "@/components/teams/TeamCard.vue"
 import TeamForm from "@/components/teams/TeamForm.vue"
 import SearchInput from "@/components/ui/SearchInput.vue"
 import { useParticipants } from "@/composables/useParticipants"
-import { usePlayerTeams } from "@/composables/usePlayerTeams"
+import { usePlayerTeams, type TeamAvatarInput } from "@/composables/usePlayerTeams"
 import type { PlayerTeamFormValues } from "@/domain/schemas/playerTeam"
 import type { Participant } from "@/domain/types/participant"
 
@@ -84,15 +84,15 @@ async function createFriendParticipant(displayName: string): Promise<Participant
   }
 }
 
-async function handleCreate(values: PlayerTeamFormValues) {
-  await createTeam(values)
+async function handleCreate(values: PlayerTeamFormValues, avatar?: TeamAvatarInput) {
+  await createTeam(values, avatar)
   closeForm()
 }
 
-async function handleUpdate(values: PlayerTeamFormValues) {
+async function handleUpdate(values: PlayerTeamFormValues, avatar?: TeamAvatarInput) {
   if (formMode.value.type !== "edit") return
 
-  await updateTeam(formMode.value.id, values)
+  await updateTeam(formMode.value.id, values, avatar)
   closeForm()
 }
 

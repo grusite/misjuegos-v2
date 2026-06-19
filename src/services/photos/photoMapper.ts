@@ -7,6 +7,7 @@ export function mapAppPhoto(row: PhotoRow): AppPhoto {
     id: row.id,
     sessionId: row.session_id,
     desiredGameId: row.desired_game_id,
+    messageId: row.message_id,
     storagePath: row.storage_path,
     publicUrl: getSessionPhotoPublicUrl(row.storage_path),
     source: row.source as PhotoSource,
@@ -22,6 +23,7 @@ export function toPhotoInsert(input: CreatePhotoInput) {
   return {
     session_id: input.sessionId ?? null,
     desired_game_id: input.desiredGameId ?? null,
+    message_id: input.messageId ?? null,
     storage_path: input.storagePath,
     created_by: input.createdBy,
     source: input.source ?? "upload",

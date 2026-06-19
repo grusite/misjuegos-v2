@@ -186,6 +186,7 @@ export type PhotoRow = {
   id: string
   session_id: string | null
   desired_game_id: string | null
+  message_id: string | null
   storage_path: string
   source: Database["public"]["Enums"]["photo_source"]
   source_file_id: string | null
@@ -199,6 +200,7 @@ export type PhotoInsert = {
   id?: string
   session_id?: string | null
   desired_game_id?: string | null
+  message_id?: string | null
   storage_path: string
   source?: Database["public"]["Enums"]["photo_source"]
   source_file_id?: string | null

@@ -24,6 +24,9 @@ import {
 } from "@/services/participants/participantBootstrap"
 import { participantsRepository } from "@/services/participants/participantsRepository"
 import { playerTeamsRepository } from "@/services/playerTeams/playerTeamsRepository"
+import { photosRepository } from "@/services/photos/photosRepository"
+import { uploadPhotoFiles } from "@/services/photos/uploadPhotos"
+import { deleteSessionPhotoFile } from "@/services/storage/sessionPhotosStorage"
 import { sessionsRepository } from "@/services/sessions/sessionsRepository"
 
 type SessionMember = {
@@ -129,7 +132,7 @@ export function useSessionDetail(sessionId: string) {
       await loadPlayerTeams()
       members.value = await resolveMembers(participantRows)
 
-      messages.value = await sessionsRepository.listMessages(found.id)
+      messages.value = await loadMessagesWithPhotos(found.id)
       scores.value =
         catalog?.type === "board_game"
           ? await sessionsRepository.listScores(found.id)
@@ -340,11 +343,33 @@ export function useSessionDetail(sessionId: string) {
     })
   }
 
-  async function addMessage(content: string) {
+  async function loadMessagesWithPhotos(currentSessionId: string): Promise<SessionMessage[]> {
+    const [messageList, attachments] = await Promise.all([
+      sessionsRepository.listMessages(currentSessionId),
+      photosRepository.listMessageAttachmentsForSession(currentSessionId),
+    ])
+
+    const photosByMessage = new Map<string, SessionMessage["photos"]>()
+
+    for (const photo of attachments) {
+      if (!photo.messageId) continue
+      const existing = photosByMessage.get(photo.messageId) ?? []
+      existing.push(photo)
+      photosByMessage.set(photo.messageId, existing)
+    }
+
+    return messageList.map(message => ({
+      ...message,
+      photos: photosByMessage.get(message.id) ?? [],
+    }))
+  }
+
+  async function addMessage(content: string, files: File[] = []) {
     if (!session.value || !authStore.profile?.id) return
 
     const normalized = content.trim()
-    if (!normalized) return
+    const hasFiles = files.length > 0
+    if (!normalized && !hasFiles) return
 
     isSaving.value = true
     errorMessage.value = null
@@ -355,7 +380,21 @@ export function useSessionDetail(sessionId: string) {
         content: normalized,
       })
 
-      messages.value = [...messages.value, created]
+      let photos: SessionMessage["photos"] = []
+
+      if (hasFiles) {
+        photos = await uploadPhotoFiles({
+          userId: authStore.profile.id,
+          files,
+          target: {
+            kind: "message",
+            sessionId: session.value.id,
+            messageId: created.id,
+          },
+        })
+      }
+
+      messages.value = [...messages.value, { ...created, photos }]
     } catch (error) {
       errorMessage.value = getDbErrorMessage(error)
     } finally {
@@ -365,7 +404,8 @@ export function useSessionDetail(sessionId: string) {
 
   async function updateMessage(messageId: string, content: string) {
     const normalized = content.trim()
-    if (!normalized) return
+    const existing = messages.value.find(message => message.id === messageId)
+    if (!normalized && !existing?.photos.length) return
 
     isSaving.value = true
     errorMessage.value = null
@@ -375,7 +415,7 @@ export function useSessionDetail(sessionId: string) {
         content: normalized,
       })
       messages.value = messages.value.map(message =>
-        message.id === messageId ? updated : message,
+        message.id === messageId ? { ...updated, photos: message.photos } : message,
       )
     } catch (error) {
       errorMessage.value = getDbErrorMessage(error)
@@ -385,12 +425,21 @@ export function useSessionDetail(sessionId: string) {
   }
 
   async function deleteMessage(messageId: string) {
+    const message = messages.value.find(item => item.id === messageId)
+
     isSaving.value = true
     errorMessage.value = null
 
     try {
+      if (message?.photos.length) {
+        for (const photo of message.photos) {
+          await photosRepository.delete(photo.id)
+          await deleteSessionPhotoFile(photo.storagePath)
+        }
+      }
+
       await sessionsRepository.deleteMessage(messageId)
-      messages.value = messages.value.filter(message => message.id !== messageId)
+      messages.value = messages.value.filter(item => item.id !== messageId)
     } catch (error) {
       errorMessage.value = getDbErrorMessage(error)
     } finally {

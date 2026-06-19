@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, reactive, watch } from "vue"
+import { computed, reactive, ref, watch } from "vue"
+import { Icon } from "@iconify/vue"
 import SessionParticipantPicker from "@/components/sessions/SessionParticipantPicker.vue"
 import UiButton from "@/components/ui/UiButton.vue"
 import {
@@ -8,6 +9,7 @@ import {
 } from "@/domain/schemas/playerTeam"
 import type { Participant } from "@/domain/types/participant"
 import type { PlayerTeamWithMembers } from "@/domain/types/playerTeam"
+import type { TeamAvatarInput } from "@/composables/usePlayerTeams"
 
 const props = defineProps<{
   participants: Participant[]
@@ -19,7 +21,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  submit: [values: PlayerTeamFormValues]
+  submit: [values: PlayerTeamFormValues, avatar?: TeamAvatarInput]
   cancel: []
 }>()
 
@@ -34,11 +36,22 @@ const fieldErrors = reactive({
   participantIds: null as string | null,
 })
 
+const avatarInputRef = ref<HTMLInputElement | null>(null)
+const avatarFile = ref<File | null>(null)
+const avatarPreviewUrl = ref<string | null>(props.initialTeam?.photoUrl ?? null)
+const removeAvatar = ref(false)
+
 const selectedParticipantIds = computed({
   get: () => form.participantIds,
   set: value => {
     form.participantIds = value
   },
+})
+
+const displayAvatarUrl = computed(() => {
+  if (removeAvatar.value) return null
+  if (avatarPreviewUrl.value) return avatarPreviewUrl.value
+  return props.initialTeam?.photoUrl ?? null
 })
 
 watch(
@@ -49,6 +62,9 @@ watch(
     form.name = team.name
     form.description = team.description ?? ""
     form.participantIds = team.members.map(member => member.id)
+    avatarFile.value = null
+    avatarPreviewUrl.value = team.photoUrl
+    removeAvatar.value = false
   },
 )
 
@@ -62,6 +78,27 @@ watch(
   },
   { immediate: true },
 )
+
+function openAvatarPicker() {
+  avatarInputRef.value?.click()
+}
+
+function handleAvatarChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  avatarFile.value = file
+  avatarPreviewUrl.value = URL.createObjectURL(file)
+  removeAvatar.value = false
+  input.value = ""
+}
+
+function clearAvatar() {
+  avatarFile.value = null
+  avatarPreviewUrl.value = null
+  removeAvatar.value = true
+}
 
 function handleSubmit() {
   const parsed = playerTeamFormSchema.safeParse({
@@ -79,7 +116,16 @@ function handleSubmit() {
 
   fieldErrors.name = null
   fieldErrors.participantIds = null
-  emit("submit", parsed.data)
+
+  const avatar: TeamAvatarInput | undefined =
+    avatarFile.value || removeAvatar.value
+      ? {
+          file: avatarFile.value,
+          remove: removeAvatar.value,
+        }
+      : undefined
+
+  emit("submit", parsed.data, avatar)
 }
 </script>
 
@@ -91,6 +137,59 @@ function handleSubmit() {
     <h2 class="text-2xl font-bold text-primary">
       {{ initialTeam ? "Editar equipo" : "Nuevo equipo" }}
     </h2>
+
+    <div class="space-y-2">
+      <span class="text-sm text-gray-400">Imagen del equipo</span>
+      <div class="flex items-center gap-4">
+        <div
+          class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-gray-700 bg-gray-900"
+        >
+          <img
+            v-if="displayAvatarUrl"
+            :src="displayAvatarUrl"
+            :alt="`Avatar de ${form.name || 'equipo'}`"
+            class="h-full w-full object-cover"
+          />
+          <Icon
+            v-else
+            icon="mdi:account-group"
+            class="h-10 w-10 text-gray-500"
+            aria-hidden="true"
+          />
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          <UiButton
+            type="button"
+            variant="ghost"
+            size="compact"
+            :disabled="isSaving"
+            @click="openAvatarPicker"
+          >
+            {{ displayAvatarUrl ? "Cambiar" : "Subir foto" }}
+          </UiButton>
+          <UiButton
+            v-if="displayAvatarUrl"
+            type="button"
+            variant="ghost"
+            size="compact"
+            class="text-secondary"
+            :disabled="isSaving"
+            @click="clearAvatar"
+          >
+            Quitar
+          </UiButton>
+        </div>
+      </div>
+
+      <input
+        ref="avatarInputRef"
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        class="hidden"
+        @change="handleAvatarChange"
+      />
+    </div>
 
     <label class="block space-y-2">
       <span class="text-sm text-gray-400">Nombre del equipo</span>

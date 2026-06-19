@@ -3,14 +3,8 @@ import { useAuthStore } from "@/stores/authStore"
 import type { SessionPhoto } from "@/domain/types/photo"
 import { getDbErrorMessage } from "@/services/errors"
 import { photosRepository } from "@/services/photos/photosRepository"
-import {
-  buildSessionPhotoStoragePath,
-  deleteSessionPhotoFile,
-  isAllowedPhotoMimeType,
-  uploadSessionPhotoFile,
-} from "@/services/storage/sessionPhotosStorage"
-
-const MAX_PHOTO_BYTES = 10 * 1024 * 1024
+import { uploadPhotoFiles } from "@/services/photos/uploadPhotos"
+import { deleteSessionPhotoFile } from "@/services/storage/sessionPhotosStorage"
 
 export function useSessionPhotos(sessionId: string) {
   const authStore = useAuthStore()
@@ -49,34 +43,14 @@ export function useSessionPhotos(sessionId: string) {
       const nextSortOrder =
         photos.value.reduce((max, photo) => Math.max(max, photo.sortOrder), -1) + 1
 
-      for (const [index, file] of fileList.entries()) {
-        if (!isAllowedPhotoMimeType(file.type)) {
-          throw new Error(`Formato no permitido: ${file.name}`)
-        }
+      const created = await uploadPhotoFiles({
+        userId: profile.id,
+        files: fileList,
+        target: { kind: "session", sessionId },
+        sortOrderStart: nextSortOrder,
+      })
 
-        if (file.size > MAX_PHOTO_BYTES) {
-          throw new Error(`La foto «${file.name}» supera 10 MB`)
-        }
-
-        const extension = file.name.split(".").pop()?.toLowerCase() ?? "jpg"
-        const fileName = `${crypto.randomUUID()}.${extension}`
-        const storagePath = buildSessionPhotoStoragePath(profile.id, sessionId, fileName)
-
-        await uploadSessionPhotoFile(storagePath, file, file.type)
-
-        try {
-          const created = await photosRepository.create({
-            sessionId,
-            storagePath,
-            createdBy: profile.id,
-            sortOrder: nextSortOrder + index,
-          })
-          photos.value = [...photos.value, created]
-        } catch (error) {
-          await deleteSessionPhotoFile(storagePath).catch(() => undefined)
-          throw error
-        }
-      }
+      photos.value = [...photos.value, ...created]
     } catch (error) {
       errorMessage.value =
         error instanceof Error ? error.message : getDbErrorMessage(error)

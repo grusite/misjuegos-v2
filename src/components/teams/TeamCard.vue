@@ -48,14 +48,33 @@ function actionClasses(tone: keyof typeof outcomeToneStyles) {
 <template>
   <article class="space-y-3 rounded-xl border-4 border-gray-700 p-4 transition-colors hover:border-primary">
     <div class="flex items-start justify-between gap-3">
-      <div class="min-w-0 flex-1 space-y-1">
-        <h3 class="text-lg font-bold text-primary">{{ team.name }}</h3>
-        <p
-          v-if="team.description"
-          class="text-sm text-gray-400"
+      <div class="flex min-w-0 flex-1 items-start gap-3">
+        <div
+          class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-gray-700 bg-gray-900"
         >
-          {{ team.description }}
-        </p>
+          <img
+            v-if="team.photoUrl"
+            :src="team.photoUrl"
+            :alt="`Avatar de ${team.name}`"
+            class="h-full w-full object-cover"
+          />
+          <Icon
+            v-else
+            icon="mdi:account-group"
+            class="h-7 w-7 text-gray-500"
+            aria-hidden="true"
+          />
+        </div>
+
+        <div class="min-w-0 space-y-1">
+          <h3 class="text-lg font-bold text-primary">{{ team.name }}</h3>
+          <p
+            v-if="team.description"
+            class="text-sm text-gray-400"
+          >
+            {{ team.description }}
+          </p>
+        </div>
       </div>
 
       <div

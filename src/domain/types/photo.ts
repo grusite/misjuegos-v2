@@ -4,6 +4,7 @@ export type AppPhoto = {
   id: string
   sessionId: string | null
   desiredGameId: string | null
+  messageId: string | null
   storagePath: string
   publicUrl: string
   source: PhotoSource
@@ -20,6 +21,7 @@ export type SessionPhoto = AppPhoto
 export type CreatePhotoInput = {
   sessionId?: string | null
   desiredGameId?: string | null
+  messageId?: string | null
   storagePath: string
   createdBy: string
   source?: PhotoSource

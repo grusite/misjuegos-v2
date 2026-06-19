@@ -2,6 +2,7 @@
 import { ref } from "vue"
 import { Icon } from "@iconify/vue"
 import UiButton from "@/components/ui/UiButton.vue"
+import UiConfirmDialog from "@/components/ui/UiConfirmDialog.vue"
 import type { AppPhoto } from "@/domain/types/photo"
 
 defineProps<{
@@ -19,6 +20,8 @@ const emit = defineEmits<{
 }>()
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
+const showDeleteConfirm = ref(false)
+const pendingDeletePhotoId = ref<string | null>(null)
 
 function openFilePicker() {
   fileInputRef.value?.click()
@@ -30,6 +33,24 @@ function handleFileChange(event: Event) {
 
   emit("upload", input.files)
   input.value = ""
+}
+
+function requestDelete(photoId: string) {
+  pendingDeletePhotoId.value = photoId
+  showDeleteConfirm.value = true
+}
+
+function handleDeleteConfirm() {
+  if (!pendingDeletePhotoId.value) return
+
+  emit("remove", pendingDeletePhotoId.value)
+  pendingDeletePhotoId.value = null
+  showDeleteConfirm.value = false
+}
+
+function cancelDelete() {
+  showDeleteConfirm.value = false
+  pendingDeletePhotoId.value = null
 }
 </script>
 
@@ -79,9 +100,9 @@ function handleFileChange(event: Event) {
         <button
           v-if="canWrite"
           type="button"
-          class="absolute right-2 top-2 rounded-full bg-dark/80 p-1.5 text-secondary opacity-0 transition-opacity group-hover:opacity-100"
+          class="absolute right-2 top-2 rounded-full bg-dark/90 p-1.5 text-secondary sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100"
           aria-label="Eliminar foto"
-          @click="emit('remove', photo.id)"
+          @click="requestDelete(photo.id)"
         >
           <Icon icon="mdi:trash-can-outline" class="h-4 w-4" aria-hidden="true" />
         </button>
@@ -99,5 +120,14 @@ function handleFileChange(event: Event) {
           : "Esta partida no tiene fotos.")
       }}
     </p>
+
+    <UiConfirmDialog
+      :open="showDeleteConfirm"
+      title="Eliminar foto"
+      message="La imagen se borrará de la galería de la partida. No se puede deshacer."
+      confirm-label="Eliminar"
+      @confirm="handleDeleteConfirm"
+      @cancel="cancelDelete"
+    />
   </section>
 </template>

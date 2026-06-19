@@ -6,6 +6,7 @@ import UiConfirmDialog from "@/components/ui/UiConfirmDialog.vue"
 import BoardOutcomePicker from "@/components/sessions/BoardOutcomePicker.vue"
 import SessionMembersEditor from "@/components/sessions/SessionMembersEditor.vue"
 import SessionMessageItem from "@/components/sessions/SessionMessageItem.vue"
+import MessageComposer from "@/components/sessions/MessageComposer.vue"
 import SessionTimerControls from "@/components/sessions/SessionTimerControls.vue"
 import EscapeSessionDetailsPanel from "@/components/sessions/EscapeSessionDetailsPanel.vue"
 import SessionPhotoGallery from "@/components/sessions/SessionPhotoGallery.vue"
@@ -136,10 +137,8 @@ async function handleSaveScores() {
   await saveScores(buildScorePayload())
 }
 
-async function handleSendMessage() {
-  const content = messageDraft.value.trim()
-  if (!content) return
-  await addMessage(content)
+async function handleSendMessage(files: File[] = []) {
+  await addMessage(messageDraft.value, files)
   messageDraft.value = ""
 }
 
@@ -293,6 +292,7 @@ async function handleDeleteSessionConfirm() {
             :author-display-name="message.authorDisplayName"
             :content="message.content"
             :created-at="message.createdAt"
+            :photos="message.photos"
             :can-manage="canManageMessage(message)"
             :is-saving="isSaving"
             compact
@@ -393,6 +393,7 @@ async function handleDeleteSessionConfirm() {
             :author-display-name="message.authorDisplayName"
             :content="message.content"
             :created-at="message.createdAt"
+            :photos="message.photos"
             :can-manage="canManageMessage(message)"
             :is-saving="isSaving"
             @save="updateMessage(message.id, $event)"
@@ -400,17 +401,12 @@ async function handleDeleteSessionConfirm() {
           />
           <p v-if="messages.length === 0" class="text-sm text-gray-500">Sin mensajes todavía.</p>
         </div>
-        <div class="flex gap-2">
-          <input
-            v-model="messageDraft"
-            type="text"
-            placeholder="Escribe un mensaje..."
-            class="min-w-0 flex-1 rounded-lg border-2 border-gray-600 bg-dark px-3 py-2 text-sm text-gray-100 focus:border-primary focus:outline-none"
-          />
-          <UiButton :disabled="isSaving || !messageDraft.trim()" @click="handleSendMessage">
-            Enviar
-          </UiButton>
-        </div>
+        <MessageComposer
+          v-model="messageDraft"
+          :disabled="isSaving"
+          placeholder="Escribe un mensaje o adjunta una foto..."
+          @send="handleSendMessage"
+        />
       </section>
 
       <section
@@ -437,21 +433,14 @@ async function handleDeleteSessionConfirm() {
       v-if="isPlaying"
       class="fixed inset-x-0 bottom-0 z-20 border-t-2 border-gray-700 bg-dark/95 p-4 backdrop-blur-sm"
     >
-      <div class="mx-auto flex max-w-lg gap-2">
-        <input
+      <div class="mx-auto max-w-lg">
+        <MessageComposer
           v-model="messageDraft"
-          type="text"
+          :disabled="isSaving"
+          compact
           placeholder="Mensaje rápido..."
-          class="min-w-0 flex-1 rounded-lg border-2 border-gray-600 bg-dark px-3 py-2 text-sm text-gray-100 focus:border-primary focus:outline-none"
-          @keydown.enter.prevent="handleSendMessage"
+          @send="handleSendMessage"
         />
-        <UiButton
-          :disabled="isSaving || !messageDraft.trim()"
-          class="!px-4"
-          @click="handleSendMessage"
-        >
-          Enviar
-        </UiButton>
       </div>
     </div>
 
@@ -490,6 +479,7 @@ async function handleDeleteSessionConfirm() {
               :author-display-name="message.authorDisplayName"
               :content="message.content"
               :created-at="message.createdAt"
+              :photos="message.photos"
               :can-manage="canManageMessage(message)"
               :is-saving="isSaving"
               @save="updateMessage(message.id, $event)"
@@ -498,18 +488,12 @@ async function handleDeleteSessionConfirm() {
             <p v-if="messages.length === 0" class="text-sm text-gray-500">Sin mensajes todavía.</p>
           </div>
 
-          <div class="flex gap-2">
-            <input
-              v-model="messageDraft"
-              type="text"
-              placeholder="Escribe un mensaje..."
-              class="min-w-0 flex-1 rounded-lg border-2 border-gray-600 bg-dark px-3 py-2 text-sm text-gray-100 focus:border-primary focus:outline-none"
-              @keydown.enter.prevent="handleSendMessage"
-            />
-            <UiButton :disabled="isSaving || !messageDraft.trim()" @click="handleSendMessage">
-              Enviar
-            </UiButton>
-          </div>
+          <MessageComposer
+            v-model="messageDraft"
+            :disabled="isSaving"
+            placeholder="Escribe un mensaje o adjunta una foto..."
+            @send="handleSendMessage"
+          />
         </div>
       </div>
     </Teleport>

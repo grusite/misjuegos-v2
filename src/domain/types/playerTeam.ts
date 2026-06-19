@@ -5,6 +5,7 @@ export type PlayerTeam = {
   name: string
   description: string | null
   photoPath: string | null
+  photoUrl: string | null
   createdBy: string
   createdAt: string
   updatedAt: string

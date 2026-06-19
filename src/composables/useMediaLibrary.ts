@@ -4,14 +4,12 @@ import type { AppPhoto } from "@/domain/types/photo"
 import { getDbErrorMessage } from "@/services/errors"
 import { photosRepository } from "@/services/photos/photosRepository"
 import {
-  buildLibraryPhotoStoragePath,
-  deleteSessionPhotoFile,
-  isAllowedPhotoMimeType,
-  uploadSessionPhotoFile,
-} from "@/services/storage/sessionPhotosStorage"
+  type PhotoUploadTarget,
+  uploadPhotoFiles,
+} from "@/services/photos/uploadPhotos"
+import { deleteSessionPhotoFile } from "@/services/storage/sessionPhotosStorage"
 
 const MEDIA_PAGE_SIZE = 36
-const MAX_PHOTO_BYTES = 10 * 1024 * 1024
 
 export type MediaFilter = "all" | "unassigned" | "linked"
 
@@ -78,7 +76,10 @@ export function useMediaLibrary() {
     await load({ force: true })
   }
 
-  async function uploadPhotos(files: FileList | File[]) {
+  async function uploadPhotos(
+    files: FileList | File[],
+    target: PhotoUploadTarget = { kind: "library" },
+  ) {
     const profile = authStore.profile
     if (!profile) return
 
@@ -89,34 +90,19 @@ export function useMediaLibrary() {
     errorMessage.value = null
 
     try {
-      for (const file of fileList) {
-        if (!isAllowedPhotoMimeType(file.type)) {
-          throw new Error(`Formato no permitido: ${file.name}`)
-        }
+      const created = await uploadPhotoFiles({
+        userId: profile.id,
+        files: fileList,
+        target,
+      })
 
-        if (file.size > MAX_PHOTO_BYTES) {
-          throw new Error(`La foto «${file.name}» supera 10 MB`)
-        }
+      const shouldShow =
+        filter.value === "all" ||
+        (filter.value === "unassigned" && target.kind === "library") ||
+        (filter.value === "linked" && target.kind !== "library")
 
-        const extension = file.name.split(".").pop()?.toLowerCase() ?? "jpg"
-        const fileName = `${crypto.randomUUID()}.${extension}`
-        const storagePath = buildLibraryPhotoStoragePath(profile.id, fileName)
-
-        await uploadSessionPhotoFile(storagePath, file, file.type)
-
-        try {
-          const created = await photosRepository.create({
-            storagePath,
-            createdBy: profile.id,
-          })
-
-          if (filter.value !== "linked") {
-            photos.value = [created, ...photos.value]
-          }
-        } catch (error) {
-          await deleteSessionPhotoFile(storagePath).catch(() => undefined)
-          throw error
-        }
+      if (shouldShow) {
+        photos.value = [...created, ...photos.value]
       }
     } catch (error) {
       errorMessage.value =
@@ -141,6 +127,24 @@ export function useMediaLibrary() {
     }
   }
 
+  function applyLinkedPhoto(updated: AppPhoto) {
+    const index = photos.value.findIndex(item => item.id === updated.id)
+
+    if (filter.value === "unassigned" && (updated.sessionId || updated.desiredGameId)) {
+      if (index >= 0) photos.value = photos.value.filter(item => item.id !== updated.id)
+      return
+    }
+
+    if (filter.value === "linked" && !updated.sessionId && !updated.desiredGameId) {
+      if (index >= 0) photos.value = photos.value.filter(item => item.id !== updated.id)
+      return
+    }
+
+    if (index >= 0) {
+      photos.value = photos.value.map(item => (item.id === updated.id ? updated : item))
+    }
+  }
+
   onMounted(() => {
     void load({ force: true })
   })
@@ -158,5 +162,6 @@ export function useMediaLibrary() {
     setFilter,
     uploadPhotos,
     removePhoto,
+    applyLinkedPhoto,
   }
 }

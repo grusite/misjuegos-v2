@@ -98,7 +98,7 @@ Reusable groups of participants for fast session setup (same crew every week, es
 
 - Route: `/teams` (nav near Participantes)
 - Used when creating sessions: “Seleccionar equipo” fills participant checkboxes in one tap
-- Team photo stored via Storage (Phase 11) — schema ready now, upload UI can land with photos phase
+- Team photo stored via Storage — upload UI in Equipos create/edit
 
 **Tasks:**
 
@@ -176,7 +176,11 @@ Richer filtering on the home sessions list (`SessionsView`) — today only type 
 - [x] **Local batch script:** upload folder of images from disk → Storage paths + `photos` rows
 - [x] Media library (`/media`) — upload without session; filter unassigned vs linked
 - [x] Wishlist photos — `desired_game_id` on `photos`, upload from **Quiero jugar** cards
-- [ ] Link library photo → session or wishlist from UI (future — repo `link()` ready)
+- [x] Link library photo → session from UI (Fotos → Enlazar partida)
+- [x] Upload destination prompt (biblioteca vs partida) on Fotos upload
+- [x] Message photo attachments in session chat (separate from session gallery)
+- [x] Team avatar upload in Equipos edit form
+- [ ] Link library photo → wishlist from UI (future)
 - [ ] When marking wishlist item **Jugado** and creating a session, carry/link existing photos (future)
 - [ ] Google Drive one-time migration script (optional — only if local download is impractical)
 

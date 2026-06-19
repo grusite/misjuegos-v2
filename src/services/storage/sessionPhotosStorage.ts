@@ -25,6 +25,14 @@ export function buildLibraryPhotoStoragePath(userId: string, fileName: string): 
   return `${userId}/library/${fileName}`
 }
 
+export function buildTeamPhotoStoragePath(
+  userId: string,
+  teamId: string,
+  fileName: string,
+): string {
+  return `${userId}/teams/${teamId}/${fileName}`
+}
+
 export function buildDesiredGamePhotoStoragePath(
   userId: string,
   desiredGameId: string,

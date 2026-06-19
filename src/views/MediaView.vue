@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { ref } from "vue"
 import { Icon } from "@iconify/vue"
+import PhotoLinkDialog from "@/components/media/PhotoLinkDialog.vue"
+import PhotoUploadDialog from "@/components/media/PhotoUploadDialog.vue"
 import UiButton from "@/components/ui/UiButton.vue"
+import UiConfirmDialog from "@/components/ui/UiConfirmDialog.vue"
+import type { AppPhoto } from "@/domain/types/photo"
 import {
   useMediaLibrary,
   type MediaFilter,
@@ -20,10 +24,17 @@ const {
   setFilter,
   uploadPhotos,
   removePhoto,
+  applyLinkedPhoto,
 } = useMediaLibrary()
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const selectedPhotoUrl = ref<string | null>(null)
+const linkPhoto = ref<AppPhoto | null>(null)
+const showLinkDialog = ref(false)
+const showUploadDialog = ref(false)
+const pendingUploadFiles = ref<File[]>([])
+const showDeleteConfirm = ref(false)
+const pendingDeletePhotoId = ref<string | null>(null)
 
 const filterOptions: Array<{ value: MediaFilter; label: string }> = [
   { value: "all", label: "Todas" },
@@ -39,8 +50,32 @@ function handleFileChange(event: Event) {
   const input = event.target as HTMLInputElement
   if (!input.files || input.files.length === 0) return
 
-  void uploadPhotos(input.files)
+  pendingUploadFiles.value = Array.from(input.files)
+  showUploadDialog.value = true
   input.value = ""
+}
+
+async function handleUploadConfirm(
+  destination: "library" | "session",
+  sessionId: string | null,
+) {
+  const files = pendingUploadFiles.value
+  if (files.length === 0) return
+
+  const target =
+    destination === "session" && sessionId
+      ? { kind: "session" as const, sessionId }
+      : { kind: "library" as const }
+
+  await uploadPhotos(files, target)
+  pendingUploadFiles.value = []
+  showUploadDialog.value = false
+}
+
+function closeUploadDialog() {
+  if (isUploading.value) return
+  showUploadDialog.value = false
+  pendingUploadFiles.value = []
 }
 
 function filterChipClasses(value: MediaFilter): string {
@@ -52,6 +87,38 @@ function filterChipClasses(value: MediaFilter): string {
 function formatDate(isoDate: string): string {
   return new Intl.DateTimeFormat("es-ES", { dateStyle: "medium" }).format(new Date(isoDate))
 }
+
+function openLinkDialog(photo: AppPhoto) {
+  linkPhoto.value = photo
+  showLinkDialog.value = true
+}
+
+function closeLinkDialog() {
+  showLinkDialog.value = false
+  linkPhoto.value = null
+}
+
+function handlePhotoLinked(updated: AppPhoto) {
+  applyLinkedPhoto(updated)
+}
+
+function requestDeletePhoto(photoId: string) {
+  pendingDeletePhotoId.value = photoId
+  showDeleteConfirm.value = true
+}
+
+async function handleDeleteConfirm() {
+  if (!pendingDeletePhotoId.value) return
+
+  await removePhoto(pendingDeletePhotoId.value)
+  pendingDeletePhotoId.value = null
+  showDeleteConfirm.value = false
+}
+
+function cancelDeletePhoto() {
+  showDeleteConfirm.value = false
+  pendingDeletePhotoId.value = null
+}
 </script>
 
 <template>
@@ -60,8 +127,7 @@ function formatDate(isoDate: string): string {
       <p class="text-sm uppercase tracking-widest text-gray-500">Biblioteca</p>
       <h1 class="text-3xl font-bold text-primary">Fotos</h1>
       <p class="text-gray-400">
-        Sube imágenes aunque no sepas a qué partida pertenecen. Las verás aquí en la
-        biblioteca compartida del grupo.
+        Al subir, elige si van a la biblioteca o a una partida. También puedes enlazarlas después.
       </p>
     </div>
 
@@ -127,7 +193,7 @@ function formatDate(isoDate: string): string {
           />
         </button>
 
-        <div class="space-y-1 p-2 text-xs text-gray-400">
+        <div class="space-y-2 p-2 text-xs text-gray-400">
           <p>{{ formatDate(photo.createdAt) }}</p>
           <RouterLink
             v-if="photo.sessionId"
@@ -144,14 +210,24 @@ function formatDate(isoDate: string): string {
             En lista de deseos
           </RouterLink>
           <p v-else class="text-primary">Sin enlace</p>
+
+          <button
+            v-if="canUpload"
+            type="button"
+            class="flex w-full items-center justify-center gap-1 rounded-lg border border-gray-600 px-2 py-1.5 text-xs font-semibold text-gray-300 transition-colors hover:border-primary hover:text-primary"
+            @click="openLinkDialog(photo)"
+          >
+            <Icon icon="mdi:link-variant" class="h-4 w-4" aria-hidden="true" />
+            {{ photo.sessionId || photo.desiredGameId ? "Cambiar enlace" : "Enlazar partida" }}
+          </button>
         </div>
 
         <button
           v-if="canUpload"
           type="button"
-          class="absolute right-2 top-2 rounded-full bg-dark/80 p-1.5 text-secondary opacity-0 transition-opacity group-hover:opacity-100"
+          class="absolute right-2 top-2 rounded-full bg-dark/90 p-1.5 text-secondary sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100"
           aria-label="Eliminar foto"
-          @click="removePhoto(photo.id)"
+          @click="requestDeletePhoto(photo.id)"
         >
           <Icon icon="mdi:trash-can-outline" class="h-4 w-4" aria-hidden="true" />
         </button>
@@ -174,6 +250,31 @@ function formatDate(isoDate: string): string {
     >
       {{ isLoadingMore ? "Cargando más..." : "Cargar más fotos" }}
     </button>
+
+    <PhotoUploadDialog
+      :open="showUploadDialog"
+      :files="pendingUploadFiles"
+      :is-uploading="isUploading"
+      :error-message="errorMessage"
+      @close="closeUploadDialog"
+      @confirm="handleUploadConfirm"
+    />
+
+    <PhotoLinkDialog
+      :open="showLinkDialog"
+      :photo="linkPhoto"
+      @close="closeLinkDialog"
+      @linked="handlePhotoLinked"
+    />
+
+    <UiConfirmDialog
+      :open="showDeleteConfirm"
+      title="Eliminar foto"
+      message="La imagen se borrará de la biblioteca y del almacenamiento. No se puede deshacer."
+      confirm-label="Eliminar"
+      @confirm="handleDeleteConfirm"
+      @cancel="cancelDeletePhoto"
+    />
 
     <Teleport to="body">
       <div

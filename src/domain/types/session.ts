@@ -1,4 +1,5 @@
 import type { Json } from "./database"
+import type { AppPhoto } from "./photo"
 import type { GameType, SessionOutcome, SessionStatus } from "./rows"
 
 export type PlaySession = {
@@ -35,6 +36,7 @@ export type SessionMessage = {
   authorDisplayName: string
   content: string
   createdAt: string
+  photos: AppPhoto[]
 }
 
 export type SessionScore = {
