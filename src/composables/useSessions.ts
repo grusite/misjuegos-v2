@@ -46,6 +46,7 @@ export type SessionListItem = {
   gameTitle: string
   escapeCity: string | null
   escapeVenue: string | null
+  escapeRating: number | null
   playerTeamId: string | null
   players: SessionMemberPreview[]
 }
@@ -68,6 +69,8 @@ export type CreateEscapeSessionPayload = {
   notes?: string
   selectedParticipants: string[]
   playerTeamId?: string | null
+  rating?: number | null
+  ratingNote?: string | null
 }
 
 const SESSIONS_PAGE_SIZE = 25
@@ -235,6 +238,7 @@ export function useSessions() {
         gameTitle: summary.gameTitle,
         escapeCity: summary.escapeCity,
         escapeVenue: summary.escapeVenue,
+        escapeRating: summary.escapeRating,
         playerTeamId: summary.playerTeamId,
         players: membersBySession.get(summary.id) ?? [],
       }))
@@ -518,6 +522,8 @@ export function useSessions() {
 
       await sessionsRepository.upsertEscapeSessionDetails(session.id, {
         priceCurrency: "EUR",
+        rating: payload.rating ?? null,
+        ratingNote: payload.ratingNote?.trim() || null,
       })
 
       await saveSessionMembers(

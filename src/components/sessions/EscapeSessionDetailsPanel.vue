@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from "vue"
-import UiButton from "@/components/ui/UiButton.vue"
 import EscapeOutcomePicker from "@/components/sessions/EscapeOutcomePicker.vue"
+import StarRatingPicker from "@/components/ui/StarRatingPicker.vue"
+import UiButton from "@/components/ui/UiButton.vue"
 import type { EscapeSessionDetails } from "@/domain/types/escapeSession"
 import type { EscapeRoomDetails } from "@/domain/types/catalog"
 import { escapeOutcomeLabelClass } from "@/lib/utils/outcomeStyles"
@@ -24,6 +25,8 @@ const emit = defineEmits<{
       price: number | null
       priceCurrency: string
       escaped: boolean | null
+      rating: number | null
+      ratingNote: string | null
     },
   ]
 }>()
@@ -34,6 +37,8 @@ const form = reactive({
   price: "",
   priceCurrency: "EUR",
   escaped: null as boolean | null,
+  rating: null as number | null,
+  ratingNote: "",
 })
 
 function hydrateFromDetails(details: EscapeSessionDetails | null) {
@@ -48,6 +53,8 @@ function hydrateFromDetails(details: EscapeSessionDetails | null) {
     details.price === null || details.price === undefined ? "" : String(details.price)
   form.priceCurrency = details.priceCurrency ?? "EUR"
   form.escaped = details.escaped
+  form.rating = details.rating
+  form.ratingNote = details.ratingNote ?? ""
 }
 
 watch(
@@ -87,6 +94,8 @@ function handleSave() {
     price: Number.isFinite(price) ? price : null,
     priceCurrency: form.priceCurrency.trim() || "EUR",
     escaped: form.escaped,
+    rating: form.rating,
+    ratingNote: form.ratingNote.trim() || null,
   })
 }
 </script>
@@ -144,6 +153,26 @@ function handleSave() {
           type="text"
           maxlength="3"
           class="w-full rounded-lg border-2 border-gray-600 bg-dark px-3 py-2 uppercase text-gray-100 focus:border-tertiary focus:outline-none"
+        />
+      </label>
+    </div>
+
+    <div class="space-y-2">
+      <p class="text-sm text-gray-400">Valoración</p>
+      <StarRatingPicker
+        v-model="form.rating"
+        accent="tertiary"
+        :disabled="!canWrite || isSaving"
+      />
+      <label class="block space-y-2">
+        <span class="text-sm text-gray-400">Nota sobre la valoración (opcional)</span>
+        <textarea
+          v-model="form.ratingNote"
+          rows="2"
+          maxlength="500"
+          class="w-full rounded-lg border-2 border-gray-600 bg-dark px-3 py-2 text-gray-100 focus:border-tertiary focus:outline-none"
+          placeholder="¿Qué os gustó o no?"
+          :disabled="!canWrite || isSaving"
         />
       </label>
     </div>

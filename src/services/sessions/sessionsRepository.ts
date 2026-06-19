@@ -56,6 +56,7 @@ type SessionSummaryRpcRow = {
   game_type: GameType
   escape_city: string | null
   escape_venue: string | null
+  escape_rating: number | null
 }
 
 type CoParticipantRow = {
@@ -79,6 +80,7 @@ function mapSessionSummaryFromRpc(row: SessionSummaryRpcRow): SessionListSummary
     gameTitle: row.game_title,
     escapeCity: row.escape_city,
     escapeVenue: row.escape_venue,
+    escapeRating: row.escape_rating === null ? null : Number(row.escape_rating),
   }
 }
 

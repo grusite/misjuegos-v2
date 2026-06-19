@@ -122,4 +122,5 @@ export type SessionListSummary = {
   gameTitle: string
   escapeCity: string | null
   escapeVenue: string | null
+  escapeRating: number | null
 }

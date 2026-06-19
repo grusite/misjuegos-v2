@@ -282,6 +282,8 @@ export type Database = {
           escaped: boolean | null
           price: number | null
           price_currency: string
+          rating: number | null
+          rating_note: string | null
           session_id: string
           time_result: string | null
           time_seconds: number | null
@@ -291,6 +293,8 @@ export type Database = {
           escaped?: boolean | null
           price?: number | null
           price_currency?: string
+          rating?: number | null
+          rating_note?: string | null
           session_id: string
           time_result?: string | null
           time_seconds?: number | null
@@ -300,6 +304,8 @@ export type Database = {
           escaped?: boolean | null
           price?: number | null
           price_currency?: string
+          rating?: number | null
+          rating_note?: string | null
           session_id?: string
           time_result?: string | null
           time_seconds?: number | null
@@ -519,6 +525,67 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          created_by: string
+          desired_game_id: string | null
+          id: string
+          session_id: string | null
+          sort_order: number
+          source: Database["public"]["Enums"]["photo_source"]
+          source_file_id: string | null
+          storage_path: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          created_by: string
+          desired_game_id?: string | null
+          id?: string
+          session_id?: string | null
+          sort_order?: number
+          source?: Database["public"]["Enums"]["photo_source"]
+          source_file_id?: string | null
+          storage_path: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string
+          desired_game_id?: string | null
+          id?: string
+          session_id?: string | null
+          sort_order?: number
+          source?: Database["public"]["Enums"]["photo_source"]
+          source_file_id?: string | null
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photos_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photos_desired_game_id_fkey"
+            columns: ["desired_game_id"]
+            isOneToOne: false
+            referencedRelation: "desired_games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photos_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "play_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -790,7 +857,48 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_participant_link: {
+        Args: { participant_id: string }
+        Returns: undefined
+      }
+      find_participant_link_candidates: {
+        Args: { search_name: string }
+        Returns: {
+          color: string
+          display_name: string
+          id: string
+          match_kind: string
+          session_count: number
+        }[]
+      }
+      list_play_session_summaries: {
+        Args: {
+          p_game_catalog_id?: string
+          p_game_type?: Database["public"]["Enums"]["game_type"]
+          p_limit?: number
+          p_offset?: number
+          p_participant_ids?: string[]
+          p_played_at_from?: string
+          p_played_at_to?: string
+          p_player_team_id?: string
+          p_search?: string
+        }
+        Returns: {
+          escape_city: string
+          escape_rating: number
+          escape_venue: string
+          game_catalog_id: string
+          game_title: string
+          game_type: Database["public"]["Enums"]["game_type"]
+          id: string
+          notes: string
+          outcome: Database["public"]["Enums"]["session_outcome"]
+          played_at: string
+          player_team_id: string
+          status: Database["public"]["Enums"]["session_status"]
+        }[]
+      }
+      skip_participant_link_prompt: { Args: never; Returns: undefined }
     }
     Enums: {
       desired_game_status: "active" | "played" | "dropped"

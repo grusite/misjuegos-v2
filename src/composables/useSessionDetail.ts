@@ -370,6 +370,8 @@ export function useSessionDetail(sessionId: string) {
     price: number | null
     priceCurrency: string
     escaped: boolean | null
+    rating: number | null
+    ratingNote: string | null
   }) {
     if (!session.value || !canWrite.value) return
 

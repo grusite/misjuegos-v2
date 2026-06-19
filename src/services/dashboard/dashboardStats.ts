@@ -3,6 +3,7 @@ import type {
   FrequentPartnerStat,
   MonthlyTrendStat,
   TopGameStat,
+  TopRatedEscapeRoomStat,
 } from "@/domain/types/dashboard"
 import type { GameType, SessionOutcome } from "@/domain/types/rows"
 
@@ -26,6 +27,7 @@ export type DashboardEscapeRow = {
   sessionId: string
   escaped: boolean | null
   cluesUsed: number | null
+  rating: number | null
 }
 
 export type BuildDashboardStatsInput = {
@@ -92,6 +94,14 @@ export function buildDashboardStats(input: BuildDashboardStatsInput): DashboardS
       ? Math.round((clues.reduce((sum, value) => sum + value, 0) / clues.length) * 10) / 10
       : null
 
+  const ratings = input.escapes
+    .map(row => row.rating)
+    .filter((value): value is number => value !== null && value >= 1 && value <= 5)
+  const averageRating =
+    ratings.length > 0
+      ? Math.round((ratings.reduce((sum, value) => sum + value, 0) / ratings.length) * 10) / 10
+      : null
+
   return {
     summary: {
       totalProfiles: input.totalProfiles,
@@ -109,12 +119,49 @@ export function buildDashboardStats(input: BuildDashboardStatsInput): DashboardS
       escapedCount,
       escapeRate,
       averageCluesUsed,
+      averageRating,
     },
     topBoardGames: buildTopGames(boardSessions),
     topEscapeRooms: buildTopGames(escapeSessions),
+    topRatedEscapeRooms: buildTopRatedEscapeRooms(input.sessions, input.escapes),
     monthlyTrends: buildMonthlyTrends(input.sessions),
     frequentPartners: buildFrequentPartners(input.profileId, input.members),
   }
+}
+
+function buildTopRatedEscapeRooms(
+  sessions: DashboardSessionRow[],
+  escapes: DashboardEscapeRow[],
+): TopRatedEscapeRoomStat[] {
+  const sessionById = new Map(sessions.map(session => [session.id, session]))
+  const buckets = new Map<string, { sum: number; count: number }>()
+
+  for (const escape of escapes) {
+    if (escape.rating === null) continue
+
+    const session = sessionById.get(escape.sessionId)
+    if (!session || session.gameType !== "escape_room") continue
+
+    const title = session.gameTitle.trim() || "Sin título"
+    const bucket = buckets.get(title) ?? { sum: 0, count: 0 }
+    bucket.sum += escape.rating
+    bucket.count += 1
+    buckets.set(title, bucket)
+  }
+
+  return Array.from(buckets.entries())
+    .map(([title, bucket]) => ({
+      title,
+      averageRating: Math.round((bucket.sum / bucket.count) * 10) / 10,
+      ratedCount: bucket.count,
+    }))
+    .sort(
+      (a, b) =>
+        b.averageRating - a.averageRating ||
+        b.ratedCount - a.ratedCount ||
+        a.title.localeCompare(b.title, "es"),
+    )
+    .slice(0, 5)
 }
 
 function buildTopGames(sessions: DashboardSessionRow[]): TopGameStat[] {

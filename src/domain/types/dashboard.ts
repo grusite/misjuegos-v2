@@ -3,6 +3,12 @@ export type TopGameStat = {
   count: number
 }
 
+export type TopRatedEscapeRoomStat = {
+  title: string
+  averageRating: number
+  ratedCount: number
+}
+
 export type MonthlyTrendStat = {
   label: string
   boardCount: number
@@ -31,6 +37,7 @@ export type EscapeDashboardSummary = {
   escapedCount: number
   escapeRate: number
   averageCluesUsed: number | null
+  averageRating: number | null
 }
 
 export type DashboardStats = {
@@ -38,6 +45,7 @@ export type DashboardStats = {
   escapeSummary: EscapeDashboardSummary
   topBoardGames: TopGameStat[]
   topEscapeRooms: TopGameStat[]
+  topRatedEscapeRooms: TopRatedEscapeRoomStat[]
   monthlyTrends: MonthlyTrendStat[]
   frequentPartners: FrequentPartnerStat[]
 }

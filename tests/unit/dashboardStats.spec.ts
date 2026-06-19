@@ -59,7 +59,7 @@ describe("dashboardStats", () => {
         },
       ],
       escapes: [
-        { sessionId: "s2", escaped: true, cluesUsed: 2 },
+        { sessionId: "s2", escaped: true, cluesUsed: 2, rating: 5 },
       ],
     })
 
@@ -69,6 +69,12 @@ describe("dashboardStats", () => {
     expect(stats.summary.boardWinRate).toBe(100)
     expect(stats.summary.averageBoardDurationMinutes).toBe(45)
     expect(stats.escapeSummary.escapeRate).toBe(100)
+    expect(stats.escapeSummary.averageRating).toBe(5)
+    expect(stats.topRatedEscapeRooms[0]).toEqual({
+      title: "La Maldición",
+      averageRating: 5,
+      ratedCount: 1,
+    })
     expect(stats.topBoardGames[0]).toEqual({ title: "Azul", count: 2 })
     expect(stats.monthlyTrends).toHaveLength(1)
     expect(stats.frequentPartners[0]).toEqual({

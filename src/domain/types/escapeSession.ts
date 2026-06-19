@@ -6,6 +6,8 @@ export type EscapeSessionDetails = {
   price: number | null
   priceCurrency: string
   escaped: boolean | null
+  rating: number | null
+  ratingNote: string | null
 }
 
 export type UpsertEscapeSessionDetailsInput = {
@@ -15,4 +17,6 @@ export type UpsertEscapeSessionDetailsInput = {
   price?: number | null
   priceCurrency?: string
   escaped?: boolean | null
+  rating?: number | null
+  ratingNote?: string | null
 }

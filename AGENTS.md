@@ -27,8 +27,8 @@ This repo is a ground-up rebuild of MisJuegos (private app at [misjuegos.net](ht
 | **12** | ✅ Done | Session list filters — search, Yo, jugador, equipo, fechas |
 | **13** | ✅ Done | Photos / Storage — gallery, upload, batch script |
 | **14** | ✅ Done | Utilities — dice, roulette, sand timer |
-| 15 | 🔜 Next | Game ratings — escapes first (1–5 stars TBD) |
-| 16 | Pending | Production cutover |
+| **15** | ✅ Done | Game ratings — escape rooms 1–5 stars |
+| 16 | 🔜 Next | Production cutover |
 
 Full task breakdown: [`docs/ROADMAP.md`](docs/ROADMAP.md)
 

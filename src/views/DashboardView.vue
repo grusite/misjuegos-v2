@@ -67,6 +67,7 @@ const { stats, isLoading, errorMessage } = useDashboard()
       <EscapeStatsSection
         :summary="stats.escapeSummary"
         :top-rooms="stats.topEscapeRooms"
+        :top-rated-rooms="stats.topRatedEscapeRooms"
       />
     </template>
   </section>

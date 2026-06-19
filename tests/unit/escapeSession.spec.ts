@@ -38,6 +38,8 @@ describe("escapeSessionMapper.ts", () => {
       price: 25,
       price_currency: "EUR",
       escaped: true,
+      rating: 4.5,
+      rating_note: "Genial",
     })
 
     expect(mapped).toEqual({
@@ -48,6 +50,8 @@ describe("escapeSessionMapper.ts", () => {
       price: 25,
       priceCurrency: "EUR",
       escaped: true,
+      rating: 4.5,
+      ratingNote: "Genial",
     })
   })
 })

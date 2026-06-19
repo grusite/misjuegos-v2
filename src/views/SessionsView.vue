@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import SessionListFilters from "@/components/sessions/SessionListFilters.vue"
+import StarRatingDisplay from "@/components/ui/StarRatingDisplay.vue"
 import NewEscapeSessionPanel from "@/components/sessions/NewEscapeSessionPanel.vue"
 import NewSessionPanel from "@/components/sessions/newSessionPanel.vue"
 import ParticipantAvatarStack from "@/components/sessions/ParticipantAvatarStack.vue"
@@ -162,6 +163,9 @@ async function handleCreateEscape(payload: {
   company?: string
   notes?: string
   selectedParticipants: string[]
+  playerTeamId?: string | null
+  rating?: number | null
+  ratingNote?: string | null
 }) {
   const sessionId = await createEscapeSession(payload)
   if (!sessionId) return
@@ -248,6 +252,12 @@ async function handleCreateEscape(payload: {
             <p v-if="session.escapeCity || session.escapeVenue" class="text-sm text-gray-500">
               {{ [session.escapeCity, session.escapeVenue].filter(Boolean).join(" · ") }}
             </p>
+            <StarRatingDisplay
+              v-if="session.gameType === 'escape_room' && session.escapeRating"
+              :rating="session.escapeRating"
+              accent="tertiary"
+              class="mt-1"
+            />
             <p class="text-sm text-gray-400">{{ formatDate(session.playedAt) }}</p>
             <p class="mt-2 text-xs uppercase text-gray-500">{{ session.status }}</p>
           </RouterLink>

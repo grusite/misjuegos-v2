@@ -8,6 +8,16 @@ export const newEscapeSessionFormSchema = z.object({
   roomName: z.string().trim().max(100).optional(),
   company: z.string().trim().max(100).optional(),
   notes: z.string().trim().max(2000).optional(),
+  rating: z
+    .number()
+    .min(1)
+    .max(5)
+    .refine(value => value * 2 === Math.trunc(value * 2), {
+      message: "La valoración debe ser en medias estrellas",
+    })
+    .nullable()
+    .optional(),
+  ratingNote: z.string().trim().max(500).nullable().optional(),
 })
 
 export const escapeSessionDetailsFormSchema = z.object({
@@ -16,6 +26,16 @@ export const escapeSessionDetailsFormSchema = z.object({
   price: z.number().min(0).max(9999).nullable().optional(),
   priceCurrency: z.string().trim().length(3).default("EUR"),
   escaped: z.boolean().nullable().optional(),
+  rating: z
+    .number()
+    .min(1)
+    .max(5)
+    .refine(value => value * 2 === Math.trunc(value * 2), {
+      message: "La valoración debe ser en medias estrellas",
+    })
+    .nullable()
+    .optional(),
+  ratingNote: z.string().trim().max(500).nullable().optional(),
 })
 
 export type NewEscapeSessionFormValues = z.infer<typeof newEscapeSessionFormSchema>

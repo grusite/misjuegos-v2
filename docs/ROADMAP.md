@@ -186,31 +186,18 @@ Richer filtering on the home sessions list (`SessionsView`) — today only type 
 - [x] Sand timer SVG animation
 - [x] 3D dice roller (Three.js + Cannon — lazy route)
 
-## Phase 15 — Game ratings (next)
+## Phase 15 — Game ratings ✅
 
-Personal ratings for played games — **escape rooms first** (typically one play per room; rating captures how much you enjoyed the experience).
+Personal ratings for played games — **escape rooms first** (1–5 stars).
 
-**Scale (decide before implementation):**
-
-- **Recommended for escapes:** **1–5 stars** (half-steps optional) — familiar from booking/review sites, quick to tap on mobile
-- **Alternative:** 1–10 integer — closer to BGG; better if you want one scale for board games later
-- Store as `smallint` either way; UI can show stars or numeric label
-
-**Placement:**
-
-- Escape: `rating` on `escape_session_details` (rate the play session / room experience)
-- Board games (optional, later): same pattern on session or catalog — lower priority since replays are common
-
-**Tasks:**
-
-- [ ] Migration: `rating` column on `escape_session_details` (+ optional `rating_note` text)
-- [ ] Zod + repository update for escape session create/edit
-- [ ] Star (or numeric) picker in escape create flow + detail panel
-- [ ] Escape session list: show rating at a glance; sort/filter by rating (optional)
-- [ ] Dashboard: average escape rating, top-rated rooms (optional)
+- [x] Migration: `rating` + `rating_note` on `escape_session_details`
+- [x] Zod + repository update for escape session create/edit
+- [x] Star picker in escape detail panel
+- [x] Escape session list: show rating at a glance
+- [x] Dashboard: average escape rating + top-rated rooms
 - [ ] Board game ratings (stretch — only if Jorge wants parity with BGG-style scoring)
 
-## Phase 16 — Production cutover
+## Phase 16 — Production cutover (next)
 
 One-time migration to cloud Supabase + `misjuegos.net`. **Full ordered checklist:** [`data/import/README.md`](../data/import/README.md#production-cutover-checklist-phase-16).
 

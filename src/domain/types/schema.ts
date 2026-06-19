@@ -47,6 +47,7 @@ export type AppDatabase = Omit<Database, "public"> & {
           game_type: Database["public"]["Enums"]["game_type"]
           escape_city: string | null
           escape_venue: string | null
+          escape_rating: number | null
         }[]
       }
     }

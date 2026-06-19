@@ -61,7 +61,7 @@ export function createDashboardRepository(client: SupabaseClient<AppDatabase>) {
           client.from("participants").select("id", { count: "exact", head: true }),
           client.from("play_sessions").select(SESSION_SELECT),
           client.from("session_participants").select(MEMBER_SELECT),
-          client.from("escape_session_details").select("session_id, escaped, clues_used"),
+          client.from("escape_session_details").select("session_id, escaped, clues_used, rating"),
         ])
 
       if (profilesResult.error) throw profilesResult.error
@@ -115,11 +115,13 @@ function mapEscapeRow(row: {
   session_id: string
   escaped: boolean | null
   clues_used: number | null
+  rating: number | null
 }): DashboardEscapeRow {
   return {
     sessionId: row.session_id,
     escaped: row.escaped,
     cluesUsed: row.clues_used,
+    rating: row.rating,
   }
 }
 

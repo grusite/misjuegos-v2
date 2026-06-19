@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from "vue"
 import SessionParticipantPicker from "@/components/sessions/SessionParticipantPicker.vue"
+import StarRatingPicker from "@/components/ui/StarRatingPicker.vue"
 import UiButton from "@/components/ui/UiButton.vue"
 import type { EscapeRoomCatalogEntry } from "@/domain/types/catalog"
 import type { Participant } from "@/domain/types/participant"
@@ -26,6 +27,8 @@ const emit = defineEmits<{
       notes?: string
       selectedParticipants: string[]
       playerTeamId?: string | null
+      rating?: number | null
+      ratingNote?: string | null
     },
   ]
   cancel: []
@@ -39,6 +42,8 @@ const form = reactive({
   venue: "",
   company: "",
   notes: "",
+  rating: null as number | null,
+  ratingNote: "",
   selectedParticipants: [] as string[],
   selectedTeamId: null as string | null,
 })
@@ -86,6 +91,8 @@ function handleSubmit() {
     notes: form.notes.trim() || undefined,
     selectedParticipants: form.selectedParticipants,
     playerTeamId: form.selectedTeamId,
+    rating: form.rating,
+    ratingNote: form.ratingNote.trim() || null,
   })
 }
 </script>
@@ -209,6 +216,21 @@ function handleSubmit() {
         placeholder="Detalles de la sesión..."
       />
     </label>
+
+    <div class="space-y-2 rounded-xl border-2 border-tertiary/30 p-3">
+      <p class="text-sm text-gray-400">Valoración (opcional)</p>
+      <StarRatingPicker v-model="form.rating" accent="tertiary" />
+      <label class="block space-y-2">
+        <span class="text-sm text-gray-400">Nota sobre la valoración</span>
+        <textarea
+          v-model="form.ratingNote"
+          rows="2"
+          maxlength="500"
+          class="w-full rounded-lg border-2 border-gray-600 bg-dark px-3 py-2 text-gray-100 focus:border-tertiary focus:outline-none"
+          placeholder="¿Qué os gustó o no?"
+        />
+      </label>
+    </div>
 
     <div class="flex gap-2">
       <UiButton

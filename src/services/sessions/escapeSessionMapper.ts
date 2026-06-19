@@ -20,6 +20,8 @@ export function mapEscapeSessionDetails(
     price: row.price === null ? null : Number(row.price),
     priceCurrency: row.price_currency,
     escaped: row.escaped,
+    rating: row.rating === null ? null : Number(row.rating),
+    ratingNote: row.rating_note,
   }
 }
 
@@ -37,5 +39,7 @@ export function toEscapeSessionDetailsUpsert(
       price_currency: input.priceCurrency,
     }),
     ...(input.escaped !== undefined && { escaped: input.escaped }),
+    ...(input.rating !== undefined && { rating: input.rating }),
+    ...(input.ratingNote !== undefined && { rating_note: input.ratingNote }),
   }
 }
