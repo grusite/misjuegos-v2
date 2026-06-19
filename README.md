@@ -57,7 +57,7 @@ Google OAuth setup:
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Phased rebuild plan |
 | [`docs/DATABASE.md`](docs/DATABASE.md) | Supabase schema |
 | [`docs/V1_REFERENCE.md`](docs/V1_REFERENCE.md) | v1 Svelte MVP — file map & what to reuse |
-
+ 
 ## Status
 
 **Phase 4 ✅** — Participants table, aliases, list/search UI, Zod forms.
