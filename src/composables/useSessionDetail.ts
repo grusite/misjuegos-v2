@@ -7,6 +7,7 @@ import type { PlayerTeamWithMembers } from "@/domain/types/playerTeam"
 import type { GameType, SessionOutcome } from "@/domain/types/rows"
 import { participantFormSchema } from "@/domain/schemas/participant"
 import { getAvatarColor } from "@/lib/utils/avatarColor"
+import { canWriteSession } from "@/lib/utils/sessionAccess"
 import type {
   PlaySession,
   SessionMessage,
@@ -75,7 +76,10 @@ export function useSessionDetail(sessionId: string) {
   })
 
   const canWrite = computed(() => {
-    return authStore.profile?.id && session.value?.createdBy === authStore.profile.id
+    const profileId = authStore.profile?.id
+    if (!profileId || !session.value) return false
+
+    return canWriteSession(session.value.createdBy, profileId, members.value)
   })
 
   const isEscapeSession = computed(() => gameType.value === "escape_room")
@@ -191,7 +195,7 @@ export function useSessionDetail(sessionId: string) {
   async function loadPlayerTeams() {
     if (!authStore.profile?.id) return
 
-    playerTeams.value = await playerTeamsRepository.listForOwner(authStore.profile.id)
+    playerTeams.value = await playerTeamsRepository.listAccessible(authStore.profile.id)
   }
 
   async function createFriendParticipant(displayName: string): Promise<Participant | null> {

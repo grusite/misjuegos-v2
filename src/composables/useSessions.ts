@@ -316,7 +316,7 @@ export function useSessions() {
     }
 
     try {
-      playerTeams.value = await playerTeamsRepository.listForOwner(ownerId.value)
+      playerTeams.value = await playerTeamsRepository.listAccessible(ownerId.value)
       appDataCache.set(cacheKey, playerTeams.value)
     } catch (error) {
       errorMessage.value = getDbErrorMessage(error)

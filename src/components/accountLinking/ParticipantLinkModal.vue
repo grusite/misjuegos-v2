@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import ParticipantBubble from "@/components/ui/ParticipantBubble.vue"
+import SearchInput from "@/components/ui/SearchInput.vue"
 import UiButton from "@/components/ui/UiButton.vue"
 import type { ParticipantLinkCandidate } from "@/domain/types/participantLink"
 
@@ -8,15 +9,23 @@ const props = defineProps<{
   open: boolean
   displayName: string
   candidates: ParticipantLinkCandidate[]
+  searchResults: ParticipantLinkCandidate[]
+  searchQuery: string
+  isSearching: boolean
   isSubmitting: boolean
 }>()
 
 const emit = defineEmits<{
   select: [participantId: string]
   decline: []
+  "update:searchQuery": [value: string]
 }>()
 
 const hasCandidates = computed(() => props.candidates.length > 0)
+const hasSearchResults = computed(() => props.searchResults.length > 0)
+const showSearchHint = computed(
+  () => props.searchQuery.trim().length > 0 && props.searchQuery.trim().length < 2,
+)
 
 function sessionLabel(count: number): string {
   if (count === 0) return "Sin partidas registradas"
@@ -50,11 +59,14 @@ function sessionLabel(count: number): string {
           </p>
         </header>
 
-        <div class="flex-1 space-y-3 overflow-y-auto p-5">
-          <template v-if="hasCandidates">
+        <div class="flex-1 space-y-4 overflow-y-auto p-5">
+          <section v-if="hasCandidates" class="space-y-2">
+            <p class="text-xs font-semibold uppercase tracking-widest text-gray-500">
+              Sugerencias por tu nombre
+            </p>
             <button
               v-for="candidate in candidates"
-              :key="candidate.id"
+              :key="`suggested-${candidate.id}`"
               type="button"
               class="flex w-full items-center gap-3 rounded-2xl border-2 border-gray-700 bg-gray-900/60 p-4 text-left transition hover:border-primary hover:bg-gray-900"
               :disabled="isSubmitting"
@@ -76,11 +88,55 @@ function sessionLabel(count: number): string {
                 Coincide
               </span>
             </button>
-          </template>
+          </section>
 
-          <p v-else class="rounded-xl bg-gray-900/80 p-4 text-sm text-gray-400">
-            No encontramos amigos sin cuenta con un nombre parecido. Puedes continuar y crearemos
-            tu ficha nueva.
+          <section class="space-y-2">
+            <p class="text-xs font-semibold uppercase tracking-widest text-gray-500">
+              Buscar otro amigo sin cuenta
+            </p>
+            <SearchInput
+              :model-value="searchQuery"
+              placeholder="Nombre o alias (mín. 2 letras)..."
+              @update:model-value="emit('update:searchQuery', $event)"
+            />
+            <p v-if="showSearchHint" class="text-xs text-gray-500">
+              Escribe al menos 2 caracteres para buscar.
+            </p>
+            <p v-else-if="isSearching" class="text-sm text-gray-400">Buscando...</p>
+            <template v-else-if="hasSearchResults">
+              <button
+                v-for="candidate in searchResults"
+                :key="`search-${candidate.id}`"
+                type="button"
+                class="flex w-full items-center gap-3 rounded-2xl border-2 border-gray-700 bg-gray-900/60 p-4 text-left transition hover:border-primary hover:bg-gray-900"
+                :disabled="isSubmitting"
+                @click="emit('select', candidate.id)"
+              >
+                <ParticipantBubble
+                  :display-name="candidate.displayName"
+                  :color-class="candidate.color"
+                  size="md"
+                />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate font-semibold text-white">{{ candidate.displayName }}</p>
+                  <p class="text-sm text-gray-400">{{ sessionLabel(candidate.sessionCount) }}</p>
+                </div>
+              </button>
+            </template>
+            <p
+              v-else-if="searchQuery.trim().length >= 2"
+              class="rounded-xl bg-gray-900/80 p-4 text-sm text-gray-400"
+            >
+              No hay amigos sin cuenta con ese nombre.
+            </p>
+          </section>
+
+          <p
+            v-if="!hasCandidates && searchQuery.trim().length < 2"
+            class="rounded-xl bg-gray-900/80 p-4 text-sm text-gray-400"
+          >
+            No encontramos coincidencias con tu nombre. Busca arriba por otro nombre o crea tu
+            ficha nueva.
           </p>
         </div>
 

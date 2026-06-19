@@ -30,7 +30,7 @@ export function usePlayerTeams() {
     errorMessage.value = null
 
     try {
-      teams.value = await playerTeamsRepository.listForOwner(ownerId.value)
+      teams.value = await playerTeamsRepository.listAccessible(ownerId.value)
     } catch (error) {
       errorMessage.value = getDbErrorMessage(error)
     } finally {

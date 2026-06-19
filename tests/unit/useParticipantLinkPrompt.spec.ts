@@ -9,6 +9,7 @@ vi.mock("@/services/auth/authService", () => ({
 
 vi.mock("@/services/accountLinking/participantLinkService", () => ({
   findParticipantLinkCandidates: vi.fn(),
+  searchParticipantLinkCandidates: vi.fn(),
   claimParticipantLink: vi.fn(),
   skipParticipantLinkPrompt: vi.fn(),
   fetchParticipantLinkPromptCompleted: vi.fn(),

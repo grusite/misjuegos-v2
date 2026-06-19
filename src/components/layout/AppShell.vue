@@ -12,6 +12,9 @@ const { profile, isInitialized } = storeToRefs(authStore)
 
 const {
   candidates,
+  searchResults,
+  searchQuery,
+  isSearching,
   isOpen,
   errorMessage,
   evaluatePrompt,
@@ -50,7 +53,11 @@ watch(
       :open="isOpen"
       :display-name="profile.displayName"
       :candidates="candidates"
+      :search-results="searchResults"
+      :search-query="searchQuery"
+      :is-searching="isSearching"
       :is-submitting="state === 'completing'"
+      @update:search-query="searchQuery = $event"
       @select="confirmLink"
       @decline="declineLink"
     />

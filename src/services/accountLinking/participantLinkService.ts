@@ -36,6 +36,27 @@ export async function claimParticipantLink(participantId: string): Promise<void>
   if (error) throw error
 }
 
+export async function searchParticipantLinkCandidates(
+  search: string,
+): Promise<ParticipantLinkCandidate[]> {
+  const normalized = search.trim()
+  if (normalized.length < 2) return []
+
+  const { data, error } = await supabase.rpc("search_participant_link_candidates", {
+    p_search: normalized,
+  })
+
+  if (error) throw error
+
+  return (data as CandidateRow[]).map(row => ({
+    id: row.id,
+    displayName: row.display_name,
+    color: row.color,
+    sessionCount: Number(row.session_count),
+    matchKind: row.match_kind === "exact" ? "exact" : "partial",
+  }))
+}
+
 export async function skipParticipantLinkPrompt(): Promise<void> {
   const { error } = await supabase.rpc("skip_participant_link_prompt")
 

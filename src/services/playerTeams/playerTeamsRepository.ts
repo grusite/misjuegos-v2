@@ -47,6 +47,23 @@ export function createPlayerTeamsRepository(client: SupabaseClient<AppDatabase>)
       )
     },
 
+    async listAccessible(profileId: string): Promise<PlayerTeamWithMembers[]> {
+      const result = await client
+        .from("player_teams")
+        .select(TEAM_WITH_MEMBERS_SELECT)
+        .order("name")
+
+      const teams = unwrap(result).map(row =>
+        mapPlayerTeamWithMembers(row as PlayerTeamRowWithMembers),
+      )
+
+      return teams.filter(
+        team =>
+          team.createdBy === profileId ||
+          team.members.some(member => member.profileId === profileId),
+      )
+    },
+
     async getById(id: string): Promise<PlayerTeamWithMembers | null> {
       const result = await client
         .from("player_teams")

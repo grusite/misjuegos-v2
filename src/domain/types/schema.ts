@@ -15,6 +15,16 @@ export type AppDatabase = Omit<Database, "public"> & {
           match_kind: string
         }[]
       }
+      search_participant_link_candidates: {
+        Args: { p_search: string }
+        Returns: {
+          id: string
+          display_name: string
+          color: string | null
+          session_count: number
+          match_kind: string
+        }[]
+      }
       claim_participant_link: {
         Args: { participant_id: string }
         Returns: undefined

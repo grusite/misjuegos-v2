@@ -8,6 +8,7 @@ import { outcomeToneStyles } from "@/lib/utils/outcomeStyles"
 const props = defineProps<{
   team: PlayerTeamWithMembers
   isSaving?: boolean
+  canDelete?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -23,22 +24,37 @@ const namesSummary = computed(() => {
   return `${names.slice(0, -1).join(", ")} y ${names.at(-1)}`
 })
 
-const actions = [
-  {
-    key: "edit",
-    label: "Editar",
-    icon: "mdi:pencil-outline",
-    tone: "neutral" as const,
-    handler: () => emit("edit"),
-  },
-  {
-    key: "remove",
-    label: "Borrar",
-    icon: "mdi:delete-outline",
-    tone: "failure" as const,
-    handler: () => emit("remove"),
-  },
-]
+const actions = computed(() => {
+  type ActionTone = keyof typeof outcomeToneStyles
+
+  const items: Array<{
+    key: string
+    label: string
+    icon: string
+    tone: ActionTone
+    handler: () => void
+  }> = [
+    {
+      key: "edit",
+      label: "Editar",
+      icon: "mdi:pencil-outline",
+      tone: "neutral" as const,
+      handler: () => emit("edit"),
+    },
+  ]
+
+  if (props.canDelete) {
+    items.push({
+      key: "remove",
+      label: "Borrar",
+      icon: "mdi:delete-outline",
+      tone: "failure" as const,
+      handler: () => emit("remove"),
+    })
+  }
+
+  return items
+})
 
 function actionClasses(tone: keyof typeof outcomeToneStyles) {
   return `border-gray-700 text-gray-400 ${outcomeToneStyles[tone].idle}`

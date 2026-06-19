@@ -7,6 +7,7 @@ import { useParticipants } from "@/composables/useParticipants"
 import { usePlayerTeams, type TeamAvatarInput } from "@/composables/usePlayerTeams"
 import type { PlayerTeamFormValues } from "@/domain/schemas/playerTeam"
 import type { Participant } from "@/domain/types/participant"
+import { canDeleteTeam } from "@/lib/utils/teamAccess"
 
 const {
   teams,
@@ -176,6 +177,7 @@ async function handleRemove(id: string) {
         :key="team.id"
         :team="team"
         :is-saving="isSaving"
+        :can-delete="ownerId ? canDeleteTeam(team, ownerId) : false"
         @edit="openEditForm(team.id)"
         @remove="handleRemove(team.id)"
       />

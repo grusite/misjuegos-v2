@@ -5,6 +5,7 @@ import {
   claimParticipantLink,
   fetchParticipantLinkPromptCompleted,
   findParticipantLinkCandidates,
+  searchParticipantLinkCandidates,
   skipParticipantLinkPrompt,
 } from "@/services/accountLinking/participantLinkService"
 import type {
@@ -19,14 +20,21 @@ import {
 } from "@/services/participants/participantBootstrap"
 import { appDataCache } from "@/services/cache/memoryCache"
 
+const SEARCH_DEBOUNCE_MS = 300
+
 export function useParticipantLinkPrompt() {
   const authStore = useAuthStore()
   const profile = computed(() => authStore.profile)
 
   const state = ref<ParticipantLinkPromptState>("idle")
   const candidates = ref<ParticipantLinkCandidate[]>([])
+  const searchResults = ref<ParticipantLinkCandidate[]>([])
+  const searchQuery = ref("")
+  const isSearching = ref(false)
   const errorMessage = ref<string | null>(null)
   const resolvedProfileId = ref<string | null>(null)
+
+  let searchTimer: ReturnType<typeof setTimeout> | null = null
 
   watch(
     () => profile.value?.id ?? null,
@@ -36,13 +44,44 @@ export function useParticipantLinkPrompt() {
       resolvedProfileId.value = null
       state.value = "idle"
       candidates.value = []
+      searchResults.value = []
+      searchQuery.value = ""
       errorMessage.value = null
     },
   )
 
+  watch(searchQuery, value => {
+    if (searchTimer) clearTimeout(searchTimer)
+
+    const normalized = value.trim()
+    if (normalized.length < 2) {
+      searchResults.value = []
+      isSearching.value = false
+      return
+    }
+
+    searchTimer = setTimeout(() => {
+      void runSearch(normalized)
+    }, SEARCH_DEBOUNCE_MS)
+  })
+
   const isOpen = computed(
     () => state.value === "pending" || state.value === "completing",
   )
+
+  async function runSearch(query: string) {
+    isSearching.value = true
+    errorMessage.value = null
+
+    try {
+      searchResults.value = await searchParticipantLinkCandidates(query)
+    } catch (error) {
+      errorMessage.value =
+        error instanceof Error ? error.message : "No se pudo buscar amigos"
+    } finally {
+      isSearching.value = false
+    }
+  }
 
   async function finishBootstrap(profileId: string, claimedParticipantId?: string) {
     if (!profile.value) return
@@ -149,6 +188,9 @@ export function useParticipantLinkPrompt() {
   return {
     state,
     candidates,
+    searchResults,
+    searchQuery,
+    isSearching,
     errorMessage,
     isOpen,
     evaluatePrompt,
