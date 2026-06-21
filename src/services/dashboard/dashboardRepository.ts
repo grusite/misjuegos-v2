@@ -28,7 +28,8 @@ const MEMBER_SELECT = `
   participant_id,
   profile_id,
   participant:participants (
-    display_name
+    display_name,
+    profile_id
   ),
   profile:profiles!session_participants_profile_id_fkey (
     display_name
@@ -48,7 +49,7 @@ type MemberQueryRow = {
   session_id: string
   participant_id: string | null
   profile_id: string | null
-  participant: { display_name: string } | null
+  participant: { display_name: string; profile_id: string | null } | null
   profile: { display_name: string } | null
 }
 
@@ -96,11 +97,16 @@ function mapSessionRow(row: SessionQueryRow): DashboardSessionRow {
 }
 
 function mapMemberRow(row: MemberQueryRow): DashboardMemberRow {
-  if (row.profile_id) {
+  const linkedProfileId = row.profile_id ?? row.participant?.profile_id ?? null
+
+  if (linkedProfileId) {
     return {
       sessionId: row.session_id,
-      memberKey: `profile:${row.profile_id}`,
-      displayName: row.profile?.display_name ?? "Jugador",
+      memberKey: `profile:${linkedProfileId}`,
+      displayName:
+        row.profile?.display_name ??
+        row.participant?.display_name ??
+        "Jugador",
     }
   }
 
