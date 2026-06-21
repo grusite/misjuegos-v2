@@ -1,8 +1,20 @@
 import { supabase } from "@/lib/supabaseClient"
 
+export const BGG_SEARCH_PAGE_SIZE = 10
+export const BGG_SEARCH_MAX_RESULTS = 30
+
 export type BggSearchResult = {
   bggId: number
+  /** Full label for UI (base + expansion when applicable). */
   title: string
+  /** Stored in game_catalog.title */
+  baseTitle: string
+  /** Stored in board_game_details.expansion */
+  expansion: string | null
+  /** Base game on BGG when this row is an expansion. */
+  baseBggId: number | null
+  /** True when BGG thing API confirms boardgameexpansion + base-game link. */
+  isExpansion: boolean
   yearPublished: number | null
   thumbnailUrl?: string | null
 }
@@ -67,8 +79,16 @@ export function bggSearchFeedbackForError(error: unknown): BggSearchFeedback {
 
 type BggSearchResponse = {
   results?: BggSearchResult[]
+  total?: number
+  hasMore?: boolean
   error?: string
   message?: string
+}
+
+export type BggSearchPage = {
+  results: BggSearchResult[]
+  total: number
+  hasMore: boolean
 }
 
 const errorMessages: Record<string, string> = {
@@ -83,13 +103,24 @@ const errorMessages: Record<string, string> = {
   bgg_error: "No se pudo consultar BoardGameGeek.",
 }
 
-export async function searchBoardGames(query: string): Promise<BggSearchResult[]> {
+export async function searchBoardGames(
+  query: string,
+  options?: { limit?: number; offset?: number },
+): Promise<BggSearchPage> {
   const normalized = query.trim()
-  if (!normalized) return []
+  if (!normalized) {
+    return { results: [], total: 0, hasMore: false }
+  }
 
   const { data, error } = await supabase.functions.invoke<BggSearchResponse>(
     "bgg-search",
-    { body: { query: normalized } },
+    {
+      body: {
+        query: normalized,
+        limit: options?.limit,
+        offset: options?.offset,
+      },
+    },
   )
 
   if (error) {
@@ -103,5 +134,9 @@ export async function searchBoardGames(query: string): Promise<BggSearchResult[]
     )
   }
 
-  return data?.results ?? []
+  return {
+    results: data?.results ?? [],
+    total: data?.total ?? 0,
+    hasMore: data?.hasMore ?? false,
+  }
 }

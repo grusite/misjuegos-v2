@@ -15,12 +15,17 @@ const {
   filteredItems,
   activeCount,
   bggResults,
+  bggResultsTotal,
+  hasMoreBggResults,
+  isBggSearching,
+  isBggLoadingMore,
   typeFilter,
   showArchived,
   isLoading,
   isSaving,
   errorMessage,
   searchBgg,
+  loadMoreBgg,
   createItem,
   updateItem,
   setStatus,
@@ -142,8 +147,13 @@ async function handleRemove(id: string) {
       v-if="formMode.type === 'create'"
       submit-label="Añadir"
       :bgg-results="bggResults"
+      :bgg-results-total="bggResultsTotal"
+      :has-more-bgg-results="hasMoreBggResults"
+      :is-bgg-searching="isBggSearching"
+      :is-bgg-loading-more="isBggLoadingMore"
       :is-saving="isSaving"
       @search-bgg="searchBgg"
+      @load-more-bgg="loadMoreBgg"
       @submit="handleCreate"
       @cancel="closeForm"
     />
@@ -153,8 +163,13 @@ async function handleRemove(id: string) {
       :initial-item="editingItem"
       submit-label="Guardar"
       :bgg-results="bggResults"
+      :bgg-results-total="bggResultsTotal"
+      :has-more-bgg-results="hasMoreBggResults"
+      :is-bgg-searching="isBggSearching"
+      :is-bgg-loading-more="isBggLoadingMore"
       :is-saving="isSaving"
       @search-bgg="searchBgg"
+      @load-more-bgg="loadMoreBgg"
       @submit="handleUpdate"
       @cancel="closeForm"
     />

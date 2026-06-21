@@ -83,6 +83,31 @@ export function createCatalogRepository(client: SupabaseClient<AppDatabase>) {
       return toBoardGameCatalogEntry(catalog, unwrap(detailsResult))
     },
 
+    async findBoardGameByBggId(
+      bggId: number,
+    ): Promise<BoardGameCatalogEntry | null> {
+      const detailsResult = await client
+        .from("board_game_details")
+        .select("*")
+        .eq("bgg_id", bggId)
+        .maybeSingle()
+
+      const details = unwrapNullable(detailsResult)
+      if (!details) return null
+
+      const catalogResult = await client
+        .from("game_catalog")
+        .select("*")
+        .eq("id", details.game_catalog_id)
+        .eq("type", "board_game")
+        .maybeSingle()
+
+      const catalog = unwrapNullable(catalogResult)
+      if (!catalog) return null
+
+      return toBoardGameCatalogEntry(catalog, details)
+    },
+
     async getEscapeRoomById(
       id: string,
     ): Promise<EscapeRoomCatalogEntry | null> {

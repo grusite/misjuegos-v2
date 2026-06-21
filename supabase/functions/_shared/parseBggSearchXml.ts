@@ -1,25 +1,58 @@
 import { decodeXmlEntities } from "./bggXmlUtils.ts"
+import { isAllowedBggSearchItemType } from "./bggItemTypes.ts"
+import {
+  BGG_SEARCH_MAX_RESULTS,
+  normalizeBggSearchLimit,
+  normalizeBggSearchOffset,
+} from "./bggSearchLimits.ts"
 
 export type BggSearchItem = {
   bggId: number
   title: string
+  baseTitle: string
+  expansion: string | null
+  baseBggId: number | null
+  isExpansion: boolean
   yearPublished: number | null
   thumbnailUrl: string | null
+}
+
+export type BggSearchParseResult = {
+  items: BggSearchItem[]
+  total: number
+  hasMore: boolean
 }
 
 const ITEM_REGEX = /<item\b([^>]*?)>([\s\S]*?)<\/item>/gi
 const NAME_TAG_REGEX = /<name\b[^>]*\/?>/gi
 
-export function parseBggSearchXml(xmlText: string): BggSearchItem[] {
+export function parseBggSearchXml(
+  xmlText: string,
+  options?: { limit?: number; offset?: number },
+): BggSearchParseResult {
+  const allItems = parseAllBggSearchItems(xmlText)
+  const offset = normalizeBggSearchOffset(options?.offset)
+  const limit = normalizeBggSearchLimit(options?.limit)
+  const cappedTotal = Math.min(allItems.length, BGG_SEARCH_MAX_RESULTS)
+  const end = Math.min(offset + limit, cappedTotal)
+  const items = allItems.slice(offset, end)
+
+  return {
+    items,
+    total: cappedTotal,
+    hasMore: end < cappedTotal,
+  }
+}
+
+function parseAllBggSearchItems(xmlText: string): BggSearchItem[] {
   const items: BggSearchItem[] = []
 
   for (const match of xmlText.matchAll(ITEM_REGEX)) {
-    if (items.length >= 10) break
-
     const attrs = match[1] ?? ""
     const inner = match[2] ?? ""
 
-    if (!/\btype="boardgame"/.test(attrs)) continue
+    const itemType = readItemType(attrs)
+    if (!isAllowedBggSearchItemType(itemType)) continue
 
     const idMatch = attrs.match(/\bid="(\d+)"/)
     if (!idMatch) continue
@@ -30,6 +63,10 @@ export function parseBggSearchXml(xmlText: string): BggSearchItem[] {
     items.push({
       bggId: Number(idMatch[1]),
       title,
+      baseTitle: title,
+      expansion: null,
+      baseBggId: null,
+      isExpansion: false,
       yearPublished: yearMatch ? Number(yearMatch[1]) : null,
       thumbnailUrl: null,
     })
@@ -54,6 +91,10 @@ function parsePrimaryName(inner: string): string | null {
   }
 
   return null
+}
+
+function readItemType(attrs: string): string | null {
+  return attrs.match(/\btype="([^"]+)"/)?.[1] ?? null
 }
 
 function readAttribute(tag: string, attribute: string): string | null {

@@ -12,8 +12,11 @@ const props = defineProps<{
   playerTeams?: PlayerTeamWithMembers[]
   selfParticipantId?: string | null
   bggResults: BggSearchResult[]
+  bggResultsTotal?: number
+  hasMoreBggResults?: boolean
   bggSearchFeedback?: BggSearchFeedback | null
   isBggSearching?: boolean
+  isBggLoadingMore?: boolean
   bggAutoFillTitle?: string | null
   bggAutoSelectId?: number | null
   isSaving?: boolean
@@ -22,6 +25,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   searchBgg: [query: string]
+  loadMoreBgg: []
   submit: [
     payload: {
       title: string
@@ -82,7 +86,7 @@ watch(
 watch(
   () => form.bggSelectionId,
   () => {
-    if (selectedBgg.value) form.title = selectedBgg.value.title
+    if (selectedBgg.value) form.title = selectedBgg.value.baseTitle
   },
 )
 
@@ -146,8 +150,18 @@ function handleSubmit() {
         v-if="bggResults.length > 0"
         v-model="form.bggSelectionId"
         :results="bggResults"
+        :total="bggResultsTotal ?? 0"
+        :has-more="hasMoreBggResults ?? false"
+        :is-loading-more="isBggLoadingMore ?? false"
         accent="board"
+        @load-more="emit('loadMoreBgg')"
       />
+      <p
+        v-if="selectedBgg?.isExpansion && selectedBgg.expansion"
+        class="text-sm text-board"
+      >
+        Expansión (BGG): {{ selectedBgg.expansion }}
+      </p>
       <p class="text-xs text-gray-500">
         Datos de juegos vía
         <a

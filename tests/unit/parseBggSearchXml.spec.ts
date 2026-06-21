@@ -15,14 +15,22 @@ describe("parseBggSearchXml", () => {
   </item>
 </items>`
 
-    expect(parseBggSearchXml(xml)).toEqual([
-      {
-        bggId: 9209,
-        title: "Azul",
-        yearPublished: 2017,
-        thumbnailUrl: null,
-      },
-    ])
+    expect(parseBggSearchXml(xml)).toEqual({
+      items: [
+        {
+          bggId: 9209,
+          title: "Azul",
+          baseTitle: "Azul",
+          expansion: null,
+          baseBggId: null,
+          isExpansion: false,
+          yearPublished: 2017,
+          thumbnailUrl: null,
+        },
+      ],
+      total: 1,
+      hasMore: false,
+    })
   })
 
   it("detects BGG queued responses", () => {
@@ -42,13 +50,57 @@ describe("parseBggSearchXml", () => {
   </item>
 </items>`
 
-    expect(parseBggSearchXml(xml)).toEqual([
-      {
-        bggId: 9209,
-        title: "Azul",
-        yearPublished: 2017,
-        thumbnailUrl: null,
-      },
-    ])
+    expect(parseBggSearchXml(xml)).toEqual({
+      items: [
+        {
+          bggId: 9209,
+          title: "Azul",
+          baseTitle: "Azul",
+          expansion: null,
+          baseBggId: null,
+          isExpansion: false,
+          yearPublished: 2017,
+          thumbnailUrl: null,
+        },
+      ],
+      total: 1,
+      hasMore: false,
+    })
+  })
+
+  it("paginates results with limit and offset", () => {
+    const items = Array.from({ length: 15 }, (_, index) => {
+      const id = 1000 + index
+      return `<item type="boardgame" id="${id}"><name type="primary" value="Game ${id}" /></item>`
+    }).join("\n")
+
+    const xml = `<?xml version="1.0"?><items>${items}</items>`
+
+    const firstPage = parseBggSearchXml(xml, { limit: 10, offset: 0 })
+    expect(firstPage.items).toHaveLength(10)
+    expect(firstPage.total).toBe(15)
+    expect(firstPage.hasMore).toBe(true)
+    expect(firstPage.items[0]?.bggId).toBe(1000)
+
+    const secondPage = parseBggSearchXml(xml, { limit: 10, offset: 10 })
+    expect(secondPage.items).toHaveLength(5)
+    expect(secondPage.total).toBe(15)
+    expect(secondPage.hasMore).toBe(false)
+    expect(secondPage.items[0]?.bggId).toBe(1010)
+  })
+
+  it("caps total results at the configured maximum", () => {
+    const items = Array.from({ length: 40 }, (_, index) => {
+      const id = 2000 + index
+      return `<item type="boardgame" id="${id}"><name type="primary" value="Game ${id}" /></item>`
+    }).join("\n")
+
+    const xml = `<?xml version="1.0"?><items>${items}</items>`
+    const page = parseBggSearchXml(xml, { limit: 10, offset: 20 })
+
+    expect(page.items).toHaveLength(10)
+    expect(page.total).toBe(30)
+    expect(page.hasMore).toBe(false)
+    expect(page.items[0]?.bggId).toBe(2020)
   })
 })

@@ -5,7 +5,7 @@ import type { DesiredGame, DesiredGameStatus } from "@/domain/types/desiredGame"
 import type { GameType } from "@/domain/types/rows"
 import { getDbErrorMessage } from "@/services/errors"
 import { desiredGamesRepository } from "@/services/desiredGames/desiredGamesRepository"
-import { searchBoardGames, type BggSearchResult } from "@/services/bgg/bggService"
+import { useBggSearch } from "@/composables/useBggSearch"
 
 export type DesiredGameFilter = "all" | GameType
 
@@ -37,7 +37,15 @@ export function useDesiredGames() {
   const ownerId = computed(() => authStore.profile?.id ?? null)
 
   const items = ref<DesiredGame[]>([])
-  const bggResults = ref<BggSearchResult[]>([])
+  const {
+    results: bggResults,
+    total: bggResultsTotal,
+    hasMore: hasMoreBggResults,
+    isSearching: isBggSearching,
+    isLoadingMore: isBggLoadingMore,
+    search: runBggSearch,
+    loadMore: loadMoreBggResults,
+  } = useBggSearch()
   const typeFilter = ref<DesiredGameFilter>("all")
   const showArchived = ref(false)
   const isLoading = ref(false)
@@ -74,7 +82,11 @@ export function useDesiredGames() {
   }
 
   async function searchBgg(query: string) {
-    bggResults.value = await searchBoardGames(query)
+    await runBggSearch(query)
+  }
+
+  async function loadMoreBgg() {
+    await loadMoreBggResults()
   }
 
   async function createItem(values: DesiredGameFormValues) {
@@ -164,6 +176,10 @@ export function useDesiredGames() {
     filteredItems,
     activeCount,
     bggResults,
+    bggResultsTotal,
+    hasMoreBggResults,
+    isBggSearching,
+    isBggLoadingMore,
     typeFilter,
     showArchived,
     isLoading,
@@ -171,6 +187,7 @@ export function useDesiredGames() {
     errorMessage,
     load,
     searchBgg,
+    loadMoreBgg,
     createItem,
     updateItem,
     setStatus,

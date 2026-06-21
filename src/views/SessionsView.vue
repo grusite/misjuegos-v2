@@ -7,6 +7,7 @@ import NewEscapeSessionPanel from "@/components/sessions/NewEscapeSessionPanel.v
 import NewSessionPanel from "@/components/sessions/newSessionPanel.vue"
 import ParticipantAvatarStack from "@/components/sessions/ParticipantAvatarStack.vue"
 import { useSessions, type SessionFilter, type SessionListItem } from "@/composables/useSessions"
+import type { BggSearchResult } from "@/services/bgg/bggService"
 import { useUiStore } from "@/stores/uiStore"
 
 const router = useRouter()
@@ -20,8 +21,11 @@ const {
   selfParticipantId,
   escapeCatalog,
   bggResults,
+  bggResultsTotal,
+  hasMoreBggResults,
   bggSearchFeedback,
   isBggSearching,
+  isBggLoadingMore,
   bggAutoFillTitle,
   bggAutoSelectId,
   isLoading,
@@ -30,6 +34,7 @@ const {
   isSaving,
   errorMessage,
   searchBgg,
+  loadMoreBgg,
   clearBggSearchState,
   clearSessionFilters,
   createSession,
@@ -140,7 +145,7 @@ async function handleCreateBoard(payload: {
   title: string
   notes?: string
   selectedParticipants: string[]
-  bggSelection?: { bggId: number; title: string; yearPublished: number | null } | null
+  bggSelection?: BggSearchResult | null
 }) {
   const sessionId = await createSession(payload)
   if (!sessionId) return
@@ -321,13 +326,17 @@ async function handleCreateEscape(payload: {
             :player-teams="playerTeams"
             :self-participant-id="selfParticipantId"
             :bgg-results="bggResults"
+            :bgg-results-total="bggResultsTotal"
+            :has-more-bgg-results="hasMoreBggResults"
             :bgg-search-feedback="bggSearchFeedback"
             :is-bgg-searching="isBggSearching"
+            :is-bgg-loading-more="isBggLoadingMore"
             :bgg-auto-fill-title="bggAutoFillTitle"
             :bgg-auto-select-id="bggAutoSelectId"
             :is-saving="isSaving"
             :create-participant="createFriendParticipant"
             @search-bgg="searchBgg"
+            @load-more-bgg="loadMoreBgg"
             @submit="handleCreateBoard"
             @cancel="handleCancelCreate"
           />

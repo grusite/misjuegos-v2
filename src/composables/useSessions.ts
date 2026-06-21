@@ -29,10 +29,10 @@ import {
 } from "@/services/sessions/sessionListFilters"
 import {
   bggSearchFeedbackForError,
-  searchBoardGames,
   type BggSearchFeedback,
   type BggSearchResult,
 } from "@/services/bgg/bggService"
+import { useBggSearch } from "@/composables/useBggSearch"
 
 export type { SessionFilter } from "@/services/sessions/sessionListFilters"
 
@@ -89,9 +89,17 @@ export function useSessions() {
   const participants = ref<Participant[]>([])
   const playerTeams = ref<PlayerTeamWithMembers[]>([])
   const escapeCatalog = ref<EscapeRoomCatalogEntry[]>([])
-  const bggResults = ref<BggSearchResult[]>([])
+  const {
+    results: bggResults,
+    total: bggResultsTotal,
+    hasMore: hasMoreBggResults,
+    isSearching: isBggSearching,
+    isLoadingMore: isBggLoadingMore,
+    search: runBggSearch,
+    loadMore: loadMoreBggResults,
+    clear: clearBggSearch,
+  } = useBggSearch()
   const bggSearchFeedback = ref<BggSearchFeedback | null>(null)
-  const isBggSearching = ref(false)
   const bggAutoFillTitle = ref<string | null>(null)
   const bggAutoSelectId = ref<number | null>(null)
   const sessionFilters = ref<SessionListFilterState>(createDefaultSessionListFilters())
@@ -351,7 +359,7 @@ export function useSessions() {
     bggAutoSelectId.value = null
 
     if (!normalized) {
-      bggResults.value = []
+      clearBggSearch()
       bggSearchFeedback.value = {
         tone: "hint",
         message: "Escribe un nombre para buscar en BGG.",
@@ -359,11 +367,11 @@ export function useSessions() {
       return
     }
 
-    isBggSearching.value = true
-
     try {
-      const results = await searchBoardGames(normalized)
-      bggResults.value = results
+      const page = await runBggSearch(normalized)
+      if (!page) return
+
+      const { results } = page
 
       if (results.length === 0) {
         bggSearchFeedback.value = {
@@ -378,30 +386,61 @@ export function useSessions() {
         const [match] = results
         if (match) {
           bggAutoSelectId.value = match.bggId
-          bggAutoFillTitle.value = match.title
+          bggAutoFillTitle.value = match.baseTitle
         }
         return
       }
 
-      bggSearchFeedback.value = {
-        tone: "hint",
-        message: `${results.length} resultados. Elige uno de la lista.`,
-      }
+      bggSearchFeedback.value = bggResultsHintMessage(
+        results.length,
+        bggResultsTotal.value,
+        hasMoreBggResults.value,
+      )
     } catch (error) {
-      bggResults.value = []
+      clearBggSearch()
       bggSearchFeedback.value = bggSearchFeedbackForError(error)
       bggAutoFillTitle.value = normalized
-    } finally {
-      isBggSearching.value = false
+    }
+  }
+
+  async function loadMoreBgg() {
+    if (!hasMoreBggResults.value || isBggLoadingMore.value) return
+
+    try {
+      await loadMoreBggResults()
+      bggSearchFeedback.value = bggResultsHintMessage(
+        bggResults.value.length,
+        bggResultsTotal.value,
+        hasMoreBggResults.value,
+      )
+    } catch (error) {
+      bggSearchFeedback.value = bggSearchFeedbackForError(error)
+    }
+  }
+
+  function bggResultsHintMessage(
+    shown: number,
+    total: number,
+    hasMore: boolean,
+  ): BggSearchFeedback {
+    if (hasMore) {
+      return {
+        tone: "hint",
+        message: `${shown} de ${total} resultados. Elige uno o carga más abajo.`,
+      }
+    }
+
+    return {
+      tone: "hint",
+      message: `${shown} resultados. Elige uno de la lista.`,
     }
   }
 
   function clearBggSearchState() {
-    bggResults.value = []
+    clearBggSearch()
     bggSearchFeedback.value = null
     bggAutoFillTitle.value = null
     bggAutoSelectId.value = null
-    isBggSearching.value = false
   }
 
   async function createFriendParticipant(displayName: string): Promise<Participant | null> {
@@ -447,15 +486,24 @@ export function useSessions() {
     errorMessage.value = null
 
     try {
+      const bgg = payload.bggSelection
+      let expansionOfId: string | null = null
+
+      if (bgg?.isExpansion && bgg.baseBggId) {
+        const baseGame = await catalogRepository.findBoardGameByBggId(bgg.baseBggId)
+        expansionOfId = baseGame?.id ?? null
+      }
+
       const game = await catalogRepository.createBoardGame({
-        title: payload.title.trim(),
+        title: bgg?.baseTitle ?? payload.title.trim(),
         createdBy: ownerId.value,
-        source: payload.bggSelection ? "bgg" : "manual",
-        sourceExternalId: payload.bggSelection
-          ? String(payload.bggSelection.bggId)
-          : null,
-        bggId: payload.bggSelection?.bggId ?? null,
-        yearPublished: payload.bggSelection?.yearPublished ?? null,
+        source: bgg ? "bgg" : "manual",
+        sourceExternalId: bgg ? String(bgg.bggId) : null,
+        bggId: bgg?.bggId ?? null,
+        expansion: bgg?.isExpansion ? bgg.expansion : null,
+        expansionOfId,
+        yearPublished: bgg?.yearPublished ?? null,
+        thumbnailUrl: bgg?.thumbnailUrl ?? null,
       })
 
       const session = await sessionsRepository.create({
@@ -564,8 +612,11 @@ export function useSessions() {
     playerTeams,
     escapeCatalog,
     bggResults,
+    bggResultsTotal,
+    hasMoreBggResults,
     bggSearchFeedback,
     isBggSearching,
+    isBggLoadingMore,
     bggAutoFillTitle,
     bggAutoSelectId,
     isLoading,
@@ -579,6 +630,7 @@ export function useSessions() {
     loadMoreSessions,
     loadEscapeCatalog,
     searchBgg,
+    loadMoreBgg,
     clearBggSearchState,
     createSession,
     createEscapeSession,

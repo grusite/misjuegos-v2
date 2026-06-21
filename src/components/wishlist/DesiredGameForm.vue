@@ -12,6 +12,10 @@ import type { BggSearchResult } from "@/services/bgg/bggService"
 const props = defineProps<{
   initialItem?: DesiredGame | null
   bggResults?: BggSearchResult[]
+  bggResultsTotal?: number
+  hasMoreBggResults?: boolean
+  isBggSearching?: boolean
+  isBggLoadingMore?: boolean
   isSaving?: boolean
   submitLabel: string
 }>()
@@ -19,6 +23,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   submit: [values: DesiredGameFormValues]
   searchBgg: [query: string]
+  loadMoreBgg: []
   cancel: []
 }>()
 
@@ -194,16 +199,21 @@ function handleSubmit() {
             type="button"
             variant="ghost"
             class="!px-4 !py-2 !text-base"
+            :disabled="isBggSearching || isSaving"
             @click="emit('searchBgg', form.bggQuery)"
           >
-            Buscar
+            {{ isBggSearching ? "Buscando..." : "Buscar" }}
           </UiButton>
         </div>
         <BggSearchResultPicker
           v-if="bggResults && bggResults.length > 0"
           v-model="form.bggSelectionId"
           :results="bggResults"
+          :total="bggResultsTotal ?? 0"
+          :has-more="hasMoreBggResults ?? false"
+          :is-loading-more="isBggLoadingMore ?? false"
           accent="wishlist"
+          @load-more="emit('loadMoreBgg')"
         />
       </label>
     </template>

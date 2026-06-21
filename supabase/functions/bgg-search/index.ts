@@ -10,6 +10,8 @@ const corsHeaders = {
 
 type SearchRequest = {
   query?: string
+  limit?: number
+  offset?: number
 }
 
 type ErrorCode =
@@ -94,8 +96,11 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const results = await fetchBggSearch(query, bggToken)
-    return jsonResponse({ results })
+    const { results, total, hasMore } = await fetchBggSearch(query, bggToken, {
+      limit: body.limit,
+      offset: body.offset,
+    })
+    return jsonResponse({ results, total, hasMore })
   } catch (error) {
     const message = error instanceof Error ? error.message : "bgg_error"
     console.error("bgg-search:", message)
