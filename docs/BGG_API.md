@@ -16,7 +16,7 @@ Official guides:
 | **Register the application** | Jorge registers a **non-commercial** app at [boardgamegeek.com/applications](https://boardgamegeek.com/applications). |
 | **Bearer token on every request** | Token stored as `BGG_TOKEN` secret — Edge Function only, never in the Vue app. |
 | **Server-side requests, not from clients** | Browser calls Supabase Edge Function `bgg-search`; function calls BGG with `Authorization: Bearer …`. |
-| **Keep requests to a minimum** | Search runs only when the user taps **Buscar**; max **10** results; no background sync or bulk import from BGG. |
+| **Keep requests to a minimum** | Search runs only when the user taps **Buscar**; max **10** results; one extra batch **thing** call for thumbnails; no background sync or bulk import from BGG. |
 | **Cache when possible** | Selected `bgg_id`, title, and year are stored in `board_game_details` / `game_catalog` — we do not re-fetch the same game on every page view. |
 | **Non-commercial use** | Private tracker for a small group of friends — fits BGG’s non-commercial license. |
 | **No AI / LLM training** | API data is not used to train models. |
@@ -69,8 +69,9 @@ If the token is missing locally, the UI shows: *«La búsqueda BGG aún no está
 ```
 Vue (authenticated) → supabase.functions.invoke("bgg-search")
                     → Edge Function (validates JWT, reads BGG_TOKEN)
-                    → GET boardgamegeek.com/xmlapi2/search?type=boardgame&query=…
-                    → JSON { results: [{ bggId, title, yearPublished }] }
+                    → GET …/search?type=boardgame&query=…
+                    → GET …/thing?id=… (batch thumbnails, same click)
+                    → JSON { results: [{ bggId, title, yearPublished, thumbnailUrl }] }
 ```
 
 Function path: `supabase/functions/bgg-search/index.ts`

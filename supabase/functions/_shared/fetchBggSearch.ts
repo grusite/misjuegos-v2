@@ -1,13 +1,8 @@
-import {
-  isBggErrorResponse,
-  isBggQueuedResponse,
-  parseBggSearchXml,
-  type BggSearchItem,
-} from "./parseBggSearchXml.ts"
+import { fetchBggXml } from "./bggXmlUtils.ts"
+import { fetchBggThingThumbnails } from "./fetchBggThingThumbnails.ts"
+import { parseBggSearchXml, type BggSearchItem } from "./parseBggSearchXml.ts"
 
 const BGG_SEARCH_URL = "https://boardgamegeek.com/xmlapi2/search"
-const MAX_ATTEMPTS = 6
-const RETRY_DELAY_MS = 2_000
 
 export async function fetchBggSearch(
   query: string,
@@ -18,59 +13,36 @@ export async function fetchBggSearch(
 
   const url = `${BGG_SEARCH_URL}?type=boardgame&query=${encodeURIComponent(normalized)}`
 
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
-    let response: Response
+  let xmlText: string
 
-    try {
-      response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/xml",
-          "User-Agent": "MisJuegos/2.0 (private; boardgamegeek.com/applications)",
-        },
-      })
-    } catch (error) {
-      const detail = error instanceof Error ? error.message : "fetch_failed"
-      throw new Error(`bgg_fetch_failed:${detail}`)
-    }
-
-    if (response.status === 202) {
-      await delay(RETRY_DELAY_MS)
-      continue
-    }
-
-    const xmlText = await response.text()
-
-    if (response.status === 401 || response.status === 403) {
-      throw new Error("bgg_unauthorized")
-    }
-
-    if (!response.ok) {
-      throw new Error(`bgg_http_${response.status}`)
-    }
-
-    if (isBggQueuedResponse(xmlText)) {
-      await delay(RETRY_DELAY_MS)
-      continue
-    }
-
-    if (isBggErrorResponse(xmlText)) {
-      throw new Error("bgg_error_response")
-    }
-
-    try {
-      return parseBggSearchXml(xmlText)
-    } catch (error) {
-      const detail = error instanceof Error ? error.message : "parse_failed"
-      throw new Error(`bgg_parse_failed:${detail}`)
-    }
+  try {
+    xmlText = await fetchBggXml(url, token)
+  } catch (error) {
+    throw error instanceof Error ? error : new Error("bgg_error", { cause: error })
   }
 
-  throw new Error("bgg_timeout")
-}
+  let results: BggSearchItem[]
 
-function delay(ms: number): Promise<void> {
-  return new Promise(resolve => {
-    setTimeout(resolve, ms)
-  })
+  try {
+    results = parseBggSearchXml(xmlText)
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "parse_failed"
+    throw new Error(`bgg_parse_failed:${detail}`, { cause: error })
+  }
+
+  if (results.length === 0) return results
+
+  try {
+    const thumbnails = await fetchBggThingThumbnails(
+      results.map(result => result.bggId),
+      token,
+    )
+
+    return results.map(result => ({
+      ...result,
+      thumbnailUrl: thumbnails.get(result.bggId) ?? null,
+    }))
+  } catch {
+    return results
+  }
 }

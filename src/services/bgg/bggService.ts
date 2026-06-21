@@ -4,6 +4,7 @@ export type BggSearchResult = {
   bggId: number
   title: string
   yearPublished: number | null
+  thumbnailUrl?: string | null
 }
 
 export class BggSearchError extends Error {

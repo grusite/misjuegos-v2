@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from "vue"
 import UiButton from "@/components/ui/UiButton.vue"
+import BggSearchResultPicker from "@/components/bgg/BggSearchResultPicker.vue"
 import {
   desiredGameFormSchema,
   type DesiredGameFormValues,
@@ -187,6 +188,7 @@ function handleSubmit() {
             class="min-w-0 flex-1 rounded-lg border-4 border-gray-700 bg-dark px-4 py-2 text-gray-100 focus:outline-none"
             :class="accentClass"
             placeholder="BoardGameGeek..."
+            @keydown.enter.prevent="emit('searchBgg', form.bggQuery)"
           />
           <UiButton
             type="button"
@@ -197,21 +199,12 @@ function handleSubmit() {
             Buscar
           </UiButton>
         </div>
-        <select
+        <BggSearchResultPicker
           v-if="bggResults && bggResults.length > 0"
           v-model="form.bggSelectionId"
-          class="w-full rounded-lg border-4 border-gray-700 bg-dark px-4 py-2 text-gray-100 focus:outline-none"
-          :class="accentClass"
-        >
-          <option value="">Sin selección</option>
-          <option
-            v-for="result in bggResults"
-            :key="result.bggId"
-            :value="String(result.bggId)"
-          >
-            {{ result.title }}{{ result.yearPublished ? ` (${result.yearPublished})` : "" }}
-          </option>
-        </select>
+          :results="bggResults"
+          accent="wishlist"
+        />
       </label>
     </template>
 

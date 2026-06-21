@@ -20,6 +20,7 @@ describe("parseBggSearchXml", () => {
         bggId: 9209,
         title: "Azul",
         yearPublished: 2017,
+        thumbnailUrl: null,
       },
     ])
   })
@@ -46,6 +47,7 @@ describe("parseBggSearchXml", () => {
         bggId: 9209,
         title: "Azul",
         yearPublished: 2017,
+        thumbnailUrl: null,
       },
     ])
   })

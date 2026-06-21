@@ -1,7 +1,10 @@
+import { decodeXmlEntities } from "./bggXmlUtils.ts"
+
 export type BggSearchItem = {
   bggId: number
   title: string
   yearPublished: number | null
+  thumbnailUrl: string | null
 }
 
 const ITEM_REGEX = /<item\b([^>]*?)>([\s\S]*?)<\/item>/gi
@@ -28,6 +31,7 @@ export function parseBggSearchXml(xmlText: string): BggSearchItem[] {
       bggId: Number(idMatch[1]),
       title,
       yearPublished: yearMatch ? Number(yearMatch[1]) : null,
+      thumbnailUrl: null,
     })
   }
 
@@ -57,24 +61,4 @@ function readAttribute(tag: string, attribute: string): string | null {
   return tag.match(pattern)?.[1] ?? null
 }
 
-function decodeXmlEntities(text: string): string {
-  return text
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-}
-
-export function isBggQueuedResponse(xmlText: string): boolean {
-  return (
-    xmlText.includes("has been accepted and will be processed soon") ||
-    xmlText.includes("<message>Your request for")
-  )
-}
-
-export function isBggErrorResponse(xmlText: string): boolean {
-  if (isBggQueuedResponse(xmlText)) return false
-
-  return xmlText.includes("<error")
-}
+export { isBggErrorResponse, isBggQueuedResponse } from "./bggXmlUtils.ts"

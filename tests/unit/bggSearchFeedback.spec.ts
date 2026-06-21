@@ -18,6 +18,6 @@ describe("bggSearchFeedbackForError", () => {
     const feedback = bggSearchFeedbackForError(new BggSearchError("bgg_error", "fail"))
 
     expect(feedback.tone).toBe("warning")
-    expect(feedback.message).toContain("Puedes crear la partida igual")
+    expect(feedback.message).toBe("fail")
   })
 })

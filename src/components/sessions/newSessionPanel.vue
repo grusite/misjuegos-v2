@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from "vue"
 import SessionParticipantPicker from "@/components/sessions/SessionParticipantPicker.vue"
+import BggSearchResultPicker from "@/components/bgg/BggSearchResultPicker.vue"
 import UiButton from "@/components/ui/UiButton.vue"
 import type { Participant } from "@/domain/types/participant"
 import type { PlayerTeamWithMembers } from "@/domain/types/playerTeam"
@@ -122,6 +123,7 @@ function handleSubmit() {
           type="search"
           class="min-w-0 flex-1 rounded-lg border-4 border-gray-700 bg-dark px-4 py-2 text-gray-100 focus:border-board focus:outline-none"
           placeholder="BoardGameGeek search..."
+          @keydown.enter.prevent="emit('searchBgg', form.bggQuery)"
         />
         <UiButton
           type="button"
@@ -140,20 +142,12 @@ function handleSubmit() {
       >
         {{ bggSearchFeedback.message }}
       </p>
-      <select
+      <BggSearchResultPicker
         v-if="bggResults.length > 0"
         v-model="form.bggSelectionId"
-        class="w-full rounded-lg border-4 border-gray-700 bg-dark px-4 py-2 text-gray-100 focus:border-board focus:outline-none"
-      >
-        <option value="">Sin selección</option>
-        <option
-          v-for="result in bggResults"
-          :key="result.bggId"
-          :value="String(result.bggId)"
-        >
-          {{ result.title }}{{ result.yearPublished ? ` (${result.yearPublished})` : "" }}
-        </option>
-      </select>
+        :results="bggResults"
+        accent="board"
+      />
       <p class="text-xs text-gray-500">
         Datos de juegos vía
         <a
