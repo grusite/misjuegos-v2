@@ -19,12 +19,20 @@ export async function fetchBggSearch(
   const url = `${BGG_SEARCH_URL}?type=boardgame&query=${encodeURIComponent(normalized)}`
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/xml",
-      },
-    })
+    let response: Response
+
+    try {
+      response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/xml",
+          "User-Agent": "MisJuegos/2.0 (private; boardgamegeek.com/applications)",
+        },
+      })
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "fetch_failed"
+      throw new Error(`bgg_fetch_failed:${detail}`)
+    }
 
     if (response.status === 202) {
       await delay(RETRY_DELAY_MS)
@@ -50,7 +58,12 @@ export async function fetchBggSearch(
       throw new Error("bgg_error_response")
     }
 
-    return parseBggSearchXml(xmlText)
+    try {
+      return parseBggSearchXml(xmlText)
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "parse_failed"
+      throw new Error(`bgg_parse_failed:${detail}`)
+    }
   }
 
   throw new Error("bgg_timeout")

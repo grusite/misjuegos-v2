@@ -38,7 +38,9 @@ export function bggSearchFeedbackForError(error: unknown): BggSearchFeedback {
     return {
       tone: "warning",
       message:
-        "BoardGameGeek tardó demasiado. Inténtalo otra vez o escribe el nombre a mano.",
+        error instanceof BggSearchError && error.message
+          ? error.message
+          : "BoardGameGeek tardó demasiado. Inténtalo otra vez o escribe el nombre a mano.",
     }
   }
 
@@ -46,6 +48,13 @@ export function bggSearchFeedbackForError(error: unknown): BggSearchFeedback {
     return {
       tone: "hint",
       message: "Indica un nombre para buscar en BGG.",
+    }
+  }
+
+  if (error instanceof BggSearchError && error.message) {
+    return {
+      tone: "warning",
+      message: error.message,
     }
   }
 

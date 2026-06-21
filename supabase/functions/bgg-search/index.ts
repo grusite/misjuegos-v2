@@ -98,6 +98,7 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ results })
   } catch (error) {
     const message = error instanceof Error ? error.message : "bgg_error"
+    console.error("bgg-search:", message)
 
     if (message === "bgg_unauthorized") {
       return errorResponse(
@@ -112,6 +113,39 @@ Deno.serve(async (req: Request) => {
         "bgg_timeout",
         "BoardGameGeek tardó demasiado. Inténtalo de nuevo.",
         504,
+      )
+    }
+
+    if (message.startsWith("bgg_http_")) {
+      const status = message.slice("bgg_http_".length)
+      return errorResponse(
+        "bgg_error",
+        `BoardGameGeek respondió con error HTTP ${status}.`,
+        502,
+      )
+    }
+
+    if (message === "bgg_error_response") {
+      return errorResponse(
+        "bgg_error",
+        "BoardGameGeek devolvió un error en la respuesta.",
+        502,
+      )
+    }
+
+    if (message.startsWith("bgg_fetch_failed:")) {
+      return errorResponse(
+        "bgg_error",
+        "No se pudo conectar con BoardGameGeek desde el servidor.",
+        502,
+      )
+    }
+
+    if (message.startsWith("bgg_parse_failed:")) {
+      return errorResponse(
+        "bgg_error",
+        "No se pudo interpretar la respuesta de BoardGameGeek.",
+        502,
       )
     }
 
